@@ -597,7 +597,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    el("rodape").textContent = CFG.RODAPE || "";
+    var VERSAO = "v5 · menu lateral";
+  el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
     if(DEMO){
