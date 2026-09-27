@@ -348,7 +348,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var TURNO_SAB = TURNOS.filter(function(t){ return t.sabado; })[0] || null;
   var DIRETORIAS = ESC.diretorias || [];
   var DIR_CURTA = ESC.diretoriasCurtas || {};
-  var INSTRUTORES = ESC.instrutores || {};
+  var INSTRUTORES = {};
+  Object.keys(ESC.instrutores || {}).forEach(function(k){ INSTRUTORES[k] = ESC.instrutores[k]; });
+  var instrutoresDoBanco = false;
   var SABADOS = ESC.sabados || [];
   var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
   var DIA_CURTO = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
@@ -546,6 +548,40 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     erro(await sb.from("convites").delete().eq("email", email));
   }
 
+  async function listarInstrutores(){
+    if(DEMO) return null;
+    var r = await sb.from("instrutores").select("nome,completo,diretoria,curso,diretor").order("completo");
+    if(r.error || !r.data || !r.data.length) return null;
+    return r.data;
+  }
+  async function carregarInstrutores(){
+    var lista = null;
+    try{ lista = await listarInstrutores(); }catch(e){}
+    if(!lista) return;                       // sem tabela ou vazia: segue com o escala.js
+    var m = {};
+    lista.forEach(function(x){
+      m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "", diretor:!!x.diretor };
+    });
+    INSTRUTORES = m;
+    instrutoresDoBanco = true;
+  }
+  async function salvarInstrutor(nome, patch){
+    if(DEMO) return;
+    erro(await sb.from("instrutores").update(patch).eq("nome", nome));
+  }
+  async function criarInstrutor(x){
+    if(DEMO) return;
+    var r = await sb.from("instrutores").insert(x);
+    if(r.error){
+      if(r.error.code === "23505") throw new Error("Já existe um instrutor com esse nome-chave.");
+      throw new Error(r.error.message);
+    }
+  }
+  async function apagarInstrutor(nome){
+    if(DEMO) return;
+    erro(await sb.from("instrutores").delete().eq("nome", nome));
+  }
+
   async function listarPerfis(){
     if(DEMO) return [perfil];
     return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
@@ -597,7 +633,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v5 · menu lateral";
+    var VERSAO = "v6 · quadro de instrutores";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
@@ -630,7 +666,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     try{ perfil = await carregarMeuPerfil(); }
     catch(e){ telaMensagem("Não consegui carregar seu perfil", e.message); return; }
     if(!perfil.aprovado){ pronto = false; telaPendente(); return; }
-    entrarNoApp();
+    await entrarNoApp();
   }
 
   async function carregarMeuPerfil(){
@@ -713,7 +749,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     sessao = null; perfil = null; location.reload();
   }
 
-  function entrarNoApp(){
+  async function entrarNoApp(){
+    await carregarInstrutores();
     pronto = true;
     el("gate").hidden = true;
     el("app").hidden = false;
@@ -1066,6 +1103,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var coordSec = "visao";
   var SECOES = [
     { id:"visao",     nome:"Visão geral" },
+    { id:"pessoas",   nome:"Instrutores" },
     { id:"contas",    nome:"Contas" },
     { id:"trocas",    nome:"Trocas" },
     { id:"registros", nome:"Registros" }
@@ -1191,7 +1229,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         +   '<label class="fld">Perfil<select id="cv-papel">'
         +     '<option value="instrutor">Instrutor(a)</option><option value="coordenacao">Coordenação</option>'
         +   '</select></label>'
-        +   '<label class="fld" id="cv-nome-wrap">Nome na escala'
+        +   '<label class="fld" id="cv-nome-wrap">Nome'
         +     '<input class="mini" id="cv-nome" list="nomes-escala" placeholder="digite ou escolha" spellcheck="false">'
         +   '</label>'
         +   '<button class="btn primary" id="cv-ok">Adicionar</button>'
@@ -1211,11 +1249,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
             }).join("") + '</tbody></table></div></div>';
       }
 
-      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+' · não entram na escala</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Situação</th><th></th></tr></thead><tbody>';
-      if(!coords.length) h += '<tr><td colspan="3" class="muted">Nenhuma.</td></tr>';
+      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+'</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th><th>Situação</th><th></th></tr></thead><tbody>';
+      if(!coords.length) h += '<tr><td colspan="4" class="muted">Nenhuma.</td></tr>';
       coords.forEach(function(x){
         h += '<tr><td>'+esc(x.email||"—")+(x.id===perfil.id?' <span class="tag">você</span>':'')+'</td>'
+          + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="digite o nome" spellcheck="false"></td>'
           + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
           + '<td style="white-space:nowrap">'
           + (x.id===perfil.id ? '<span class="muted tiny">sua conta</span>'
@@ -1244,6 +1283,50 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
           + '</td></tr>';
       });
       h += '</tbody></table></div></div>';
+    }
+
+    /* ---------------- instrutores ---------------- */
+    if(coordSec === "pessoas"){
+      var chaves = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar instrutor(a)</h2>'
+        + '<p>o nome-chave é curto e não muda depois</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Nome-chave<input id="in-chave" placeholder="Maria Isadora" size="16"></label>'
+        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Maria Isadora Gomes Profirio" size="26"></label>'
+        +   '<label class="fld">Diretoria<select id="in-dir"><option value="">—</option>'
+        +     DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Curso<input id="in-curso" placeholder="Psicologia" size="16"></label>'
+        +   '<button class="btn primary" id="in-ok">Adicionar</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">O <b>nome-chave</b> é o que você escreve na grade do '
+        + '<span class="mono">escala.js</span> e é a etiqueta que o banco guarda em cada ponto. '
+        + 'Por isso ele não pode ser alterado depois: mudá-lo desligaria a pessoa do próprio histórico.</p></div>';
+
+      h += '<div><div class="sec-head"><h2>Quadro de instrutores</h2><p>'+chaves.length+' pessoas'
+        + (instrutoresDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>Nome-chave</th><th>Nome completo</th>'
+        + '<th>Diretoria</th><th>Curso</th><th>Diretor(a)</th><th class="num">Turnos</th><th></th></tr></thead><tbody>';
+      var turnosPor = {};
+      TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){
+        escalados(t.id,d,"").forEach(function(n){ turnosPor[n] = (turnosPor[n]||0)+1; }); }); });
+      chaves.forEach(function(n){
+        var i3 = infoDe(n);
+        h += '<tr><td><b>'+esc(n)+'</b></td>'
+          + '<td><input class="mini" style="max-width:240px" data-inf="completo" data-key="'+esc(n)+'" value="'+esc(i3.completo||"")+'"></td>'
+          + '<td><select class="mini" data-inf="diretoria" data-key="'+esc(n)+'"><option value="">—</option>'
+          +   DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'"'+(d===i3.diretoria?" selected":"")+'>'+esc(d)+'</option>'; }).join("")
+          + '</select></td>'
+          + '<td><input class="mini" style="max-width:150px" data-inf="curso" data-key="'+esc(n)+'" value="'+esc(i3.curso||"")+'"></td>'
+          + '<td><input type="checkbox" data-inf="diretor" data-key="'+esc(n)+'"'+(i3.diretor?" checked":"")+'></td>'
+          + '<td class="num">'+(turnosPor[n]||0)+'</td>'
+          + '<td><button class="btn icon ghost" data-delinstr="'+esc(n)+'" style="color:var(--alert)">Remover</button></td></tr>';
+      });
+      h += '</tbody></table></div>'
+        + '<p class="note" style="margin-top:10px">A grade semanal e os sábados continuam no arquivo '
+        + '<span class="mono">escala.js</span>, editados à mão. Esta tela cuida de quem são as pessoas; '
+        + 'o arquivo cuida de quando cada uma trabalha.</p></div>';
     }
 
     /* ---------------- trocas ---------------- */
@@ -1327,8 +1410,39 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     ligar(box, "data-re", function(id){ return decidirTroca(id, "recusada"); }, "Troca recusada.");
     ligar(box, "data-lib",  function(id){ return mudarPerfil(id, { aprovado:true }); }, "Conta liberada.");
     ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
-    ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao", nome:null }); }, "Agora é coordenação.");
+    ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Agora é coordenação.");
     ligar(box, "data-delconv", function(em){ return apagarConvite(em); }, "Convite removido.");
+    ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor removido do quadro.");
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-inf]"), function(c){
+      c.addEventListener("change", async function(){
+        var campo = c.dataset.inf;
+        var valor = (c.type === "checkbox") ? c.checked : c.value.trim();
+        c.disabled = true;
+        var patch = {}; patch[campo] = valor;
+        try{
+          await salvarInstrutor(c.dataset.key, patch);
+          if(!INSTRUTORES[c.dataset.key]) INSTRUTORES[c.dataset.key] = {};
+          INSTRUTORES[c.dataset.key][campo] = valor;
+          aviso("Salvo.");
+        }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); }
+        c.disabled = false;
+      });
+    });
+
+    var ib = el("in-ok");
+    if(ib) ib.addEventListener("click", async function(){
+      var chave = (el("in-chave").value||"").trim();
+      if(!chave){ aviso("Informe o nome-chave."); return; }
+      ib.disabled = true;
+      try{
+        await criarInstrutor({ nome:chave, completo:(el("in-completo").value||"").trim() || chave,
+                               diretoria: el("in-dir").value || null, curso:(el("in-curso").value||"").trim() || null });
+        await carregarInstrutores();
+        aviso("Instrutor adicionado. Lembre de colocá-lo na grade do escala.js.");
+        render();
+      }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ib.disabled = false; }
+    });
 
     Array.prototype.forEach.call(box.querySelectorAll("[data-nome]"), function(inp){
       var antes = inp.value;
@@ -1345,17 +1459,14 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
 
     var papelSel = el("cv-papel");
-    function ajustaNome(){ el("cv-nome-wrap").hidden = (papelSel.value === "coordenacao"); }
-    if(papelSel){ papelSel.addEventListener("change", ajustaNome); ajustaNome(); }
     var cv = el("cv-ok");
     if(cv) cv.addEventListener("click", async function(){
       var em = (el("cv-email").value||"").trim().toLowerCase();
       if(!em || em.indexOf("@") < 0){ aviso("Informe um e-mail válido."); return; }
-      var coord = papelSel.value === "coordenacao";
       cv.disabled = true;
       try{
         await criarConvite({ email:em, papel: papelSel.value,
-                             nome: coord ? null : ((el("cv-nome").value||"").trim() || null) });
+                             nome: (el("cv-nome").value||"").trim() || null });
         aviso("Adicionado. Peça para a pessoa entrar com o Google usando esse e-mail.");
         await carregarMes();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); cv.disabled = false; }
