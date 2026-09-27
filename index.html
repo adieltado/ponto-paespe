@@ -258,7 +258,8 @@ select.addslot{width:100%;margin-top:7px;font-size:11.5px;max-width:none}
 .chart .mark:hover{opacity:.82}
 #tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--ground);
   border-radius:7px;padding:6px 9px;font-size:12px;font-weight:500;max-width:280px;box-shadow:var(--shadow)}
-tr.somatorio td{background:var(--surface-2);border-top:2px solid var(--line-2)}
+tr.minhalinha td{background:var(--accent-soft)}
+tr.minhalinha td:first-child{font-weight:600}
 .acesso .em{font-size:12px;color:var(--ink-2)}
 .coordwrap{display:grid;grid-template-columns:184px 1fr;gap:22px;align-items:start}
 .coordmain{min-width:0;display:flex;flex-direction:column;gap:20px}
@@ -316,6 +317,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     <nav class="tabs" role="tablist" aria-label="Seções" id="topnav" hidden>
       <button role="tab" id="tab-ponto" aria-selected="true"  aria-controls="v-ponto" data-v="ponto">Registrar</button>
       <button role="tab" id="tab-escala" aria-selected="false" aria-controls="v-escala" data-v="escala">Escala</button>
+      <button role="tab" id="tab-acomp" aria-selected="false" aria-controls="v-acomp" data-v="acomp">Acompanhamento</button>
       <button role="tab" id="tab-coord" aria-selected="false" aria-controls="v-coord" data-v="coord">Coordenação</button>
     </nav>
   </div>
@@ -327,6 +329,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   <div id="app" hidden>
   <section id="v-ponto"  class="stack" role="tabpanel" aria-labelledby="tab-ponto"  style="padding-top:18px"></section>
   <section id="v-escala" class="stack" role="tabpanel" aria-labelledby="tab-escala" style="padding-top:18px" hidden></section>
+  <section id="v-acomp"  class="stack" role="tabpanel" aria-labelledby="tab-acomp"  style="padding-top:18px" hidden></section>
   <section id="v-coord"  class="stack" role="tabpanel" aria-labelledby="tab-coord"  style="padding-top:18px" hidden></section>
   </div>
 
@@ -697,7 +700,11 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   }
   async function excluirPerfil(id, email){
     if(DEMO) return;
-    erro(await sb.from("perfis").delete().eq("id", id));
+    var r = await sb.from("perfis").delete().eq("id", id).select("id");
+    if(r.error) throw new Error(r.error.message);
+    if(!r.data || !r.data.length){
+      throw new Error("o banco recusou a exclusão — falta rodar a política \u201ccoord apaga perfis\u201d no Supabase");
+    }
     if(email){ try{ await sb.from("convites").delete().eq("email", email); }catch(e){} }
   }
   async function apagarInstrutor(nome){
@@ -886,7 +893,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v19 · Pessoas restaurada";
+    var VERSAO = "v20 · acompanhamento";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     periodoDe = hojeKey().slice(0,7)+"-01";
     periodoAte = fimDoMes(hojeKey().slice(0,7));
@@ -1030,8 +1037,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     el("v-ponto").hidden  = v!=="ponto";
     el("v-escala").hidden = v!=="escala";
+    el("v-acomp").hidden  = v!=="acomp";
     el("v-coord").hidden  = v!=="coord";
-    if(v==="coord") carregarMes(); else render();
+    if(v==="coord" || v==="acomp") carregarMes(); else render();
   }
   Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(b){
     b.addEventListener("click", function(){ trocarPara(b.dataset.v); });
@@ -1042,6 +1050,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(!pronto) return;
     if(view==="ponto") viewPonto();
     else if(view==="escala") viewEscala();
+    else if(view==="acomp") viewAcomp();
     else viewCoord();
   }
 
@@ -1452,10 +1461,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     { id:"registros", nome:"Registros" }
   ];
 
-  function viewCoord(){
-    var box = el("v-coord");
-    if(!ehCoord()){ box.innerHTML = '<div class="empty"><h3>Área restrita à coordenação</h3></div>'; return; }
-
+  function estatisticas(){
     var hoje = hojeKey();
     var porNome = {};
     function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0, fj:0,
@@ -1502,6 +1508,126 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     })();
 
     var ordenados = regsMes.slice().sort(function(a,b){ return new Date(b.chegada) - new Date(a.chegada); });
+    var totalBolsa = 0;
+    var linhas = nomes.map(function(n){
+      var sn = porNome[n];
+      var prevT = sn.prevSemana + sn.prevSabado, presT = sn.presSemana + sn.presSabado;
+      var b = prevT ? BOLSA * Math.min(1, presT/prevT) : 0;
+      totalBolsa += b;
+      return { nome:n, dir:diretoriaDe(n) || "Sem diretoria",
+        prevSemana:sn.prevSemana, presSemana:sn.presSemana,
+        prevSabado:sn.prevSabado, presSabado:sn.presSabado,
+        prevT:prevT, presT:presT,
+        pctSemana: sn.prevSemana ? sn.presSemana/sn.prevSemana*100 : null,
+        pctSabado: sn.prevSabado ? sn.presSabado/sn.prevSabado*100 : null,
+        pctTotal:  prevT ? presT/prevT*100 : null,
+        bolsa:b, atrasos:sn.atrasos, fj:sn.fj };
+    });
+    return { porNome:porNome, nomes:nomes, previstosTot:previstosTot, freq:freq,
+             atrasosTot:atrasosTot, ordenados:ordenados, linhas:linhas, totalBolsa:totalBolsa };
+  }
+
+  function barraPeriodo(comCsv){
+    return '<div class="toolbar">'
+      + '<label class="fld">De<input type="date" id="f-de" value="'+esc(periodoDe)+'"></label>'
+      + '<label class="fld">Até<input type="date" id="f-ate" value="'+esc(periodoAte)+'"></label>'
+      + '<span class="atalhos">'
+      +   '<button class="btn icon ghost" data-per="mes">Este mês</button>'
+      +   '<button class="btn icon ghost" data-per="anterior">Mês passado</button>'
+      +   '<button class="btn icon ghost" data-per="tri">Últimos 3 meses</button>'
+      + '</span><span class="spacer"></span>'
+      + '<button class="btn ghost" id="btn-recarregar">Atualizar</button>'
+      + (comCsv ? '<button class="btn" id="btn-csv">Baixar CSV</button>' : '')
+      + '</div><p class="tiny muted" style="margin:-8px 0 0">'+esc(rotuloPeriodo())+'</p>';
+  }
+  function ligarPeriodo(box){
+    el("f-de").addEventListener("change", function(){
+      periodoDe = this.value || hojeKey().slice(0,7)+"-01";
+      if(periodoAte < periodoDe) periodoAte = periodoDe;
+      carregarMes();
+    });
+    el("f-ate").addEventListener("change", function(){
+      periodoAte = this.value || hojeKey();
+      if(periodoAte < periodoDe) periodoDe = periodoAte;
+      carregarMes();
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-per]"), function(b){
+      b.addEventListener("click", function(){
+        var hj = new Date(), a2 = hj.getFullYear(), m = hj.getMonth();
+        if(b.dataset.per === "mes"){
+          periodoDe = new Date(a2, m, 1).toLocaleDateString("sv-SE");
+          periodoAte = new Date(a2, m+1, 0).toLocaleDateString("sv-SE");
+        } else if(b.dataset.per === "anterior"){
+          periodoDe = new Date(a2, m-1, 1).toLocaleDateString("sv-SE");
+          periodoAte = new Date(a2, m, 0).toLocaleDateString("sv-SE");
+        } else {
+          periodoDe = new Date(a2, m-2, 1).toLocaleDateString("sv-SE");
+          periodoAte = new Date(a2, m+1, 0).toLocaleDateString("sv-SE");
+        }
+        carregarMes();
+      });
+    });
+    el("btn-recarregar").addEventListener("click", carregarMes);
+  }
+
+  function tabelaPorInstrutor(linhas, destacarEu){
+    if(!linhas.length) return '<div class="empty"><h3>Nada a mostrar neste período</h3></div>';
+    var eu = meuNome();
+    var h2 = '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
+      + '<th class="num">P</th><th class="num">Sábados</th><th class="num">% Sábados</th>'
+      + '<th class="num">% Semana</th><th class="num">% Total</th><th class="num">R$</th>'
+      + '<th class="num">Atrasos</th><th class="num">FJ</th></tr></thead><tbody>';
+    linhas.slice().sort(function(a,b){ return (a.pctTotal===null?999:a.pctTotal) - (b.pctTotal===null?999:b.pctTotal); })
+      .forEach(function(x){
+        var baixo = (x.pctTotal !== null && x.pctTotal < CORTE);
+        var meu = (destacarEu && x.nome === eu);
+        h2 += '<tr'+(meu?' class="minhalinha"':'')+'><td>'+esc(nomeCheio(x.nome))+(meu?' <span class="tag">você</span>':'')+'</td>'
+          + '<td class="dirc'+classeDir(x.dir)+'">'+esc(dirCurta(x.dir))+'</td>'
+          + '<td class="num">'+x.presT+'<span class="muted">/'+x.prevT+'</span></td>'
+          + '<td class="num">'+x.presSabado+'<span class="muted">/'+x.prevSabado+'</span></td>'
+          + '<td class="num">'+pct(x.pctSabado)+'</td>'
+          + '<td class="num">'+pct(x.pctSemana)+'</td>'
+          + '<td class="num"'+(baixo?' style="color:var(--alert);font-weight:600"':'')+'>'+pct(x.pctTotal)+'</td>'
+          + '<td class="num">'+reais(x.bolsa)+'</td>'
+          + '<td class="num"'+(x.atrasos?' style="color:var(--warn)"':'')+'>'+x.atrasos+'</td>'
+          + '<td class="num">'+(x.fj || '<span class="muted">0</span>')+'</td></tr>';
+      });
+    return h2 + '</tbody></table></div>';
+  }
+
+  function viewAcomp(){
+    var box = el("v-acomp");
+    var E = estatisticas();
+    var eu = meuNome();
+    var minha = E.linhas.filter(function(x){ return x.nome === eu; })[0];
+
+    var h = barraPeriodo(ehCoord());
+    if(minha){
+      h += '<div class="tiles">'
+        + tile("Sua frequência", (minha.pctTotal===null ? "—" : minha.pctTotal.toFixed(0)+"%"))
+        + tile("Presenças", minha.presT+" de "+minha.prevT)
+        + tile("Sua bolsa", "R$ "+reais(minha.bolsa))
+        + tile("Atrasos", String(minha.atrasos))
+        + '</div>';
+    }
+    h += '<div><div class="sec-head"><h2>Por instrutor</h2>'
+      + '<p>'+esc(rotuloPeriodo())+' · até hoje · ordenado da menor frequência para a maior</p></div>'
+      + tabelaPorInstrutor(E.linhas, true)
+      + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre os turnos previstos. '
+      + 'A bolsa é R$ '+reais(BOLSA)+' × essa fração. Feriados, turnos suspensos e trocas aprovadas saem do previsto.</p></div>';
+
+    box.innerHTML = h;
+    ligarPeriodo(box);
+    var bc = el("btn-csv");
+    if(bc) bc.addEventListener("click", function(){ baixarCSV(E.ordenados); });
+  }
+
+  function viewCoord(){
+    var box = el("v-coord");
+    if(!ehCoord()){ box.innerHTML = '<div class="empty"><h3>Área restrita à coordenação</h3></div>'; return; }
+
+    var E = estatisticas();
+    var ordenados = E.ordenados;
     var pendConta = perfis.filter(function(x){ return !x.aprovado; }).length;
     var pendTroca = trocas.filter(function(x){ return x.status === "pendente"; }).length;
 
@@ -1513,44 +1639,17 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         }).join("")
       + '</nav><div class="coordmain">';
 
-    h += '<div class="toolbar">'
-      + '<label class="fld">De<input type="date" id="f-de" value="'+esc(periodoDe)+'"></label>'
-      + '<label class="fld">Até<input type="date" id="f-ate" value="'+esc(periodoAte)+'"></label>'
-      + '<span class="atalhos">'
-      +   '<button class="btn icon ghost" data-per="mes">Este mês</button>'
-      +   '<button class="btn icon ghost" data-per="anterior">Mês passado</button>'
-      +   '<button class="btn icon ghost" data-per="tri">Últimos 3 meses</button>'
-      + '</span>'
-      + '<span class="spacer"></span>'
-      + '<button class="btn ghost" id="btn-recarregar">Atualizar</button>'
-      + '<button class="btn" id="btn-csv">Baixar CSV</button></div>'
-      + '<p class="tiny muted" style="margin:-8px 0 0">'+esc(rotuloPeriodo())+'</p>';
+    h += barraPeriodo(true);
 
     /* ---------------- visão geral ---------------- */
     if(coordSec === "visao"){
-      var linhas = nomes.map(function(n){
-        var sn = porNome[n];
-        var prevT = sn.prevSemana + sn.prevSabado;
-        var presT = sn.presSemana + sn.presSabado;
-        return {
-          nome:n, dir:diretoriaDe(n) || "Sem diretoria",
-          prevSemana:sn.prevSemana, presSemana:sn.presSemana,
-          prevSabado:sn.prevSabado, presSabado:sn.presSabado,
-          prevT:prevT, presT:presT,
-          pctSemana: sn.prevSemana ? sn.presSemana/sn.prevSemana*100 : null,
-          pctSabado: sn.prevSabado ? sn.presSabado/sn.prevSabado*100 : null,
-          pctTotal:  prevT ? presT/prevT*100 : null,
-          bolsa: prevT ? BOLSA * Math.min(1, presT/prevT) : 0,
-          atrasos:sn.atrasos, fj:sn.fj
-        };
-      });
-      var totalBolsa = linhas.reduce(function(a,x){ return a + x.bolsa; }, 0);
+      var linhas = E.linhas;
 
       h += '<div class="tiles">'
-        + tile("Frequência", freq+"%")
+        + tile("Frequência", E.freq+"%")
         + tile("Presenças", String(regsMes.length))
-        + tile("Turnos previstos", String(previstosTot))
-        + tile("Chegadas com atraso", String(atrasosTot))
+        + tile("Turnos previstos", String(E.previstosTot))
+        + tile("Chegadas com atraso", String(E.atrasosTot))
         + '</div>';
 
       /* gráfico 1 — frequência por instrutor */
@@ -1601,35 +1700,10 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
             }).join("") + '</tbody></table></div></div>';
       }
 
-      /* tabela principal */
-      h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(rotuloPeriodo())+' · até hoje</p></div>';
-      if(!linhas.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
-      else {
-        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
-          + '<th class="num">P</th><th class="num">Sábados</th><th class="num">% Sábados</th>'
-          + '<th class="num">% Semana</th><th class="num">% Total</th><th class="num">R$</th>'
-          + '<th class="num">Atrasos</th><th class="num">FJ</th></tr></thead><tbody>';
-        linhas.slice().sort(function(a,b){ return (a.pctTotal===null?999:a.pctTotal) - (b.pctTotal===null?999:b.pctTotal); })
-          .forEach(function(x){
-            var baixo = (x.pctTotal !== null && x.pctTotal < CORTE);
-            h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
-              + '<td class="dirc'+classeDir(x.dir)+'">'+esc(dirCurta(x.dir))+'</td>'
-              + '<td class="num">'+x.presT+'<span class="muted">/'+x.prevT+'</span></td>'
-              + '<td class="num">'+x.presSabado+'<span class="muted">/'+x.prevSabado+'</span></td>'
-              + '<td class="num">'+pct(x.pctSabado)+'</td>'
-              + '<td class="num">'+pct(x.pctSemana)+'</td>'
-              + '<td class="num"'+(baixo?' style="color:var(--alert);font-weight:600"':'')+'>'+pct(x.pctTotal)+'</td>'
-              + '<td class="num">'+reais(x.bolsa)+'</td>'
-              + '<td class="num"'+(x.atrasos?' style="color:var(--warn)"':'')+'>'+x.atrasos+'</td>'
-              + '<td class="num">'+(x.fj || '<span class="muted">0</span>')+'</td></tr>';
-          });
-        h += '<tr class="somatorio"><td colspan="7"><b>Total</b></td><td class="num"><b>'+reais(totalBolsa)+'</b></td>'
-          + '<td class="num"></td><td class="num"></td></tr>';
-        h += '</tbody></table></div>'
-          + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre o total de turnos previstos. '
-          + '<b>FJ</b> conta as faltas justificadas: elas ficam registradas, mas a falta continua descontando.</p>';
-      }
-      h += '</div>';
+      h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(rotuloPeriodo())+' · até hoje</p></div>'
+        + tabelaPorInstrutor(linhas, false)
+        + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre o total de turnos previstos. '
+        + '<b>FJ</b> conta as faltas justificadas: elas ficam registradas, mas a falta continua descontando.</p></div>';
     }
 
 
