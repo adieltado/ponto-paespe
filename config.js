@@ -45,5 +45,5 @@ window.CONFIG = {
   CODIGO_COORDENACAO: "paespe2026",
 
   /* Texto do rodapé. */
-  RODAPE: "PAESPE · Programa de Apoio ao Estudante de Pré-Engenharia · CTEC/UFAL"
+  RODAPE: "PAESPE · Programa de Apoio aos Estudantes das Escolas Públicas do Estado"
 };
