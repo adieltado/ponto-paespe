@@ -38,12 +38,6 @@ window.CONFIG = {
     nome: "prédio do PAESPE"
   },
 
-  /* Código que abre a aba Coordenação. Troque por outro e avise
-     só quem vai acompanhar a frequência. É uma tranca simples,
-     não uma senha de verdade: quem entender de navegador
-     consegue contorná-la. Não guarde nada sigiloso aqui. */
-  CODIGO_COORDENACAO: "paespe2026",
-
   /* Texto do rodapé. */
   RODAPE: "PAESPE · Programa de Apoio aos Estudantes das Escolas Públicas do Estado"
 };

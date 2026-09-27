@@ -225,6 +225,17 @@ th.hoje{color:var(--accent-strong)}
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .trocacard .txt{flex:1;min-width:200px}
 .trocacard h2{font-size:15px;font-weight:600;margin-bottom:2px}
+.uchip{display:flex;align-items:center;gap:9px}
+.uchip .ut{display:flex;flex-direction:column;line-height:1.2;text-align:right}
+.uchip .ut b{font-size:13px;font-weight:600}
+.uchip .ut span{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:600}
+.gatecard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 24px;
+  max-width:440px;margin:40px auto 0;box-shadow:var(--shadow)}
+.gatecard h2{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+.gatecard p{margin:0 0 18px;font-size:14px;color:var(--ink-2)}
+.gatecard .btn.big{width:100%}
+.namecard.esperando{opacity:.62;cursor:default}
+.namecard.eu{border-color:var(--accent);border-width:2px}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);
   padding:20px;max-width:390px;width:calc(100% - 32px);box-shadow:var(--shadow)}
 dialog::backdrop{background:var(--scrim)}
@@ -248,7 +259,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   <div class="top-in">
     <div class="brand"><img class="logo" alt="PAESPE" src="data:image/png;base64,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LVm8eM7cuYHFCM5YmNacMMBZCSGy6f+0kaXT6cHBwYMHD3Z2dg709zuOU1VVtWDBgmXLly9YsCCoYZV9k2Tg2NPT8++3397T0/Pt73yntrb29ttvv+qqqy+55OJb7n/le+t6q+K6z0SlHhAEts+jCvzXP5512vwGx/V+ed+9AHDppZc+9vjju95447Of/expp58+NDT0y1/+8uUNGwghq0477cILL1yxYkUwALm5VTZOkVOY3PJVseoS7AKvfDFojiA1JnhxcHBwz549r7/22uHDh4eGh88///yqqqpXX3nl29/5jm3Z4XBICXhQLBZVVb3rzjtXrFx57rnnBrUUjuNIcku2y7tW7mKQm0SCxqqyMYy0+PJF2fBZBnby86Ojo12HDu3Zu7e7u7tYLCaTyUWLFq1YsWLBggWV8wGAdevW/fvtt69evfrLN9/84x//uKGx6W8/+5kv3rP5Jy/0VcUNnwnJA0IUjwtFsCf++ayzFzR1dR/+3UO/XX3OOaZpPvjggx+84oqrrrpq06ZNd9555+DAwBlnnHHFFVesOu00OZ5isei5rgDAGBOMEcbylKVAxmfGIJU9boLzV6DciKICkkIY42DijLF9+/YplL762mtPPvHEHXfc4bpuKBxWVZUGICrzfdO05O0zmUwg19KLBscPHXf9Ew+6RDLGTNMM2BONRs86++zV554rSdB54MDOnTt/cd99tm03NzevWrVqxcqVMjd83/ved9555/3bv/3bRz784e9+73u7du367ne/9+Nbbj4yYf/X7lRVVCs1d0bIcZy1X1h19oKm9c8+t3/vngsvvPDhhx/WVPUb3/zm9u3br7rySkrpNddee8kll1RXVzPGbNv2fV/X9XA4DBWFa0II13Vl3CF/kaZfBhGSMZRSCVpomqaqqoxHZhJHwpeO48gabIzxggULMMZv7NplWbbreVDyp4JWVLV4pllsbm6uLKaTZqpQKMhHy7Icx3Fs2/U8aShlJQDCWFEUOSxNVVVNC4fDsspMmrxQKDRtlIwxucy0dNmyFStXAsDw8PDOnTu3bNny0EMPRWOxM84445xzzmloaPiP//iPDRs2/MPf//2nP/OZtva27333Ow/+wz8tu/WZ/pxnEIQxmsia3/7wwg+e3v6L+39FETQ2Nd11111XX301RuimL30pHIl86aab1qxZE5gIecKhbdtH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"><span class="bt"><b>Registro de Frequência</b><span>PAESPE · Instrutores</span></span></div>
     <div class="clock"><div class="t mono" id="clock-t">--:--</div><div class="d" id="clock-d">&nbsp;</div></div>
-    <nav class="tabs" role="tablist" aria-label="Seções">
+    <div class="uchip" id="userchip" hidden><span class="ut"><b id="uc-nome"></b><span id="uc-papel"></span></span><button class="btn icon ghost" id="uc-sair">Sair</button></div>
+    <nav class="tabs" role="tablist" aria-label="Seções" id="topnav" hidden>
       <button role="tab" id="tab-ponto" aria-selected="true"  aria-controls="v-ponto" data-v="ponto">Registrar</button>
       <button role="tab" id="tab-escala" aria-selected="false" aria-controls="v-escala" data-v="escala">Escala</button>
       <button role="tab" id="tab-coord" aria-selected="false" aria-controls="v-coord" data-v="coord">Coordenação</button>
@@ -258,9 +270,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
 <main class="wrap">
   <div id="aviso"></div>
+  <div id="gate" hidden></div>
+  <div id="app" hidden>
   <section id="v-ponto"  class="stack" role="tabpanel" aria-labelledby="tab-ponto"  style="padding-top:18px"></section>
   <section id="v-escala" class="stack" role="tabpanel" aria-labelledby="tab-escala" style="padding-top:18px" hidden></section>
   <section id="v-coord"  class="stack" role="tabpanel" aria-labelledby="tab-coord"  style="padding-top:18px" hidden></section>
+  </div>
+
   <footer class="legal"><span id="rodape"></span><span id="modo"></span></footer>
 </main>
 
@@ -290,7 +306,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 <dialog id="dlg-troca">
   <h3>Registrar fora da escala</h3>
   <p class="tiny muted" id="tr-sub" style="margin:0 0 14px"></p>
-  <label class="fld">Seu nome<select id="tr-nome"></select></label>
+  <p class="tiny" style="margin:0 0 12px"><b id="tr-quem"></b></p>
   <label class="fld" style="margin-top:12px">Mês do plantão que sai no lugar<input type="month" id="tr-mes"></label>
   <div id="tr-lista" style="margin-top:10px"></div>
   <div class="geo" id="tr-geo" style="margin-top:14px" hidden></div>
@@ -300,6 +316,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   </div>
 </dialog>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script src="escala.js"></script>
 <script>
@@ -313,7 +330,6 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var TURNO_SAB = TURNOS.filter(function(t){ return t.sabado; })[0] || null;
   var DIRETORIAS = ESC.diretorias || [];
   var DIR_CURTA = ESC.diretoriasCurtas || {};
-  function dirCurta(d){ return DIR_CURTA[d] || d; }
   var INSTRUTORES = ESC.instrutores || {};
   var SABADOS = ESC.sabados || [];
   var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
@@ -330,17 +346,20 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var SVG_PIN = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">'
     + '<path d="M8 15s5-4.6 5-8.4A5 5 0 1 0 3 6.6C3 10.4 8 15 8 15z" stroke="currentColor" stroke-width="1.4"/>'
     + '<circle cx="8" cy="6.5" r="1.9" fill="currentColor"/></svg>';
+  var SVG_GOOGLE = '<svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">'
+    + '<path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.5 2.7-3.8 2.7-6.6z"/>'
+    + '<path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.2-3.8H.8v2.3A9 9 0 0 0 9 18z"/>'
+    + '<path fill="#FBBC05" d="M3.8 10.7a5.4 5.4 0 0 1 0-3.4V5H.8a9 9 0 0 0 0 8l3-2.3z"/>'
+    + '<path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .8 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/></svg>';
 
+  var sb = null, sessao = null, perfil = null, perfis = [];
   var view = "ponto";
   var turnoSel = null;
-  var regsHoje = [];
-  var regsMes = [];
-  var mesFiltro = "";
-  var filtroDir = "";
-  var coordOk = false;
+  var regsHoje = [], regsMes = [], trocas = [];
+  var mesFiltro = "", filtroDir = "";
   var alvoConf = null, alvoFix = null;
-  var trocas = [];
   var trocaSel = null, trocaMes = "", trocaGeoOk = false;
+  var pronto = false;
 
   /* ---------- utilidades ---------- */
   function el(id){ return document.getElementById(id); }
@@ -356,18 +375,20 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function turnoDe(id){ for(var i=0;i<TURNOS.length;i++){ if(TURNOS[i].id===id) return TURNOS[i]; } return null; }
   function infoDe(n){ var v = INSTRUTORES[n]; return (typeof v === "string") ? { diretoria:v } : (v || {}); }
   function diretoriaDe(n){ return infoDe(n).diretoria || ""; }
+  function dirCurta(d){ return DIR_CURTA[d] || d; }
   function nomeCheio(n){ return infoDe(n).completo || n; }
   var PARTICULAS = ["de","do","da","dos","das","e"];
   function nomeCurto(n){
     var ps = nomeCheio(n).split(/\s+/).filter(Boolean);
     if(ps.length < 2) return ps[0] || n;
-    for(var i=1;i<ps.length;i++){
-      if(PARTICULAS.indexOf(ps[i].toLowerCase()) < 0) return ps[0]+" "+ps[i];
-    }
+    for(var i=1;i<ps.length;i++){ if(PARTICULAS.indexOf(ps[i].toLowerCase()) < 0) return ps[0]+" "+ps[i]; }
     return ps[0];
   }
-  function classeDir(d){ var i = DIRETORIAS.indexOf(d); return i >= 0 ? " dir-"+i : ""; }
   function ordenaPorNome(a,b){ return nomeCheio(a).localeCompare(nomeCheio(b),"pt-BR"); }
+  function classeDir(d){ var i = DIRETORIAS.indexOf(d); return i >= 0 ? " dir-"+i : ""; }
+
+  function ehCoord(){ return !!(perfil && perfil.aprovado && perfil.papel === "coordenacao"); }
+  function meuNome(){ return (perfil && perfil.aprovado) ? (perfil.nome || "") : ""; }
 
   /* ---------- escala ---------- */
   function turnosDe(dow){
@@ -382,21 +403,16 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function nomesDasDiretorias(ds){
     var todos = Object.keys(INSTRUTORES);
     if(ds === "todos" || ds === "Todos") return todos.slice();
-    var set = {};
-    (ds || []).forEach(function(d){ set[d] = 1; });
+    var set = {}; (ds || []).forEach(function(d){ set[d] = 1; });
     return todos.filter(function(n){ return set[diretoriaDe(n)]; });
   }
   function rotuloSabado(e){
     if(!e) return "";
-    return (e.diretorias === "todos" || e.diretorias === "Todos")
-      ? "Todas as diretorias" : (e.diretorias || []).join(" e ");
+    return (e.diretorias === "todos" || e.diretorias === "Todos") ? "Todas as diretorias" : (e.diretorias || []).join(" e ");
   }
   function escalados(turnoId, dow, data){
     var t = turnoDe(turnoId);
-    if(t && t.sabado){
-      var e = sabadoDe(data);
-      return e ? nomesDasDiretorias(e.diretorias) : [];
-    }
+    if(t && t.sabado){ var e = sabadoDe(data); return e ? nomesDasDiretorias(e.diretorias) : []; }
     var g = (ESC.grade && ESC.grade[turnoId]) || {};
     return (g[dow] || []).slice();
   }
@@ -441,90 +457,67 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(tipo !== "fixo") avisoTimer = setTimeout(function(){ el("aviso").innerHTML=""; }, 6000);
   }
 
-  /* ---------- relógio ---------- */
   function tick(){
     var n = new Date();
     el("clock-t").textContent = n.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     el("clock-d").textContent = DIA_CURTO[n.getDay()]+", "+n.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});
   }
 
-  /* ---------- dados ---------- */
-  function headers(extra){
-    var h = { "apikey":CFG.SUPABASE_ANON_KEY, "Authorization":"Bearer "+CFG.SUPABASE_ANON_KEY, "Content-Type":"application/json" };
-    if(extra) Object.keys(extra).forEach(function(k){ h[k]=extra[k]; });
-    return h;
-  }
-  function base(){ return CFG.SUPABASE_URL.replace(/\/+$/,""); }
-  function demoLer(){ try{ return JSON.parse(localStorage.getItem("ponto-paespe-demo")||"[]"); }catch(e){ return []; } }
-  function demoGravar(a){ try{ localStorage.setItem("ponto-paespe-demo", JSON.stringify(a)); }catch(e){} }
+  /* ================= DADOS ================= */
+  function demoLer(k){ try{ return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
+  function demoGravar(k,a){ try{ localStorage.setItem(k, JSON.stringify(a)); }catch(e){} }
+  function erro(r){ if(r.error) throw new Error(r.error.message || "erro"); return r.data; }
 
   async function listar(de, ate){
-    if(DEMO) return demoLer().filter(function(r){ return r.data >= de && r.data <= ate; });
-    var url = base()+"/rest/v1/registros?select=id,nome,turno,data,chegada&data=gte."+de+"&data=lte."+ate+"&order=chegada.desc";
-    var r = await fetch(url, { headers: headers() });
-    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
-    return await r.json();
+    if(DEMO) return demoLer("paespe-regs").filter(function(r){ return r.data >= de && r.data <= ate; });
+    return erro(await sb.from("registros").select("id,nome,turno,data,chegada")
+      .gte("data", de).lte("data", ate).order("chegada", { ascending:false })) || [];
   }
   async function inserir(nome, turno, data, chegada){
     if(DEMO){
-      var a = demoLer();
+      var a = demoLer("paespe-regs");
       if(a.some(function(r){ return r.nome===nome && r.turno===turno && r.data===data; })) return;
       a.push({ id:"d"+Date.now(), nome:nome, turno:turno, data:data, chegada:chegada });
-      demoGravar(a); return;
+      demoGravar("paespe-regs", a); return;
     }
-    var r = await fetch(base()+"/rest/v1/registros", {
-      method:"POST", headers:headers({ "Prefer":"return=minimal" }),
-      body: JSON.stringify({ nome:nome, turno:turno, data:data, chegada:chegada })
-    });
-    if(!r.ok){
-      var txt = await r.text();
-      if(r.status===409 || txt.indexOf("duplicate") >= 0) return;
-      throw new Error("HTTP "+r.status+" — "+txt.slice(0,200));
+    var r = await sb.from("registros").insert({ nome:nome, turno:turno, data:data, chegada:chegada });
+    if(r.error){
+      if(r.error.code === "23505") return;          // já registrado hoje
+      if(r.error.code === "42501") throw new Error("O banco recusou: você só pode registrar o próprio ponto.");
+      throw new Error(r.error.message);
     }
   }
   async function alterar(id, chegada){
-    if(DEMO){
-      var a = demoLer();
-      a.forEach(function(r){ if(String(r.id)===String(id)) r.chegada = chegada; });
-      demoGravar(a); return;
-    }
-    var r = await fetch(base()+"/rest/v1/registros?id=eq."+encodeURIComponent(id), {
-      method:"PATCH", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify({ chegada:chegada })
-    });
-    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+    if(DEMO){ var a = demoLer("paespe-regs"); a.forEach(function(r){ if(String(r.id)===String(id)) r.chegada = chegada; }); demoGravar("paespe-regs", a); return; }
+    erro(await sb.from("registros").update({ chegada:chegada }).eq("id", id));
   }
   async function remover(id){
-    if(DEMO){ demoGravar(demoLer().filter(function(r){ return String(r.id)!==String(id); })); return; }
-    var r = await fetch(base()+"/rest/v1/registros?id=eq."+encodeURIComponent(id), {
-      method:"DELETE", headers:headers({ "Prefer":"return=minimal" })
-    });
-    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+    if(DEMO){ demoGravar("paespe-regs", demoLer("paespe-regs").filter(function(r){ return String(r.id)!==String(id); })); return; }
+    erro(await sb.from("registros").delete().eq("id", id));
   }
-  function demoTrocas(){ try{ return JSON.parse(localStorage.getItem("paespe-trocas")||"[]"); }catch(e){ return []; } }
-  function demoTrocasGravar(a){ try{ localStorage.setItem("paespe-trocas", JSON.stringify(a)); }catch(e){} }
-
   async function listarTrocas(){
-    if(DEMO) return demoTrocas();
-    var r = await fetch(base()+"/rest/v1/trocas?select=id,nome,data,turno,data_abater,turno_abater,status&order=id.desc", { headers: headers() });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    return await r.json();
+    if(DEMO) return demoLer("paespe-trocas");
+    return erro(await sb.from("trocas").select("id,nome,data,turno,data_abater,turno_abater,status")
+      .order("id", { ascending:false })) || [];
   }
   async function inserirTroca(t){
-    if(DEMO){ var a = demoTrocas(); t.id = "t"+Date.now(); t.status = "pendente"; a.push(t); demoTrocasGravar(a); return; }
-    var r = await fetch(base()+"/rest/v1/trocas", {
-      method:"POST", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify(t) });
-    if(!r.ok){
-      var txt = await r.text();
-      if(r.status===409 || txt.indexOf("duplicate") >= 0) throw new Error("Já existe uma solicitação para esse plantão.");
-      throw new Error("HTTP "+r.status+" — "+txt.slice(0,160));
+    if(DEMO){ var a = demoLer("paespe-trocas"); t.id="t"+Date.now(); t.status="pendente"; a.push(t); demoGravar("paespe-trocas", a); return; }
+    var r = await sb.from("trocas").insert(t);
+    if(r.error){
+      if(r.error.code === "23505") throw new Error("Já existe uma solicitação para esse plantão.");
+      throw new Error(r.error.message);
     }
   }
   async function decidirTroca(id, status){
-    if(DEMO){ var a = demoTrocas(); a.forEach(function(x){ if(String(x.id)===String(id)) x.status = status; }); demoTrocasGravar(a); return; }
-    var r = await fetch(base()+"/rest/v1/trocas?id=eq."+encodeURIComponent(id), {
-      method:"PATCH", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify({ status:status }) });
-    if(!r.ok) throw new Error("HTTP "+r.status);
+    if(DEMO){ var a = demoLer("paespe-trocas"); a.forEach(function(x){ if(String(x.id)===String(id)) x.status = status; }); demoGravar("paespe-trocas", a); return; }
+    erro(await sb.from("trocas").update({ status:status }).eq("id", id));
   }
+  async function listarPerfis(){
+    if(DEMO) return [perfil];
+    return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
+      .order("criado_em", { ascending:false })) || [];
+  }
+
   function abatido(nome, data, turno){
     return trocas.some(function(x){ return x.status==="aprovada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
   }
@@ -532,10 +525,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     return trocas.some(function(x){ return x.status!=="recusada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
   }
   function trocaDoRegistro(r){
-    for(var i=0;i<trocas.length;i++){
-      var x = trocas[i];
-      if(x.nome===r.nome && x.data===r.data && x.turno===r.turno) return x;
-    }
+    for(var i=0;i<trocas.length;i++){ var x=trocas[i]; if(x.nome===r.nome && x.data===r.data && x.turno===r.turno) return x; }
     return null;
   }
   function plantoesDe(nome, ym){
@@ -554,32 +544,170 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   async function carregarHoje(){
     try{ trocas = await listarTrocas(); }catch(e){}
     try{ regsHoje = await listar(hojeKey(), hojeKey()); }
-    catch(e){ aviso("Não consegui falar com o banco de dados. Confira o config.js ou a conexão. ("+e.message+")", "fixo"); }
+    catch(e){ aviso("Não consegui falar com o banco de dados. ("+e.message+")", "fixo"); }
     render();
   }
   async function carregarMes(){
     var p = mesFiltro.split("-");
     var ate = new Date(+p[0], +p[1], 0).toLocaleDateString("sv-SE");
     try{ trocas = await listarTrocas(); }catch(e){}
+    try{ perfis = await listarPerfis(); }catch(e){}
     try{ regsMes = await listar(mesFiltro+"-01", ate); }
     catch(e){ regsMes = []; aviso("Não consegui carregar o período. ("+e.message+")"); }
     render();
   }
 
-  /* ---------- abas ---------- */
-  var tabs = document.querySelectorAll("nav.tabs button");
-  Array.prototype.forEach.call(tabs, function(b){
-    b.addEventListener("click", function(){
-      view = b.dataset.v;
-      Array.prototype.forEach.call(tabs, function(o){ o.setAttribute("aria-selected", String(o===b)); });
-      el("v-ponto").hidden  = view!=="ponto";
-      el("v-escala").hidden = view!=="escala";
-      el("v-coord").hidden  = view!=="coord";
-      if(view==="coord" && coordOk) carregarMes(); else render();
+  /* ================= AUTENTICAÇÃO ================= */
+  async function boot(){
+    tick();
+    setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
+    setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
+    el("rodape").textContent = CFG.RODAPE || "";
+    mesFiltro = hojeKey().slice(0,7);
+
+    if(DEMO){
+      perfil = { id:"demo", email:"demonstracao@paespe", nome:"Sara Vitória", papel:"coordenacao", aprovado:true };
+      el("modo").textContent = "Modo demonstração — dados só neste navegador";
+      entrarNoApp();
+      aviso("Modo demonstração: preencha o config.js com os dados do Supabase para valer de verdade.", "fixo");
+      return;
+    }
+    if(!window.supabase || !window.supabase.createClient){
+      telaMensagem("Biblioteca não carregou", "O site não conseguiu carregar a biblioteca de login. Verifique sua conexão e recarregue a página.");
+      return;
+    }
+    sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY,
+      { auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"pkce" } });
+
+    sb.auth.onAuthStateChange(function(_ev, s){
+      var mudou = (!!s) !== (!!sessao) || (s && sessao && s.user.id !== sessao.user.id);
+      sessao = s;
+      if(mudou) iniciarSessao();
     });
+    var g = await sb.auth.getSession();
+    sessao = g.data ? g.data.session : null;
+    iniciarSessao();
+  }
+
+  async function iniciarSessao(){
+    if(!sessao){ pronto = false; telaLogin(); return; }
+    try{ perfil = await carregarMeuPerfil(); }
+    catch(e){ telaMensagem("Não consegui carregar seu perfil", e.message); return; }
+    if(!perfil.aprovado){ pronto = false; telaPendente(); return; }
+    entrarNoApp();
+  }
+
+  async function carregarMeuPerfil(){
+    var uid = sessao.user.id;
+    var r = await sb.from("perfis").select("id,email,nome,papel,aprovado").eq("id", uid).maybeSingle();
+    if(r.error) throw new Error(r.error.message);
+    if(!r.data){
+      var ins = await sb.from("perfis").insert({ id:uid, email:sessao.user.email });
+      if(ins.error && ins.error.code !== "23505") throw new Error(ins.error.message);
+      r = await sb.from("perfis").select("id,email,nome,papel,aprovado").eq("id", uid).maybeSingle();
+      if(r.error) throw new Error(r.error.message);
+    }
+    return r.data || { id:uid, email:sessao.user.email, nome:null, papel:"instrutor", aprovado:false };
+  }
+
+  function mostrarGate(html){
+    el("gate").innerHTML = html;
+    el("gate").hidden = false;
+    el("app").hidden = true;
+    el("topnav").hidden = true;
+    el("userchip").hidden = true;
+  }
+  function telaLogin(){
+    mostrarGate(
+      '<div class="gatecard">'
+      + '<h2>Registro de frequência do PAESPE</h2>'
+      + '<p>Entre com a conta Google que você usa no programa. No primeiro acesso, a coordenação precisa liberar seu cadastro.</p>'
+      + '<button class="btn primary big" id="g-login">'+SVG_GOOGLE+'Entrar com Google</button>'
+      + '</div>');
+    el("g-login").addEventListener("click", async function(){
+      this.disabled = true;
+      var r = await sb.auth.signInWithOAuth({ provider:"google",
+        options:{ redirectTo: location.origin + location.pathname } });
+      if(r.error){ aviso("Não consegui abrir o login. ("+r.error.message+")", "warn"); this.disabled = false; }
+    });
+  }
+  function telaPendente(){
+    var livres = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+    mostrarGate(
+      '<div class="gatecard">'
+      + '<div class="eyebrow">Cadastro recebido</div>'
+      + '<h2>Aguardando liberação</h2>'
+      + '<p>Entramos com <b>'+esc(sessao.user.email)+'</b>. Diga quem você é e a coordenação libera seu acesso.</p>'
+      + '<label class="fld" style="margin-bottom:14px">Seu nome na escala'
+      +   '<select id="p-nome"><option value="">Escolha seu nome</option>'
+      +   livres.map(function(n){ return '<option value="'+esc(n)+'"'+(perfil.nome===n?" selected":"")+'>'+esc(nomeCheio(n))+'</option>'; }).join("")
+      +   '</select></label>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      +   '<button class="btn primary" id="p-ok">Salvar</button>'
+      +   '<button class="btn ghost" id="p-rec">Já liberaram, verificar</button>'
+      +   '<span style="flex:1"></span>'
+      +   '<button class="btn ghost" id="p-sair">Sair</button>'
+      + '</div>'
+      + (perfil.nome ? '<p class="tiny muted" style="margin:14px 0 0">Você se identificou como <b>'+esc(nomeCheio(perfil.nome))+'</b>. Avise a coordenação para liberar.</p>' : '')
+      + '</div>');
+    el("p-ok").addEventListener("click", async function(){
+      var n = el("p-nome").value;
+      if(!n){ aviso("Escolha seu nome na lista."); return; }
+      this.disabled = true;
+      var r = await sb.from("perfis").update({ nome:n }).eq("id", sessao.user.id);
+      this.disabled = false;
+      if(r.error){
+        aviso(r.error.code === "23505" ? "Esse nome já está vinculado a outra conta. Fale com a coordenação." : r.error.message, "warn");
+        return;
+      }
+      perfil.nome = n; telaPendente(); aviso("Salvo. A coordenação precisa liberar seu acesso.");
+    });
+    el("p-rec").addEventListener("click", iniciarSessao);
+    el("p-sair").addEventListener("click", sair);
+  }
+  function telaMensagem(titulo, txt){
+    mostrarGate('<div class="gatecard"><h2>'+esc(titulo)+'</h2><p>'+esc(txt)+'</p>'
+      + '<button class="btn ghost" id="m-sair">Sair</button></div>');
+    var b = el("m-sair"); if(b) b.addEventListener("click", sair);
+  }
+  async function sair(){
+    if(sb) await sb.auth.signOut();
+    sessao = null; perfil = null; location.reload();
+  }
+
+  function entrarNoApp(){
+    pronto = true;
+    el("gate").hidden = true;
+    el("app").hidden = false;
+    el("topnav").hidden = false;
+    el("userchip").hidden = false;
+    el("uc-nome").textContent = perfil.nome ? nomeCurto(perfil.nome) : (perfil.email || "");
+    el("uc-papel").textContent = ehCoord() ? "coordenação" : "instrutor(a)";
+    el("tab-coord").hidden = !ehCoord();
+    if(!ehCoord() && view === "coord") trocarPara("ponto");
+    turnoSel = turnoAtual();
+    render();
+    carregarHoje();
+  }
+
+  /* ---------- abas ---------- */
+  function trocarPara(v){
+    view = v;
+    Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(o){
+      o.setAttribute("aria-selected", String(o.dataset.v === v));
+    });
+    el("v-ponto").hidden  = v!=="ponto";
+    el("v-escala").hidden = v!=="escala";
+    el("v-coord").hidden  = v!=="coord";
+    if(v==="coord") carregarMes(); else render();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(b){
+    b.addEventListener("click", function(){ trocarPara(b.dataset.v); });
   });
+  el("uc-sair").addEventListener("click", sair);
 
   function render(){
+    if(!pronto) return;
     if(view==="ponto") viewPonto();
     else if(view==="escala") viewEscala();
     else viewCoord();
@@ -591,6 +719,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var dow = new Date().getDay();
     var data = hojeKey();
     var lista = turnosDe(dow);
+    var eu = meuNome();
 
     if(!lista.length){
       box.innerHTML = '<div class="empty"><h3>Sem plantão hoje</h3>'
@@ -600,8 +729,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var entradaSab = (dow===6) ? sabadoDe(data) : null;
     if(dow===6 && !entradaSab){
       box.innerHTML = '<div class="empty"><h3>Este sábado não está na escala</h3>'
-        + '<p class="tiny" style="margin:0">Só é possível registrar nos sábados marcados pela coordenação. '
-        + 'Confira as datas na aba Escala.</p></div>';
+        + '<p class="tiny" style="margin:0">Só é possível registrar nos sábados marcados pela coordenação.</p></div>';
       return;
     }
     if(!lista.some(function(t){ return t.id === turnoSel; })) turnoSel = lista[0].id;
@@ -617,8 +745,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     h += '</div>';
     if(GEO_ATIVO){
-      h += '<div class="regra">'+SVG_PIN+'O ponto só é aceito a até '+RAIO+' m do '+esc(LOCAL_NOME)
-        + '. O aparelho vai pedir sua localização.</div>';
+      h += '<div class="regra">'+SVG_PIN+'O ponto só é aceito a até '+RAIO+' m do '+esc(LOCAL_NOME)+'.</div>';
     }
     h += '</div>';
 
@@ -635,32 +762,45 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       h += '<div class="progress"><span class="eyebrow">'+feitos+' de '+nomes.length+' registraram</span>'
         + '<span class="bar"><i style="width:'+Math.round(feitos/nomes.length*100)+'%"></i></span></div><div class="grid">';
       nomes.forEach(function(n){
-        var r = reg[n], d = diretoriaDe(n);
+        var r = reg[n], d = diretoriaDe(n), sou = (n === eu);
         var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(dirCurta(d))+'</span>' : '';
         if(r){
           var at = atrasoDe(turnoSel, r.chegada);
-          h += '<div class="namecard done'+(at!=null?" late":"")+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+'</span>'
+          h += '<div class="namecard done'+(at!=null?" late":"")+(sou?" eu":"")+'">'+rot
+            + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+'</span>'
             + '<span class="s"><svg class="check" viewBox="0 0 20 20" fill="none" aria-hidden="true">'
             + '<circle cx="10" cy="10" r="9" fill="currentColor" opacity=".18"/>'
             + '<path d="M5.8 10.3l2.7 2.7 5.7-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
             + '<span>Chegou às <span class="mono">'+esc(hhmm(r.chegada))+'</span>'
             + (at!=null ? ' &middot; '+at+' min de atraso' : '')+'</span></span></div>';
+        } else if(sou){
+          h += '<button class="namecard eu" data-n="'+esc(n)+'">'+rot
+            + '<span class="n">'+esc(nomeCheio(n))+' <span class="tag">você</span></span>'
+            + '<span class="s">Toque para registrar sua chegada</span></button>';
         } else {
-          h += '<button class="namecard" data-n="'+esc(n)+'">'+rot
+          h += '<div class="namecard esperando">'+rot
             + '<span class="n">'+esc(nomeCheio(n))+'</span>'
-            + '<span class="s">Toque para registrar a chegada</span></button>';
+            + '<span class="s">Ainda não registrou</span></div>';
         }
       });
       h += '</div>';
     }
     h += '</div>';
 
-    h += '<div class="trocacard"><div class="txt">'
-      + '<h2>Veio fora da sua escala?</h2>'
-      + '<p class="tiny muted" style="margin:0">Registre a presença de hoje e escolha qual plantão seu sai no lugar. '
-      + 'A coordenação aprova a troca.</p></div>'
-      + '<button class="btn" id="btn-troca">Registrar troca</button></div>';
+    if(eu && nomes.indexOf(eu) < 0){
+      h += '<div class="trocacard"><div class="txt">'
+        + '<h2>Você não está escalado neste turno</h2>'
+        + '<p class="tiny muted" style="margin:0">Se veio cobrir alguém, registre a presença e escolha qual plantão seu sai no lugar. '
+        + 'A coordenação aprova a troca.</p></div>'
+        + '<button class="btn primary" id="btn-troca">Registrar troca</button></div>';
+    } else if(eu){
+      h += '<div class="trocacard"><div class="txt">'
+        + '<h2>Precisa trocar um plantão?</h2>'
+        + '<p class="tiny muted" style="margin:0">Registre a presença de hoje e escolha qual plantão seu sai no lugar.</p></div>'
+        + '<button class="btn" id="btn-troca">Registrar troca</button></div>';
+    } else {
+      h += '<p class="note">Sua conta não está vinculada a um nome da escala, então você acompanha mas não registra ponto.</p>';
+    }
 
     var fora = regsHoje.filter(function(r){ return r.turno===turnoSel && nomes.indexOf(r.nome) < 0; });
     if(fora.length){
@@ -690,12 +830,10 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       var chegaram = nomes.filter(function(n){ return reg[n]; });
       var faltam = nomes.filter(function(n){ return !reg[n]; });
       total += nomes.length; presentes += chegaram.length;
-
       corpo += '<div class="linha'+(i===0?" first":"")+'">'
         + '<div class="tn">'+esc(t.nome)+'<small>'+esc(t.inicio)+'–'+esc(t.fim)+'</small></div><div class="chips">';
-      if(!nomes.length){
-        corpo += '<span class="chip">sem escala neste dia</span>';
-      } else {
+      if(!nomes.length){ corpo += '<span class="chip">sem escala neste dia</span>'; }
+      else {
         chegaram.forEach(function(n){
           var at = atrasoDe(t.id, reg[n].chegada);
           corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(nomeCurto(n))+' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
@@ -741,43 +879,36 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     try{
       await inserir(a.nome, a.turno, hojeKey(), agora);
       el("dlg-conf").close();
-      aviso("Chegada de "+nomeCheio(a.nome)+" registrada às "+hhmm(agora)+".");
+      aviso("Chegada registrada às "+hhmm(agora)+".");
       await carregarHoje();
     }catch(e){
       el("dlg-conf").close();
-      aviso("Não consegui registrar. Tente de novo. ("+e.message+")", "warn");
+      aviso("Não consegui registrar. "+e.message, "warn");
     }
     btn.disabled = false;
   });
 
-  /* ---------- troca de escala ---------- */
+  /* ---------- troca ---------- */
   function abrirTroca(){
     var t = turnoDe(turnoSel);
     trocaSel = null; trocaGeoOk = false;
     trocaMes = hojeKey().slice(0,7);
     el("tr-sub").textContent = "Presença de hoje: " + t.nome + ", "
       + new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) + ".";
-    var nomes = Object.keys(INSTRUTORES).sort(ordenaPorNome);
-    el("tr-nome").innerHTML = '<option value="">Escolha seu nome</option>'
-      + nomes.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("");
+    el("tr-quem").textContent = nomeCheio(meuNome());
     el("tr-mes").value = trocaMes;
-    el("tr-lista").innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Escolha seu nome para ver seus plantões.</p>';
     el("tr-geo").hidden = true;
     el("tr-ok").disabled = true;
+    pintarPlantoes();
     el("dlg-troca").showModal();
   }
-
   function pintarPlantoes(){
-    var nome = el("tr-nome").value;
-    var alvo = el("tr-lista");
+    var nome = meuNome(), alvo = el("tr-lista");
     trocaSel = null; trocaGeoOk = false;
-    el("tr-ok").disabled = true;
-    el("tr-geo").hidden = true;
-    if(!nome){ alvo.innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Escolha seu nome para ver seus plantões.</p>'; return; }
+    el("tr-ok").disabled = true; el("tr-geo").hidden = true;
     var lista = plantoesDe(nome, trocaMes);
     if(!lista.length){
-      alvo.innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Nenhum plantão disponível neste mês '
-        + '(ou todos já têm troca solicitada). Escolha outro mês.</p>';
+      alvo.innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Nenhum plantão disponível neste mês (ou todos já têm troca solicitada). Escolha outro mês.</p>';
       return;
     }
     alvo.innerHTML = '<div class="optlist">' + lista.map(function(x, i){
@@ -795,7 +926,6 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       });
     });
   }
-
   async function checarGeoTroca(){
     var faixa = el("tr-geo"), ok = el("tr-ok");
     if(!GEO_ATIVO){ faixa.hidden = true; trocaGeoOk = true; ok.disabled = false; return; }
@@ -809,25 +939,20 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     faixa.innerHTML = SVG_PIN + "<span>" + esc(r.msg) + "</span>";
     ok.disabled = !r.ok || !trocaSel;
   }
-
   el("tr-no").addEventListener("click", function(){ el("dlg-troca").close(); });
-  el("tr-nome").addEventListener("change", pintarPlantoes);
   el("tr-mes").addEventListener("change", function(){ trocaMes = this.value || hojeKey().slice(0,7); pintarPlantoes(); });
   el("tr-ok").addEventListener("click", async function(){
-    var nome = el("tr-nome").value;
+    var nome = meuNome();
     if(!nome || !trocaSel || !trocaGeoOk) return;
     var btn = el("tr-ok"); btn.disabled = true;
-    var agora = new Date().toISOString();
     try{
       await inserirTroca({ nome:nome, data:hojeKey(), turno:turnoSel,
                            data_abater:trocaSel.data, turno_abater:trocaSel.turno, status:"pendente" });
-      await inserir(nome, turnoSel, hojeKey(), agora);
+      await inserir(nome, turnoSel, hojeKey(), new Date().toISOString());
       el("dlg-troca").close();
       aviso("Presença registrada e troca enviada para aprovação da coordenação.");
       await carregarHoje();
-    }catch(e){
-      aviso("Não consegui enviar. " + e.message, "warn");
-    }
+    }catch(e){ aviso("Não consegui enviar. "+e.message, "warn"); }
     btn.disabled = false;
   });
 
@@ -835,10 +960,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function viewEscala(){
     var dow = new Date().getDay();
     var passa = function(n){ return !filtroDir || diretoriaDe(n) === filtroDir; };
-
     var h = '<div class="toolbar" style="margin-bottom:-6px">'
-      + '<label class="fld">Diretoria<select id="f-dir">'
-      + '<option value="">Todas</option>'
+      + '<label class="fld">Diretoria<select id="f-dir"><option value="">Todas</option>'
       + DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'"'+(d===filtroDir?" selected":"")+'>'+esc(d)+'</option>'; }).join("")
       + '</select></label></div>';
 
@@ -849,8 +972,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       + UTEIS.map(function(d){
           var nm = DIA_LONGO[d].replace("-feira","");
           return '<th'+(d===dow?' class="hoje"':'')+'>'+nm.charAt(0).toUpperCase()+nm.slice(1)+'</th>';
-        }).join("")
-      + '</tr></thead><tbody>';
+        }).join("") + '</tr></thead><tbody>';
     TURNOS_SEMANA.forEach(function(t){
       h += '<tr><td class="turno">'+esc(t.nome)+'<small>'+esc(t.inicio)+' – '+esc(t.fim)+'</small></td>';
       UTEIS.forEach(function(d){
@@ -863,21 +985,18 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     h += '</tbody></table></div></div>';
 
-    /* sábados */
     if(TURNO_SAB){
       var hoje = hojeKey();
       var futuros = SABADOS.slice().sort(function(a,b){ return a.data < b.data ? -1 : 1; });
       h += '<div><div class="sec-head"><h2>Sábados</h2><p>'
         + esc(TURNO_SAB.inicio)+' – '+esc(TURNO_SAB.fim)+' · por diretoria, nas datas marcadas</p></div>';
       if(!futuros.length){
-        h += '<div class="empty"><h3>Nenhum sábado cadastrado</h3>'
-          + '<p class="tiny" style="margin:0">A coordenação adiciona as datas no arquivo da escala.</p></div>';
+        h += '<div class="empty"><h3>Nenhum sábado cadastrado</h3></div>';
       } else {
         h += '<div class="tblwrap"><table><thead><tr><th>Data</th><th>Diretorias</th><th class="num">Instrutores</th></tr></thead><tbody>';
         futuros.forEach(function(e){
           var ns = nomesDasDiretorias(e.diretorias).filter(passa);
-          var passou = e.data < hoje;
-          h += '<tr'+(passou?' class="passou"':'')+'>'
+          h += '<tr'+(e.data < hoje ? ' class="passou"' : '')+'>'
             + '<td class="mono">'+esc(brData(e.data))+' <span class="muted">'+DIA_CURTO[dowDe(e.data)]+'</span>'
             + (e.data===hoje ? ' <span class="pill p-on"><span class="dot"></span>hoje</span>' : '')+'</td>'
             + '<td>'+esc(rotuloSabado(e))+'</td><td class="num">'+ns.length+'</td></tr>';
@@ -887,15 +1006,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       h += '</div>';
     }
 
-    /* instrutores */
     var todos = Object.keys(INSTRUTORES).filter(passa).sort(ordenaPorNome);
     var turnosSem = {};
     TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){ escalados(t.id,d,"").forEach(function(n){ turnosSem[n] = (turnosSem[n]||0)+1; }); }); });
     h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+todos.length+' pessoas · turnos por semana</p></div>'
       + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Curso</th><th>Diretoria</th><th class="num">Turnos/semana</th></tr></thead><tbody>'
       + todos.map(function(n){
-          var d = diretoriaDe(n);
-          var i = infoDe(n);
+          var d = diretoriaDe(n), i = infoDe(n);
           return '<tr><td>'+(i.diretor?'<b>'+esc(nomeCheio(n))+'</b> <span class="tag">diretor(a)</span>':esc(nomeCheio(n)))+'</td>'
             + '<td'+(i.curso?'':' class="muted"')+'>'+esc(i.curso || "—")+'</td>'
             + '<td class="'+(d?('dirc'+classeDir(d)):'muted')+'">'+esc(d||"a definir")+'</td>'
@@ -910,25 +1027,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   /* ================= COORDENAÇÃO ================= */
   function viewCoord(){
     var box = el("v-coord");
-    if(!coordOk){
-      box.innerHTML = '<div class="card" style="max-width:420px">'
-        + '<div class="eyebrow">Área restrita</div>'
-        + '<h2 style="font-size:18px;margin:4px 0 4px">Acompanhamento de frequência</h2>'
-        + '<p class="tiny muted" style="margin:0 0 14px">Informe o código da coordenação para ver os registros.</p>'
-        + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        + '<input type="password" id="cod" placeholder="Código" style="flex:1;min-width:140px">'
-        + '<button class="btn primary" id="cod-ok">Entrar</button></div></div>';
-      el("cod-ok").addEventListener("click", entrarCoord);
-      el("cod").addEventListener("keydown", function(e){ if(e.key==="Enter") entrarCoord(); });
-      return;
-    }
+    if(!ehCoord()){ box.innerHTML = '<div class="empty"><h3>Área restrita à coordenação</h3></div>'; return; }
 
     var p = mesFiltro.split("-");
     var ultimoDia = new Date(+p[0], +p[1], 0).getDate();
     var hoje = hojeKey();
     var porNome = {};
     function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0 }); }
-
     for(var d=1; d<=ultimoDia; d++){
       var dt = new Date(+p[0], +p[1]-1, d);
       var key = dt.toLocaleDateString("sv-SE");
@@ -940,8 +1045,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
     var atrasosTot = 0;
     regsMes.forEach(function(r){
-      var s = slot(r.nome);
-      s.presentes++;
+      var s = slot(r.nome); s.presentes++;
       if(atrasoDe(r.turno, r.chegada) != null){ s.atrasos++; atrasosTot++; }
     });
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
@@ -962,15 +1066,35 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       + tile("Chegadas com atraso", String(atrasosTot))
       + '</div>';
 
-    /* por diretoria */
+    /* contas */
+    var pendentes = perfis.filter(function(x){ return !x.aprovado; });
+    h += '<div><div class="sec-head"><h2>Contas</h2><p>'
+      + (pendentes.length ? pendentes.length+' aguardando liberação' : 'nenhuma pendente')+'</p></div>'
+      + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome na escala</th>'
+      + '<th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody>';
+    perfis.slice().sort(function(a,b){ return (a.aprovado?1:0) - (b.aprovado?1:0); }).forEach(function(x){
+      h += '<tr><td>'+esc(x.email||"—")+'</td>'
+        + '<td>'+(x.nome ? esc(nomeCheio(x.nome)) : '<span class="muted">não informou</span>')+'</td>'
+        + '<td>'+(x.papel==="coordenacao" ? '<span class="pill p-on"><span class="dot"></span>coordenação</span>' : 'instrutor(a)')+'</td>'
+        + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
+        + '<td style="white-space:nowrap">'
+        + (x.aprovado
+            ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
+            : '<button class="btn icon" data-lib="'+esc(x.id)+'"'+(x.nome?'':' disabled title="precisa escolher o nome primeiro"')+'>Liberar</button> ')
+        + (x.papel==="coordenacao"
+            ? '<button class="btn icon ghost" data-reb="'+esc(x.id)+'">Tornar instrutor(a)</button>'
+            : '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>')
+        + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+
+    /* diretorias */
     var porDir = {};
     nomes.forEach(function(n){
-      var d = diretoriaDe(n) || "Sem diretoria";
-      var s = porDir[d] || (porDir[d] = { previstos:0, presentes:0, atrasos:0, pessoas:0 });
-      s.previstos += porNome[n].previstos;
-      s.presentes += porNome[n].presentes;
-      s.atrasos   += porNome[n].atrasos;
-      s.pessoas++;
+      var dd = diretoriaDe(n) || "Sem diretoria";
+      var s = porDir[dd] || (porDir[dd] = { previstos:0, presentes:0, atrasos:0, pessoas:0 });
+      s.previstos += porNome[n].previstos; s.presentes += porNome[n].presentes;
+      s.atrasos += porNome[n].atrasos; s.pessoas++;
     });
     var dirs = DIRETORIAS.filter(function(d){ return porDir[d]; });
     Object.keys(porDir).forEach(function(d){ if(dirs.indexOf(d) < 0) dirs.push(d); });
@@ -980,18 +1104,17 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
         + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>'
         + dirs.map(function(d){
-            var s = porDir[d];
-            var faltas = Math.max(0, s.previstos - s.presentes);
+            var s = porDir[d], faltas = Math.max(0, s.previstos - s.presentes);
             var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
             return '<tr><td class="dirc'+classeDir(d)+'">'+esc(d)+'</td><td class="num">'+s.pessoas+'</td>'
               + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
               + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
               + '<td class="num"'+(s.atrasos?' style="color:var(--warn)"':'')+'>'+s.atrasos+'</td>'
               + '<td class="num">'+pc+'%</td></tr>';
-          }).join("")
-        + '</tbody></table></div></div>';
+          }).join("") + '</tbody></table></div></div>';
     }
 
+    /* trocas */
     var pend = trocas.filter(function(x){ return x.status === "pendente"; });
     var decid = trocas.filter(function(x){ return x.status !== "pendente"; }).slice(0,20);
     if(pend.length || decid.length){
@@ -1007,10 +1130,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
           + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+esc(te?te.nome:x.turno)+'</span></td>'
           + '<td class="mono">'+esc(brData(x.data_abater))+' <span class="muted">'+esc(ta?ta.nome:x.turno_abater)+'</span></td>'
-          + '<td>'+sit+'</td>'
-          + '<td>'+(x.status==="pendente"
-              ? '<button class="btn icon" data-ap="'+esc(x.id)+'">Aprovar</button> '
-                +'<button class="btn icon ghost" data-re="'+esc(x.id)+'" style="color:var(--alert)">Recusar</button>'
+          + '<td>'+sit+'</td><td style="white-space:nowrap">'
+          + (x.status==="pendente"
+              ? '<button class="btn icon" data-ap="'+esc(x.id)+'">Aprovar</button> <button class="btn icon ghost" data-re="'+esc(x.id)+'" style="color:var(--alert)">Recusar</button>'
               : '<button class="btn icon ghost" data-ap="'+esc(x.id)+'">Reabrir como aprovada</button>')
           + '</td></tr>';
       });
@@ -1018,15 +1140,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
 
     h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
-    if(!nomes.length){
-      h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>';
-    } else {
+    if(!nomes.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
+    else {
       h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
         + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
         + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>';
       nomes.forEach(function(n){
-        var s = porNome[n];
-        var faltas = Math.max(0, s.previstos - s.presentes);
+        var s = porNome[n], faltas = Math.max(0, s.previstos - s.presentes);
         var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
         h += '<tr><td>'+esc(nomeCheio(n))+'</td><td class="muted">'+esc(diretoriaDe(n) || "—")+'</td>'
           + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
@@ -1044,15 +1164,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor(a)</th>'
         + '<th>Diretoria</th><th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
       ordenados.slice(0,200).forEach(function(r, i){
-        var at = atrasoDe(r.turno, r.chegada);
-        var t = turnoDe(r.turno);
-        var tr_ = trocaDoRegistro(r);
+        var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
         h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dowDe(r.data)]+'</span></td>'
           + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(nomeCheio(r.nome))+'</td>'
           + '<td class="muted">'+esc(diretoriaDe(r.nome) || "—")+'</td>'
           + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
           + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')
-          + (tr_ ? ' <span class="pill '+(tr_.status==="aprovada"?"p-on":(tr_.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tr_.status)+'</span>' : '')+'</td>'
+          + (tx ? ' <span class="pill '+(tx.status==="aprovada"?"p-on":(tx.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tx.status)+'</span>' : '')+'</td>'
           + '<td><button class="btn icon ghost" data-fix="'+i+'">Corrigir</button></td></tr>';
       });
       h += '</tbody></table></div>';
@@ -1070,42 +1188,37 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       try{
         var pos = await posicao();
         alvo.innerHTML = '<div class="geo ok" style="margin-top:12px">'+SVG_PIN
-          + '<span>Você está aqui, com precisão de cerca de '+Math.round(pos.coords.accuracy)+' m.<br>'
-          + 'Cole estes dois números no <span class="mono">config.js</span>:<br>'
+          + '<span>Precisão de cerca de '+Math.round(pos.coords.accuracy)+' m. Cole no <span class="mono">config.js</span>:<br>'
           + '<span class="mono" style="font-size:14px">lat: '+pos.coords.latitude.toFixed(6)
           + ',&nbsp; lng: '+pos.coords.longitude.toFixed(6)+'</span></span></div>';
       }catch(e){
-        alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN
-          + '<span>Não consegui ler o GPS. Permita o acesso à localização e tente de novo.</span></div>';
+        alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN+'<span>Não consegui ler o GPS.</span></div>';
       }
     });
     Array.prototype.forEach.call(box.querySelectorAll("[data-fix]"), function(b){
       b.addEventListener("click", function(){ abrirFix(ordenados[+b.dataset.fix]); });
     });
-    Array.prototype.forEach.call(box.querySelectorAll("[data-ap]"), function(b){
+    ligar(box, "data-ap", function(id){ return decidirTroca(id, "aprovada"); }, "Troca aprovada.");
+    ligar(box, "data-re", function(id){ return decidirTroca(id, "recusada"); }, "Troca recusada.");
+    ligar(box, "data-lib",  function(id){ return mudarPerfil(id, { aprovado:true }); }, "Conta liberada.");
+    ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
+    ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Perfil alterado.");
+    ligar(box, "data-reb",  function(id){ return mudarPerfil(id, { papel:"instrutor" }); }, "Perfil alterado.");
+  }
+  function ligar(box, attr, fn, ok){
+    Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"), function(b){
       b.addEventListener("click", async function(){
         b.disabled = true;
-        try{ await decidirTroca(b.dataset.ap, "aprovada"); aviso("Troca aprovada."); await carregarMes(); }
-        catch(e){ aviso("Não consegui aprovar. ("+e.message+")", "warn"); b.disabled = false; }
+        try{ await fn(b.getAttribute(attr)); aviso(ok); await carregarMes(); }
+        catch(e){ aviso("Não consegui. ("+e.message+")", "warn"); b.disabled = false; }
       });
     });
-    Array.prototype.forEach.call(box.querySelectorAll("[data-re]"), function(b){
-      b.addEventListener("click", async function(){
-        b.disabled = true;
-        try{ await decidirTroca(b.dataset.re, "recusada"); aviso("Troca recusada."); await carregarMes(); }
-        catch(e){ aviso("Não consegui recusar. ("+e.message+")", "warn"); b.disabled = false; }
-      });
-    });
+  }
+  async function mudarPerfil(id, patch){
+    if(DEMO) return;
+    erro(await sb.from("perfis").update(patch).eq("id", id));
   }
   function tile(k,v){ return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'; }
-
-  function entrarCoord(){
-    if(el("cod").value && el("cod").value === CFG.CODIGO_COORDENACAO){
-      coordOk = true;
-      try{ sessionStorage.setItem("paespe-coord","1"); }catch(e){}
-      carregarMes();
-    } else aviso("Código incorreto.", "warn");
-  }
 
   function abrirFix(r){
     alvoFix = r;
@@ -1132,16 +1245,14 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     catch(e){ aviso("Não consegui apagar. ("+e.message+")", "warn"); }
   });
 
-  /* ---------- CSV ---------- */
   function baixarCSV(rows){
-    var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Chegada","Atraso (min)","Situação","Troca"];
+    var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Curso","Chegada","Atraso (min)","Situação","Troca"];
     var out = [head.join(";")];
     rows.slice().reverse().forEach(function(r){
-      var at = atrasoDe(r.turno, r.chegada);
-      var t = turnoDe(r.turno);
+      var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
       out.push([brData(r.data), DIA_CURTO[dowDe(r.data)], t?t.nome:r.turno, nomeCheio(r.nome),
-        diretoriaDe(r.nome), hhmm(r.chegada), at!=null?String(at):"", at!=null?"Atraso":"No horário",
-        (function(){ var x = trocaDoRegistro(r); return x ? x.status : ""; })()]
+        diretoriaDe(r.nome), infoDe(r.nome).curso || "", hhmm(r.chegada),
+        at!=null?String(at):"", at!=null?"Atraso":"No horário", tx ? tx.status : ""]
         .map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(";"));
     });
     var blob = new Blob(["﻿"+out.join("\r\n")], { type:"text/csv;charset=utf-8" });
@@ -1152,7 +1263,6 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
-  /* ---------- início ---------- */
   function turnoAtual(){
     var lista = turnosDe(new Date().getDay());
     if(!lista.length) return null;
@@ -1165,19 +1275,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     return prox || lista[0].id;
   }
 
-  el("rodape").textContent = CFG.RODAPE || "";
-  el("modo").textContent = DEMO ? "Modo demonstração — registros salvos só neste navegador" : "";
-  turnoSel = turnoAtual();
-  try{ if(sessionStorage.getItem("paespe-coord")==="1") coordOk = true; }catch(e){}
-  mesFiltro = hojeKey().slice(0,7);
-
-  tick();
-  setInterval(function(){ tick(); if(view==="ponto") render(); }, 30000);
-  setInterval(function(){ if(view==="ponto") carregarHoje(); }, 45000);
-
-  render();
-  carregarHoje();
-  if(DEMO) aviso("Modo demonstração: preencha o arquivo config.js com os dados do Supabase para valer de verdade.", "fixo");
+  boot();
 })();
 </script>
 </body>
