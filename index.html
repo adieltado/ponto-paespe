@@ -234,6 +234,8 @@ th.hoje{color:var(--accent-strong)}
 table.grade.editor td{min-width:180px}
 select.addslot{width:100%;margin-top:2px;font-size:11.5px;max-width:none}
 .opcao{display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:12.5px;white-space:nowrap}
+.acesso{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.acesso .em{font-size:12px;color:var(--ink-2)}
 .coordwrap{display:grid;grid-template-columns:184px 1fr;gap:22px;align-items:start}
 .coordmain{min-width:0;display:flex;flex-direction:column;gap:20px}
 .railnav{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:12px;
@@ -687,7 +689,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v7 · escala editável";
+    var VERSAO = "v8 · pessoas unificado";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
@@ -1158,9 +1160,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var coordSec = "visao";
   var SECOES = [
     { id:"visao",     nome:"Visão geral" },
-    { id:"pessoas",   nome:"Instrutores" },
+    { id:"pessoas",   nome:"Pessoas" },
     { id:"escala",    nome:"Escala" },
-    { id:"contas",    nome:"Contas" },
     { id:"trocas",    nome:"Trocas" },
     { id:"registros", nome:"Registros" }
   ];
@@ -1197,7 +1198,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
     var h = '<div class="coordwrap"><nav class="railnav" aria-label="Seções da coordenação">'
       + SECOES.map(function(sc){
-          var badge = (sc.id==="contas" && pendConta) ? pendConta : (sc.id==="trocas" && pendTroca ? pendTroca : 0);
+          var badge = (sc.id==="pessoas" && pendConta) ? pendConta : (sc.id==="trocas" && pendTroca ? pendTroca : 0);
           return '<button data-sec="'+sc.id+'" aria-current="'+(sc.id===coordSec)+'">'+esc(sc.nome)
             + (badge ? '<span class="badge">'+badge+'</span>' : '')+'</button>';
         }).join("")
@@ -1264,53 +1265,109 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       h += '</div>';
     }
 
-    /* ---------------- contas ---------------- */
-    if(coordSec === "contas"){
-      h += '<datalist id="nomes-escala">'
-        + Object.keys(INSTRUTORES).sort(ordenaPorNome)
-            .map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
-        + '</datalist>';
-
+    /* ---------------- pessoas ---------------- */
+    if(coordSec === "pessoas"){
+      var chaves = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+      var perfilPor = {};
+      perfis.forEach(function(x){ if(x.nome) perfilPor[x.nome] = x; });
       var emailsComConta = {};
       perfis.forEach(function(x){ if(x.email) emailsComConta[x.email.toLowerCase()] = 1; });
-      var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
+      var convitePor = {};
+      convites.forEach(function(c){
+        if(!emailsComConta[(c.email||"").toLowerCase()] && c.nome) convitePor[c.nome] = c;
+      });
       var coords = perfis.filter(function(x){ return x.papel === "coordenacao"; });
-      var instrs = perfis.filter(function(x){ return x.papel !== "coordenacao"; });
+      var soltas = perfis.filter(function(x){
+        return x.papel !== "coordenacao" && (!x.nome || !INSTRUTORES[x.nome]);
+      });
+      var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
+      var convSoltos = convAbertos.filter(function(c){ return !c.nome || !INSTRUTORES[c.nome]; });
 
-      h += '<div class="card" style="margin-bottom:18px">'
-        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar pessoa</h2>'
-        + '<p>a conta Google é dela; aqui você só libera o e-mail</p></div>'
-        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-        +   '<label class="fld">E-mail<input id="cv-email" type="email" placeholder="pessoa@gmail.com" size="24"></label>'
-        +   '<label class="fld">Perfil<select id="cv-papel">'
-        +     '<option value="instrutor">Instrutor(a)</option><option value="coordenacao">Coordenação</option>'
-        +   '</select></label>'
-        +   '<label class="fld" id="cv-nome-wrap">Nome'
-        +     '<input class="mini" id="cv-nome" list="nomes-escala" placeholder="digite ou escolha" spellcheck="false">'
-        +   '</label>'
-        +   '<button class="btn primary" id="cv-ok">Adicionar</button>'
-        + '</div>'
-        + '<p class="tiny muted" style="margin:10px 0 0">Quando a pessoa entrar com o Google usando esse e-mail, '
-        + 'ela já cai liberada, sem passar pela fila de aprovação.</p></div>';
-
-      if(convAbertos.length){
-        h += '<div><div class="sec-head"><h2>Convites em aberto</h2><p>ainda não entraram no site</p></div>'
-          + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Perfil</th><th>Nome</th><th></th></tr></thead><tbody>'
-          + convAbertos.map(function(c){
-              var coord = c.papel === "coordenacao";
-              return '<tr><td>'+esc(c.email)+'</td>'
-                + '<td>'+(coord ? '<span class="pill p-on"><span class="dot"></span>coordenação</span>' : 'instrutor(a)')+'</td>'
-                + '<td>'+(coord ? '<span class="muted">sem escala</span>' : (c.nome ? esc(nomeCheio(c.nome)) : '<span class="muted">—</span>'))+'</td>'
-                + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'" style="color:var(--alert)">Remover</button></td></tr>';
-            }).join("") + '</tbody></table></div></div>';
+      function celulaAcesso(ap){
+        var pf = perfilPor[ap], cv = convitePor[ap];
+        if(pf){
+          return '<div class="acesso"><span class="em">'+esc(pf.email||"—")+'</span>'
+            + (pf.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>'
+                           : '<span class="pill p-late">pendente</span>')+'</div>';
+        }
+        if(cv){
+          return '<div class="acesso"><span class="em">'+esc(cv.email)+'</span>'
+            + '<span class="pill p-wait">convidado</span></div>';
+        }
+        return '<div class="acesso"><input class="mini" type="email" data-convemail="'+esc(ap)+'" '
+          + 'placeholder="e-mail para convidar" style="max-width:180px">'
+          + '<button class="btn icon" data-convok="'+esc(ap)+'">Convidar</button></div>';
+      }
+      function acoesPessoa(ap){
+        var pf = perfilPor[ap], cv = convitePor[ap], out = "";
+        if(pf){
+          out += pf.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(pf.id)+'">Bloquear</button> '
+                             : '<button class="btn icon" data-lib="'+esc(pf.id)+'">Liberar</button> ';
+          out += '<button class="btn icon ghost" data-prom="'+esc(pf.id)+'">Tornar coordenação</button> ';
+        } else if(cv){
+          out += '<button class="btn icon ghost" data-delconv="'+esc(cv.email)+'">Cancelar convite</button> ';
+        }
+        out += '<button class="btn icon ghost" data-delinstr="'+esc(ap)+'" style="color:var(--alert)">Remover</button>';
+        return out;
       }
 
-      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+'</p></div>'
+      h += '<datalist id="nomes-escala">'
+        + chaves.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
+        + '</datalist>';
+
+      /* ---- instrutores ---- */
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar instrutor(a)</h2>'
+        + '<p>o apelido é curto e não muda depois</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Apelido<input id="in-chave" placeholder="Maria Isadora" size="14"></label>'
+        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Maria Isadora Gomes Profirio" size="24"></label>'
+        +   '<label class="fld">Diretoria<select id="in-dir"><option value="">—</option>'
+        +     DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Curso<input id="in-curso" placeholder="Psicologia" size="14"></label>'
+        +   '<label class="fld">E-mail (opcional)<input id="in-email" type="email" placeholder="pessoa@gmail.com" size="20"></label>'
+        +   '<button class="btn primary" id="in-ok">Adicionar</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">O <b>apelido</b> é o nome curto que identifica a pessoa na escala e '
+        + 'é a etiqueta que o banco guarda em cada ponto — por isso não pode mudar depois. '
+        + 'Preenchendo o e-mail, ela já entra liberada quando acessar com o Google.</p></div>';
+
+      var turnosPor = {};
+      TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){
+        escalados(t.id,d,"").forEach(function(n){ turnosPor[n] = (turnosPor[n]||0)+1; }); }); });
+
+      h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+chaves.length+' pessoas'
+        + (instrutoresDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>Apelido</th><th>Nome completo</th>'
+        + '<th>Diretoria</th><th>Curso</th><th>Dir.</th><th class="num">Turnos</th><th>Acesso</th><th></th></tr></thead><tbody>';
+      chaves.forEach(function(n){
+        var i3 = infoDe(n);
+        h += '<tr><td><b>'+esc(n)+'</b></td>'
+          + '<td><input class="mini" style="max-width:230px" data-inf="completo" data-key="'+esc(n)+'" value="'+esc(i3.completo||"")+'"></td>'
+          + '<td><select class="mini" data-inf="diretoria" data-key="'+esc(n)+'"><option value="">—</option>'
+          +   DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'"'+(d===i3.diretoria?" selected":"")+'>'+esc(d)+'</option>'; }).join("")
+          + '</select></td>'
+          + '<td><input class="mini" style="max-width:145px" data-inf="curso" data-key="'+esc(n)+'" value="'+esc(i3.curso||"")+'"></td>'
+          + '<td><input type="checkbox" data-inf="diretor" data-key="'+esc(n)+'"'+(i3.diretor?" checked":"")+'></td>'
+          + '<td class="num">'+(turnosPor[n]||0)+'</td>'
+          + '<td>'+celulaAcesso(n)+'</td>'
+          + '<td style="white-space:nowrap">'+acoesPessoa(n)+'</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+
+      /* ---- coordenação ---- */
+      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+' · não entram na escala</p></div>'
+        + '<div class="card" style="margin-bottom:12px"><div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">E-mail<input id="cc-email" type="email" placeholder="pessoa@gmail.com" size="22"></label>'
+        +   '<label class="fld">Nome<input id="cc-nome" placeholder="Nome da pessoa" size="18"></label>'
+        +   '<button class="btn primary" id="cc-ok">Adicionar à coordenação</button>'
+        + '</div></div>'
         + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th><th>Situação</th><th></th></tr></thead><tbody>';
       if(!coords.length) h += '<tr><td colspan="4" class="muted">Nenhuma.</td></tr>';
       coords.forEach(function(x){
         h += '<tr><td>'+esc(x.email||"—")+(x.id===perfil.id?' <span class="tag">você</span>':'')+'</td>'
-          + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="digite o nome" spellcheck="false"></td>'
+          + '<td><input class="mini" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="nome"></td>'
           + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
           + '<td style="white-space:nowrap">'
           + (x.id===perfil.id ? '<span class="muted tiny">sua conta</span>'
@@ -1318,71 +1375,38 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
                             : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button>'))
           + '</td></tr>';
       });
-      h += '</tbody></table></div></div>';
-
-      h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+instrs.length+' conta'+(instrs.length===1?'':'s')
-        + (pendConta ? ' · '+pendConta+' aguardando liberação' : '')+'</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th>'
-        + '<th>Situação</th><th></th></tr></thead><tbody>';
-      if(!instrs.length) h += '<tr><td colspan="4" class="muted">Nenhuma.</td></tr>';
-      instrs.slice().sort(function(a,b){ return (a.aprovado?1:0) - (b.aprovado?1:0); }).forEach(function(x){
-        var solto = x.nome && !INSTRUTORES[x.nome];
-        h += '<tr><td>'+esc(x.email||"—")+'</td>'
-          + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" '
-          +   'placeholder="digite ou escolha" spellcheck="false">'
-          +   (solto ? ' <span class="pill p-late" title="Não existe na escala">fora da escala</span>' : '')+'</td>'
-          + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
-          + '<td style="white-space:nowrap">'
-          + (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
-                        : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
-          + '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>'
-          + '</td></tr>';
+      convSoltos.filter(function(c){ return c.papel === "coordenacao"; }).forEach(function(c){
+        h += '<tr><td>'+esc(c.email)+'</td><td class="muted">'+esc(c.nome||"—")+'</td>'
+          + '<td><span class="pill p-wait">convidado</span></td>'
+          + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'">Cancelar convite</button></td></tr>';
       });
       h += '</tbody></table></div></div>';
-    }
 
-    /* ---------------- instrutores ---------------- */
-    if(coordSec === "pessoas"){
-      var chaves = Object.keys(INSTRUTORES).sort(ordenaPorNome);
-      h += '<div class="card">'
-        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar instrutor(a)</h2>'
-        + '<p>o nome-chave é curto e não muda depois</p></div>'
-        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-        +   '<label class="fld">Nome-chave<input id="in-chave" placeholder="Maria Isadora" size="16"></label>'
-        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Maria Isadora Gomes Profirio" size="26"></label>'
-        +   '<label class="fld">Diretoria<select id="in-dir"><option value="">—</option>'
-        +     DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join("")
-        +   '</select></label>'
-        +   '<label class="fld">Curso<input id="in-curso" placeholder="Psicologia" size="16"></label>'
-        +   '<button class="btn primary" id="in-ok">Adicionar</button>'
-        + '</div>'
-        + '<p class="tiny muted" style="margin:10px 0 0">O <b>nome-chave</b> é o que você escreve na grade do '
-        + '<span class="mono">escala.js</span> e é a etiqueta que o banco guarda em cada ponto. '
-        + 'Por isso ele não pode ser alterado depois: mudá-lo desligaria a pessoa do próprio histórico.</p></div>';
+      /* ---- contas sem vínculo ---- */
+      var convSoltosInstr = convSoltos.filter(function(c){ return c.papel !== "coordenacao"; });
+      if(soltas.length || convSoltosInstr.length){
+        h += '<div><div class="sec-head"><h2>Contas sem vínculo</h2>'
+          + '<p>entraram no site mas ainda não estão ligadas a um apelido da escala</p></div>'
+          + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Apelido</th><th>Situação</th><th></th></tr></thead><tbody>';
+        soltas.forEach(function(x){
+          h += '<tr><td>'+esc(x.email||"—")+'</td>'
+            + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="digite o apelido"></td>'
+            + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
+            + '<td style="white-space:nowrap">'
+            + (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
+                          : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
+            + '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button></td></tr>';
+        });
+        convSoltosInstr.forEach(function(c){
+          h += '<tr><td>'+esc(c.email)+'</td><td class="muted">'+esc(c.nome||"—")+'</td>'
+            + '<td><span class="pill p-wait">convidado</span></td>'
+            + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'">Cancelar convite</button></td></tr>';
+        });
+        h += '</tbody></table></div></div>';
+      }
 
-      h += '<div><div class="sec-head"><h2>Quadro de instrutores</h2><p>'+chaves.length+' pessoas'
-        + (instrutoresDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>Nome-chave</th><th>Nome completo</th>'
-        + '<th>Diretoria</th><th>Curso</th><th>Diretor(a)</th><th class="num">Turnos</th><th></th></tr></thead><tbody>';
-      var turnosPor = {};
-      TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){
-        escalados(t.id,d,"").forEach(function(n){ turnosPor[n] = (turnosPor[n]||0)+1; }); }); });
-      chaves.forEach(function(n){
-        var i3 = infoDe(n);
-        h += '<tr><td><b>'+esc(n)+'</b></td>'
-          + '<td><input class="mini" style="max-width:240px" data-inf="completo" data-key="'+esc(n)+'" value="'+esc(i3.completo||"")+'"></td>'
-          + '<td><select class="mini" data-inf="diretoria" data-key="'+esc(n)+'"><option value="">—</option>'
-          +   DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'"'+(d===i3.diretoria?" selected":"")+'>'+esc(d)+'</option>'; }).join("")
-          + '</select></td>'
-          + '<td><input class="mini" style="max-width:150px" data-inf="curso" data-key="'+esc(n)+'" value="'+esc(i3.curso||"")+'"></td>'
-          + '<td><input type="checkbox" data-inf="diretor" data-key="'+esc(n)+'"'+(i3.diretor?" checked":"")+'></td>'
-          + '<td class="num">'+(turnosPor[n]||0)+'</td>'
-          + '<td><button class="btn icon ghost" data-delinstr="'+esc(n)+'" style="color:var(--alert)">Remover</button></td></tr>';
-      });
-      h += '</tbody></table></div>'
-        + '<p class="note" style="margin-top:10px">A grade semanal e os sábados continuam no arquivo '
-        + '<span class="mono">escala.js</span>, editados à mão. Esta tela cuida de quem são as pessoas; '
-        + 'o arquivo cuida de quando cada uma trabalha.</p></div>';
+      h += '<p class="note">A grade semanal e os sábados ficam na aba <b>Escala</b>. '
+        + 'Esta tela cuida de quem são as pessoas e de quem consegue entrar no site.</p>';
     }
 
     /* ---------------- escala ---------------- */
@@ -1529,6 +1553,28 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
     ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Agora é coordenação.");
     ligar(box, "data-delconv", function(em){ return apagarConvite(em); }, "Convite removido.");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-convok]"), function(b){
+      b.addEventListener("click", async function(){
+        var ap = b.dataset.convok;
+        var campo = box.querySelector('[data-convemail="'+ap.replace(/"/g,'\\"')+'"]');
+        var em = ((campo && campo.value) || "").trim().toLowerCase();
+        if(!em || em.indexOf("@") < 0){ aviso("Informe um e-mail válido."); return; }
+        b.disabled = true;
+        try{ await criarConvite({ email:em, nome:ap, papel:"instrutor" }); aviso("Convite criado para "+em+"."); await carregarMes(); }
+        catch(e){ aviso("Não consegui convidar. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
+    var ccb = el("cc-ok");
+    if(ccb) ccb.addEventListener("click", async function(){
+      var em = ((el("cc-email").value)||"").trim().toLowerCase();
+      if(!em || em.indexOf("@") < 0){ aviso("Informe um e-mail válido."); return; }
+      ccb.disabled = true;
+      try{
+        await criarConvite({ email:em, nome:((el("cc-nome").value)||"").trim() || null, papel:"coordenacao" });
+        aviso("Adicionado à coordenação. Peça para entrar com o Google usando esse e-mail.");
+        await carregarMes();
+      }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ccb.disabled = false; }
+    });
     ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor removido do quadro.");
 
     async function recarregarEscala(){ await carregarEscala(); render(); }
@@ -1603,7 +1649,10 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       try{
         await criarInstrutor({ nome:chave, completo:(el("in-completo").value||"").trim() || chave,
                                diretoria: el("in-dir").value || null, curso:(el("in-curso").value||"").trim() || null });
+        var emNovo = ((el("in-email")||{}).value || "").trim().toLowerCase();
+        if(emNovo && emNovo.indexOf("@") > 0) await criarConvite({ email:emNovo, nome:chave, papel:"instrutor" });
         await carregarInstrutores();
+        await carregarMes();
         aviso("Instrutor adicionado. Lembre de colocá-lo na grade do escala.js.");
         render();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ib.disabled = false; }
