@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ponto PAESPE</title>
+<meta name="description" content="Registro de chegada dos instrutores do PAESPE — CTEC/UFAL.">
+<meta name="theme-color" content="#0E6A58">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230E6A58'/%3E%3Cpath d='M16 8v8.5l5.5 3.2' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+
+<style>
+:root{
+  --ground:#F2F5F3; --surface:#FFFFFF; --surface-2:#EAEFEC;
+  --ink:#121B19; --ink-2:#5A6A66;
+  --line:#DBE3DF; --line-2:#C3D0CB;
+  --accent:#0E6A58; --accent-ink:#FFFFFF; --accent-soft:#DFEFE9;
+  --warn:#8F5600; --warn-soft:#FAEDD8;
+  --alert:#9C3128; --alert-soft:#F7E3E0;
+  --scrim:rgba(18,27,25,.45);
+  --shadow:0 1px 2px rgba(16,33,29,.06), 0 10px 28px -18px rgba(16,33,29,.34);
+  --r:12px;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1211; --surface:#151D1B; --surface-2:#1D2725;
+    --ink:#E9EFEC; --ink-2:#97A7A2;
+    --line:#26312E; --line-2:#33423F;
+    --accent:#52C9AC; --accent-ink:#06231D; --accent-soft:#12312A;
+    --warn:#E0A648; --warn-soft:#332714;
+    --alert:#EC8377; --alert-soft:#3A1E1B;
+    --scrim:rgba(0,0,0,.62);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1211; --surface:#151D1B; --surface-2:#1D2725;
+  --ink:#E9EFEC; --ink-2:#97A7A2;
+  --line:#26312E; --line-2:#33423F;
+  --accent:#52C9AC; --accent-ink:#06231D; --accent-soft:#12312A;
+  --warn:#E0A648; --warn-soft:#332714;
+  --alert:#EC8377; --alert-soft:#3A1E1B;
+  --scrim:rgba(0,0,0,.62);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+img{max-width:100%}
+[hidden]{display:none !important}
+h1,h2,h3{font-family:"Archivo", ui-sans-serif, system-ui, sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.mono{font-family:"IBM Plex Mono", ui-monospace, monospace;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+.wrap{max-width:1020px;margin:0 auto;padding-inline:16px;padding-block:0 60px}
+
+/* topo */
+header.top{position:sticky;top:0;z-index:20;background:var(--ground);border-bottom:1px solid var(--line)}
+.top-in{max-width:1020px;margin:0 auto;padding-inline:16px;padding-block:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;margin-right:auto}
+.brand b{font-family:"Archivo";font-size:17px;font-weight:700;letter-spacing:-.02em}
+.brand span{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.09em;font-weight:500}
+.clock{text-align:right;line-height:1.2}
+.clock .t{font-family:"IBM Plex Mono";font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.clock .d{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.07em}
+nav.tabs{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;width:100%}
+nav.tabs button{flex:1;border:0;background:transparent;border-radius:8px;padding:8px 10px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--ink-2);font-family:"Archivo"}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+nav.tabs button:focus-visible,.btn:focus-visible,.turnobtn:focus-visible,.namecard:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+
+/* genéricos */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.stack{display:flex;flex-direction:column;gap:20px}
+.sec-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.sec-head h2{font-size:15px;font-weight:600}
+.sec-head p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);font-weight:600;font-family:"Archivo"}
+.muted{color:var(--ink-2)} .tiny{font-size:12.5px}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:8px 13px;
+  font-size:13.5px;font-weight:600;cursor:pointer;font-family:"Archivo";display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{border-color:var(--ink-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.big{padding:14px 20px;font-size:15.5px;border-radius:11px}
+.btn.ghost{background:transparent;border-color:var(--line)}
+.btn.icon{padding:5px 9px;font-size:12.5px}
+input,select{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line-2);border-radius:8px;padding:8px 9px;max-width:100%}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--ink-2);font-weight:600;font-family:"Archivo"}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;
+  font-size:12px;font-weight:600;font-family:"Archivo";white-space:nowrap}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.p-on{background:var(--accent-soft);color:var(--accent)}
+.p-wait{background:var(--surface-2);color:var(--ink-2)}
+.p-late{background:var(--warn-soft);color:var(--warn)}
+.p-miss{background:var(--alert-soft);color:var(--alert)}
+.empty{border:1px dashed var(--line-2);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--ink-2)}
+.empty h3{font-size:15px;color:var(--ink);margin-bottom:4px}
+.banner{border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:10px;
+  padding:11px 14px;font-size:13px;font-weight:500;margin-top:14px;box-shadow:var(--shadow)}
+.banner.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+
+/* seletor de turno */
+.turnos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.turnobtn{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:11px 8px;
+  cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:2px}
+.turnobtn b{font-family:"Archivo";font-size:14px;font-weight:600}
+.turnobtn span{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--ink-2)}
+.turnobtn[aria-pressed="true"]{background:var(--accent);border-color:transparent}
+.turnobtn[aria-pressed="true"] b{color:var(--accent-ink)}
+.turnobtn[aria-pressed="true"] span{color:var(--accent-ink);opacity:.8}
+
+/* cartões de nome */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:10px}
+.namecard{
+  border:1px solid var(--line-2);background:var(--surface);border-radius:12px;padding:14px 15px;
+  min-height:78px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:5px;width:100%;
+}
+.namecard:hover{border-color:var(--accent)}
+.namecard .n{font-family:"Archivo";font-size:16px;font-weight:600;line-height:1.25}
+.namecard .s{font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.namecard.done{background:var(--accent-soft);border-color:transparent;cursor:default}
+.namecard.done .n{color:var(--accent)}
+.namecard.done .s{color:var(--accent)}
+.namecard.done .s .mono{font-weight:600}
+.namecard.late{background:var(--warn-soft)}
+.namecard.late .n,.namecard.late .s{color:var(--warn)}
+.check{width:18px;height:18px;flex:none}
+
+.progress{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.bar{flex:1;min-width:140px;height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+/* painel do dia */
+.painel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.painel .linha{display:grid;grid-template-columns:128px 1fr auto;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.painel .linha.first{border-top:0}
+.painel .tn{font-family:"Archivo";font-weight:600;font-size:13.5px}
+.painel .tn small{display:block;font-family:"IBM Plex Mono";font-weight:400;font-size:11px;color:var(--ink-2)}
+.painel .cont{font-family:"IBM Plex Mono";font-size:14px;font-weight:600;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11.5px;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.chip.ok{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.chip.late{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.chip .mono{font-weight:500;opacity:.85}
+@media (max-width:560px){
+  .painel .linha{grid-template-columns:1fr auto;gap:8px 12px}
+  .painel .chips{grid-column:1 / -1}
+}
+
+/* localização */
+.geo{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;border-radius:10px;padding:10px 12px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);line-height:1.45}
+.geo.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:600}
+.geo.bad{background:var(--alert-soft);border-color:transparent;color:var(--alert);font-weight:600}
+.geo svg{width:15px;height:15px;flex:none;margin-top:2px}
+.regra{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:7px;margin-top:10px}
+.regra svg{width:13px;height:13px;flex:none}
+
+/* tabelas */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+table.data{min-width:660px}
+table th,table td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left}
+table th{font-family:"Archivo";font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--ink-2);font-weight:600;background:var(--surface-2);white-space:nowrap}
+table tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+td.num{font-family:"IBM Plex Mono";font-variant-numeric:tabular-nums}
+table.grade{min-width:820px}
+table.grade td{vertical-align:top;border-right:1px solid var(--line)}
+table.grade th{border-right:1px solid var(--line)}
+table.grade th:last-child,table.grade td:last-child{border-right:0}
+table.grade td.turno{background:var(--surface-2);font-family:"Archivo";font-weight:600;white-space:nowrap;min-width:132px}
+table.grade td.turno small{display:block;font-family:"IBM Plex Mono";font-weight:400;color:var(--ink-2);font-size:11.5px}
+.nm{display:block;padding:1px 0;font-size:12.5px}
+th.hoje,td.hoje{background:var(--accent-soft)}
+th.hoje{color:var(--accent)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);font-weight:600;font-family:"Archivo"}
+.tile .v{font-family:"IBM Plex Mono";font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .spacer{flex:1;min-width:0}
+
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);
+  padding:20px;max-width:390px;width:calc(100% - 32px);box-shadow:var(--shadow)}
+dialog::backdrop{background:var(--scrim)}
+dialog h3{font-size:18px;margin-bottom:4px}
+
+footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (prefers-reduced-motion: no-preference){
+  .btn,.pill,.namecard,.turnobtn{transition:background-color .15s ease,border-color .15s ease,filter .15s ease}
+}
+@media (max-width:420px){
+  .turnos{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>Ponto PAESPE</b><span>Instrutores · CTEC / UFAL</span></div>
+    <div class="clock"><div class="t mono" id="clock-t">--:--</div><div class="d" id="clock-d">&nbsp;</div></div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tab-ponto" aria-selected="true"  aria-controls="v-ponto" data-v="ponto">Bater ponto</button>
+      <button role="tab" id="tab-escala" aria-selected="false" aria-controls="v-escala" data-v="escala">Escala</button>
+      <button role="tab" id="tab-coord" aria-selected="false" aria-controls="v-coord" data-v="coord">Coordenação</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="aviso"></div>
+  <section id="v-ponto"  class="stack" role="tabpanel" aria-labelledby="tab-ponto"  style="padding-top:18px"></section>
+  <section id="v-escala" class="stack" role="tabpanel" aria-labelledby="tab-escala" style="padding-top:18px" hidden></section>
+  <section id="v-coord"  class="stack" role="tabpanel" aria-labelledby="tab-coord"  style="padding-top:18px" hidden></section>
+  <footer class="legal"><span id="rodape"></span><span id="modo"></span></footer>
+</main>
+
+<dialog id="dlg-conf">
+  <h3 id="dc-nome">Nome</h3>
+  <p class="tiny muted" id="dc-sub" style="margin:0 0 16px"></p>
+  <div class="geo" id="dc-geo" style="margin-bottom:16px" hidden></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn primary big" id="dc-ok" style="flex:1">Confirmar chegada</button>
+    <button class="btn ghost big" id="dc-retry" hidden>Tentar de novo</button>
+    <button class="btn ghost big" id="dc-no">Cancelar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-fix">
+  <h3>Corrigir registro</h3>
+  <p class="tiny muted" id="df-sub" style="margin:0 0 14px"></p>
+  <label class="fld" style="max-width:150px">Chegada<input type="time" id="df-h"></label>
+  <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+    <button class="btn primary" id="df-ok">Salvar</button>
+    <button class="btn ghost" id="df-no">Cancelar</button>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="df-del" style="color:var(--alert)">Apagar</button>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="escala.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var CFG = window.CONFIG || {};
+  var ESC = window.ESCALA || { turnos:[], grade:{}, toleranciaMin:10 };
+  var TURNOS = ESC.turnos || [];
+  var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
+  var DIA_CURTO = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  var DIA_LONGO = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+  var UTEIS = [1,2,3,4,5];
+  var DEMO = !(CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY);
+
+  var GEO = CFG.LOCAL || {};
+  var GEO_ATIVO = typeof GEO.lat === "number" && typeof GEO.lng === "number";
+  var RAIO = typeof GEO.raioMetros === "number" ? GEO.raioMetros : 150;
+  var LOCAL_NOME = GEO.nome || "prédio do PAESPE";
+
+  var SVG_PIN = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">'
+    + '<path d="M8 15s5-4.6 5-8.4A5 5 0 1 0 3 6.6C3 10.4 8 15 8 15z" stroke="currentColor" stroke-width="1.4"/>'
+    + '<circle cx="8" cy="6.5" r="1.9" fill="currentColor"/></svg>';
+
+  var view = "ponto";
+  var turnoSel = null;
+  var regsHoje = [];
+  var regsMes = [];
+  var mesFiltro = "";
+  var coordOk = false;
+  var alvoConf = null, alvoFix = null;
+  var carregando = true;
+
+  /* ---------- utilidades ---------- */
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ var d=document.createElement("div"); d.textContent = (s==null?"":String(s)); return d.innerHTML; }
+  function hojeKey(){ return new Date().toLocaleDateString("sv-SE"); }
+  function hhmm(iso){ return iso ? new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : ""; }
+  function minOf(hm){ var p=String(hm).split(":"); return (+p[0])*60 + (+p[1]||0); }
+  function minIso(iso){ var d=new Date(iso); return d.getHours()*60 + d.getMinutes(); }
+  function agoraMin(){ var n=new Date(); return n.getHours()*60 + n.getMinutes(); }
+  function brData(k){ var p=String(k).split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+  function nomeMes(ym){ var p=ym.split("-"); return new Date(+p[0],+p[1]-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); }
+  function turnoDe(id){ for(var i=0;i<TURNOS.length;i++){ if(TURNOS[i].id===id) return TURNOS[i]; } return null; }
+  function escalados(turnoId, dow){
+    var g = (ESC.grade && ESC.grade[turnoId]) || {};
+    return (g[dow] || []).slice();
+  }
+  function atrasoDe(turnoId, iso){
+    var t = turnoDe(turnoId); if(!t) return null;
+    var d = minIso(iso) - minOf(t.inicio);
+    return d > TOL ? d : null;
+  }
+  function fmtDist(d){ return d < 1000 ? Math.round(d)+" m" : (d/1000).toFixed(1).replace(".",",")+" km"; }
+  function distanciaM(la1, ln1, la2, ln2){
+    var R = 6371000, r = Math.PI/180;
+    var a = Math.sin((la2-la1)*r/2), b = Math.sin((ln2-ln1)*r/2);
+    var x = a*a + Math.cos(la1*r)*Math.cos(la2*r)*b*b;
+    return 2*R*Math.asin(Math.min(1, Math.sqrt(x)));
+  }
+  function posicao(){
+    return new Promise(function(ok, falha){
+      if(!navigator.geolocation){ falha({ code:-1 }); return; }
+      navigator.geolocation.getCurrentPosition(ok, falha,
+        { enableHighAccuracy:true, timeout:15000, maximumAge:20000 });
+    });
+  }
+  /* Resolve { ok, msg }. A margem de erro do próprio aparelho entra como folga
+     (até 100 m) para não barrar quem está dentro do prédio com sinal fraco. */
+  async function verificarLocal(){
+    if(!GEO_ATIVO) return { ok:true, msg:"" };
+    try{
+      var p = await posicao();
+      var d = distanciaM(p.coords.latitude, p.coords.longitude, GEO.lat, GEO.lng);
+      var folga = Math.min(p.coords.accuracy || 0, 100);
+      if(d - folga <= RAIO) return { ok:true, msg:"Você está no "+LOCAL_NOME+"." };
+      return { ok:false, msg:"Você está a cerca de "+fmtDist(d)+" do "+LOCAL_NOME
+        +". O ponto só pode ser registrado no local." };
+    }catch(e){
+      if(e && e.code === 1) return { ok:false, msg:"Permita o acesso à localização para bater o ponto. "
+        + "Toque no cadeado ao lado do endereço → Localização → Permitir, e tente de novo." };
+      return { ok:false, msg:"Não consegui obter sua localização. Ligue o GPS, saia de perto de paredes grossas e tente de novo." };
+    }
+  }
+
+  var avisoTimer = null;
+  function aviso(msg, tipo){
+    el("aviso").innerHTML = '<div class="banner'+(tipo==="warn"?" warn":"")+'">'+esc(msg)+'</div>';
+    if(avisoTimer) clearTimeout(avisoTimer);
+    if(tipo!=="fixo") avisoTimer = setTimeout(function(){ el("aviso").innerHTML=""; }, 6000);
+  }
+
+  /* ---------- relógio ---------- */
+  function tick(){
+    var n = new Date();
+    el("clock-t").textContent = n.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    el("clock-d").textContent = DIA_CURTO[n.getDay()]+", "+n.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});
+  }
+
+  /* ---------- camada de dados ---------- */
+  function headers(extra){
+    var h = { "apikey":CFG.SUPABASE_ANON_KEY, "Authorization":"Bearer "+CFG.SUPABASE_ANON_KEY, "Content-Type":"application/json" };
+    if(extra) Object.keys(extra).forEach(function(k){ h[k]=extra[k]; });
+    return h;
+  }
+  function demoLer(){
+    try{ return JSON.parse(localStorage.getItem("ponto-paespe-demo") || "[]"); }catch(e){ return []; }
+  }
+  function demoGravar(a){
+    try{ localStorage.setItem("ponto-paespe-demo", JSON.stringify(a)); }catch(e){}
+  }
+
+  async function listar(de, ate){
+    if(DEMO){
+      return demoLer().filter(function(r){ return r.data >= de && r.data <= ate; });
+    }
+    var url = CFG.SUPABASE_URL.replace(/\/+$/,"") + "/rest/v1/registros"
+      + "?select=id,nome,turno,data,chegada&data=gte."+de+"&data=lte."+ate+"&order=chegada.desc";
+    var r = await fetch(url, { headers: headers() });
+    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+    return await r.json();
+  }
+
+  async function inserir(nome, turno, data, chegada){
+    if(DEMO){
+      var a = demoLer();
+      if(a.some(function(r){ return r.nome===nome && r.turno===turno && r.data===data; })) return;
+      a.push({ id:"d"+Date.now(), nome:nome, turno:turno, data:data, chegada:chegada });
+      demoGravar(a); return;
+    }
+    var r = await fetch(CFG.SUPABASE_URL.replace(/\/+$/,"")+"/rest/v1/registros", {
+      method:"POST", headers:headers({ "Prefer":"return=minimal" }),
+      body: JSON.stringify({ nome:nome, turno:turno, data:data, chegada:chegada })
+    });
+    if(!r.ok){
+      var txt = await r.text();
+      if(r.status===409 || txt.indexOf("duplicate") >= 0) return; // já registrado
+      throw new Error("HTTP "+r.status+" — "+txt.slice(0,200));
+    }
+  }
+
+  async function alterar(id, chegada){
+    if(DEMO){
+      var a = demoLer();
+      a.forEach(function(r){ if(String(r.id)===String(id)) r.chegada = chegada; });
+      demoGravar(a); return;
+    }
+    var r = await fetch(CFG.SUPABASE_URL.replace(/\/+$/,"")+"/rest/v1/registros?id=eq."+encodeURIComponent(id), {
+      method:"PATCH", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify({ chegada:chegada })
+    });
+    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+  }
+
+  async function remover(id){
+    if(DEMO){
+      demoGravar(demoLer().filter(function(r){ return String(r.id)!==String(id); }));
+      return;
+    }
+    var r = await fetch(CFG.SUPABASE_URL.replace(/\/+$/,"")+"/rest/v1/registros?id=eq."+encodeURIComponent(id), {
+      method:"DELETE", headers:headers({ "Prefer":"return=minimal" })
+    });
+    if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+  }
+
+  async function carregarHoje(){
+    try{
+      regsHoje = await listar(hojeKey(), hojeKey());
+      carregando = false;
+    }catch(e){
+      carregando = false;
+      aviso("Não consegui falar com o banco de dados. Confira o config.js ou a conexão. ("+e.message+")", "fixo");
+    }
+    render();
+  }
+  async function carregarMes(){
+    var p = mesFiltro.split("-");
+    var de = mesFiltro+"-01";
+    var ate = new Date(+p[0], +p[1], 0).toLocaleDateString("sv-SE");
+    try{ regsMes = await listar(de, ate); }
+    catch(e){ regsMes = []; aviso("Não consegui carregar o período. ("+e.message+")"); }
+    render();
+  }
+
+  /* ---------- abas ---------- */
+  var tabs = document.querySelectorAll("nav.tabs button");
+  Array.prototype.forEach.call(tabs, function(b){
+    b.addEventListener("click", function(){
+      view = b.dataset.v;
+      Array.prototype.forEach.call(tabs, function(o){ o.setAttribute("aria-selected", String(o===b)); });
+      el("v-ponto").hidden  = view!=="ponto";
+      el("v-escala").hidden = view!=="escala";
+      el("v-coord").hidden  = view!=="coord";
+      if(view==="coord" && coordOk) carregarMes(); else render();
+    });
+  });
+
+  /* ---------- render ---------- */
+  function render(){
+    if(view==="ponto") viewPonto();
+    else if(view==="escala") viewEscala();
+    else viewCoord();
+  }
+
+  /* ---------- BATER PONTO ---------- */
+  function viewPonto(){
+    var box = el("v-ponto");
+    var dow = new Date().getDay();
+    var data = hojeKey();
+    var h = "";
+
+    if(dow===0 || dow===6){
+      box.innerHTML = '<div class="empty"><h3>Sem plantão hoje</h3>'
+        + '<p class="tiny" style="margin:0">A escala do PAESPE vai de segunda a sexta. Bom fim de semana.</p></div>';
+      return;
+    }
+
+    h += painelHoje(dow);
+
+    h += '<div>'
+      + '<div class="eyebrow" style="margin-bottom:8px">Registrar chegada · '+esc(DIA_LONGO[dow])+', '
+      + esc(new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long"}))+'</div>'
+      + '<div class="turnos">';
+    TURNOS.forEach(function(t){
+      h += '<button class="turnobtn" data-t="'+esc(t.id)+'" aria-pressed="'+(t.id===turnoSel)+'">'
+        + '<b>'+esc(t.nome)+'</b><span>'+esc(t.inicio)+' – '+esc(t.fim)+'</span></button>';
+    });
+    h += '</div>';
+    if(GEO_ATIVO){
+      h += '<div class="regra">'+SVG_PIN+'O ponto só é aceito a até '+RAIO+' m do '+esc(LOCAL_NOME)
+        +'. O aparelho vai pedir sua localização.</div>';
+    }
+    h += '</div>';
+
+    var nomes = escalados(turnoSel, dow);
+    var doTurno = regsHoje.filter(function(r){ return r.turno===turnoSel; });
+    var porNome = {}; doTurno.forEach(function(r){ porNome[r.nome] = r; });
+    var feitos = nomes.filter(function(n){ return porNome[n]; }).length;
+
+    h += '<div>';
+    if(!nomes.length){
+      h += '<div class="empty"><h3>Ninguém escalado neste turno hoje</h3>'
+        +  '<p class="tiny" style="margin:0">Escolha outro turno acima, ou confira a aba Escala.</p></div>';
+    } else {
+      h += '<div class="progress"><span class="eyebrow">'+feitos+' de '+nomes.length+' registraram</span>'
+        +  '<span class="bar"><i style="width:'+Math.round(feitos/nomes.length*100)+'%"></i></span></div>'
+        +  '<div class="grid">';
+      nomes.forEach(function(n){
+        var r = porNome[n];
+        if(r){
+          var at = atrasoDe(turnoSel, r.chegada);
+          h += '<div class="namecard done'+(at!=null?" late":"")+'">'
+            + '<span class="n">'+esc(n)+'</span>'
+            + '<span class="s"><svg class="check" viewBox="0 0 20 20" fill="none" aria-hidden="true">'
+            + '<circle cx="10" cy="10" r="9" fill="currentColor" opacity=".18"/>'
+            + '<path d="M5.8 10.3l2.7 2.7 5.7-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            + '<span>Chegou às <span class="mono">'+esc(hhmm(r.chegada))+'</span>'
+            + (at!=null ? ' &middot; '+at+' min de atraso' : '')+'</span>'
+            + '</span></div>';
+        } else {
+          h += '<button class="namecard" data-n="'+esc(n)+'">'
+            + '<span class="n">'+esc(n)+'</span>'
+            + '<span class="s">Toque para registrar a chegada</span></button>';
+        }
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    var fora = doTurno.filter(function(r){ return nomes.indexOf(r.nome) < 0; });
+    if(fora.length){
+      h += '<div><div class="sec-head"><h2>Fora da escala</h2><p>Registraram neste turno sem estar escalados</p></div>'
+        +  '<div class="card" style="padding:12px 16px">'
+        +  fora.map(function(r){ return '<div class="tiny">'+esc(r.nome)+' · <span class="mono">'+esc(hhmm(r.chegada))+'</span></div>'; }).join("")
+        +  '</div></div>';
+    }
+
+    box.innerHTML = h;
+
+    Array.prototype.forEach.call(box.querySelectorAll(".turnobtn"), function(b){
+      b.addEventListener("click", function(){ turnoSel = b.dataset.t; render(); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll(".namecard[data-n]"), function(b){
+      b.addEventListener("click", function(){ abrirConfirma(b.dataset.n); });
+    });
+  }
+
+  function painelHoje(dow){
+    var total = 0, presentes = 0;
+    var corpo = "";
+    TURNOS.forEach(function(t, i){
+      var nomes = escalados(t.id, dow);
+      var reg = {};
+      regsHoje.forEach(function(r){ if(r.turno===t.id) reg[r.nome] = r; });
+      var chegaram = nomes.filter(function(n){ return reg[n]; });
+      var faltam = nomes.filter(function(n){ return !reg[n]; });
+      total += nomes.length; presentes += chegaram.length;
+
+      corpo += '<div class="linha'+(i===0?" first":"")+'">'
+        + '<div class="tn">'+esc(t.nome)+'<small>'+esc(t.inicio)+'–'+esc(t.fim)+'</small></div>'
+        + '<div class="chips">';
+      if(!nomes.length){
+        corpo += '<span class="chip">sem escala neste dia</span>';
+      } else {
+        chegaram.forEach(function(n){
+          var at = atrasoDe(t.id, reg[n].chegada);
+          corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(n)
+            + ' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
+        });
+        faltam.forEach(function(n){ corpo += '<span class="chip">'+esc(n)+'</span>'; });
+      }
+      corpo += '</div><div class="cont"'+(nomes.length && chegaram.length===nomes.length ? ' style="color:var(--accent)"' : '')+'>'
+        + chegaram.length+'/'+nomes.length+'</div></div>';
+    });
+
+    return '<div class="painel">'
+      + '<div class="sec-head" style="margin-bottom:2px">'
+      +   '<h2>Quem já chegou hoje</h2>'
+      +   '<p>'+presentes+' de '+total+' turnos preenchidos · verde é presente, âmbar é atraso, cinza ainda não chegou</p>'
+      + '</div>' + corpo + '</div>';
+  }
+
+  function abrirConfirma(nome){
+    var t = turnoDe(turnoSel);
+    alvoConf = { nome:nome, turno:turnoSel };
+    el("dc-nome").textContent = nome;
+    el("dc-sub").textContent = t.nome + " · " + new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
+      + " · " + new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+    el("dlg-conf").showModal();
+    checarNoDialogo();
+  }
+
+  async function checarNoDialogo(){
+    var faixa = el("dc-geo"), ok = el("dc-ok"), retry = el("dc-retry");
+    if(!GEO_ATIVO){ faixa.hidden = true; ok.disabled = false; retry.hidden = true; return; }
+    faixa.hidden = false; retry.hidden = true;
+    faixa.className = "geo";
+    faixa.innerHTML = SVG_PIN + "<span>Verificando sua localização…</span>";
+    ok.disabled = true;
+    var r = await verificarLocal();
+    if(!el("dlg-conf").open) return;
+    faixa.className = "geo " + (r.ok ? "ok" : "bad");
+    faixa.innerHTML = SVG_PIN + "<span>" + esc(r.msg) + "</span>";
+    ok.disabled = !r.ok;
+    retry.hidden = r.ok;
+  }
+  el("dc-retry").addEventListener("click", checarNoDialogo);
+
+  el("dc-no").addEventListener("click", function(){ el("dlg-conf").close(); });
+  el("dc-ok").addEventListener("click", async function(){
+    var a = alvoConf; if(!a) return;
+    var btn = el("dc-ok"); btn.disabled = true;
+    var agora = new Date().toISOString();
+    try{
+      await inserir(a.nome, a.turno, hojeKey(), agora);
+      el("dlg-conf").close();
+      aviso("Chegada de "+a.nome+" registrada às "+hhmm(agora)+".");
+      await carregarHoje();
+    }catch(e){
+      el("dlg-conf").close();
+      aviso("Não consegui registrar. Tente de novo. ("+e.message+")", "warn");
+    }
+    btn.disabled = false;
+  });
+
+  /* ---------- ESCALA ---------- */
+  function viewEscala(){
+    var dow = new Date().getDay();
+    var h = '<div><div class="sec-head"><h2>Escala semanal</h2>'
+      + '<p>Definida pela coordenação · a coluna de hoje aparece destacada</p></div>'
+      + '<div class="tblwrap"><table class="grade"><thead><tr><th>Turno</th>'
+      + UTEIS.map(function(d){ return '<th'+(d===dow?' class="hoje"':'')+'>'+DIA_LONGO[d].replace("-feira","")
+          .replace(/^./,function(c){return c.toUpperCase();})+'</th>'; }).join("")
+      + '</tr></thead><tbody>';
+    TURNOS.forEach(function(t){
+      h += '<tr><td class="turno">'+esc(t.nome)+'<small>'+esc(t.inicio)+' – '+esc(t.fim)+'</small></td>';
+      UTEIS.forEach(function(d){
+        var ns = escalados(t.id, d);
+        h += '<td'+(d===dow?' class="hoje"':'')+'>'
+          + (ns.length ? ns.map(function(n){ return '<span class="nm">'+esc(n)+'</span>'; }).join("") : '<span class="muted">—</span>')
+          + '</td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div></div>';
+
+    var todos = {};
+    TURNOS.forEach(function(t){ UTEIS.forEach(function(d){ escalados(t.id,d).forEach(function(n){ todos[n] = (todos[n]||0)+1; }); }); });
+    var lista = Object.keys(todos).sort(function(a,b){ return a.localeCompare(b,"pt-BR"); });
+    h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+lista.length+' pessoas · turnos por semana</p></div>'
+      + '<div class="tblwrap"><table><tbody>'
+      + lista.map(function(n){ return '<tr><td>'+esc(n)+'</td><td class="num muted">'+todos[n]+'</td></tr>'; }).join("")
+      + '</tbody></table></div></div>';
+
+    el("v-escala").innerHTML = h;
+  }
+
+  /* ---------- COORDENAÇÃO ---------- */
+  function viewCoord(){
+    var box = el("v-coord");
+    if(!coordOk){
+      box.innerHTML = '<div class="card" style="max-width:420px">'
+        + '<div class="eyebrow">Área restrita</div>'
+        + '<h2 style="font-size:18px;margin:4px 0 4px">Acompanhamento de frequência</h2>'
+        + '<p class="tiny muted" style="margin:0 0 14px">Informe o código da coordenação para ver os registros.</p>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +   '<input type="password" id="cod" placeholder="Código" style="flex:1;min-width:140px">'
+        +   '<button class="btn primary" id="cod-ok">Entrar</button></div></div>';
+      el("cod-ok").addEventListener("click", entrarCoord);
+      el("cod").addEventListener("keydown", function(e){ if(e.key==="Enter") entrarCoord(); });
+      return;
+    }
+
+    var p = mesFiltro.split("-");
+    var ultimoDia = new Date(+p[0], +p[1], 0).getDate();
+    var hoje = hojeKey();
+
+    var porNome = {};
+    function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0 }); }
+    for(var d=1; d<=ultimoDia; d++){
+      var dt = new Date(+p[0], +p[1]-1, d);
+      var key = dt.toLocaleDateString("sv-SE");
+      if(key > hoje) break;
+      var dow = dt.getDay();
+      if(dow===0 || dow===6) continue;
+      TURNOS.forEach(function(t){ escalados(t.id, dow).forEach(function(n){ slot(n).previstos++; }); });
+    }
+    var atrasosTot = 0;
+    regsMes.forEach(function(r){
+      var s = slot(r.nome);
+      s.presentes++;
+      if(atrasoDe(r.turno, r.chegada) != null){ s.atrasos++; atrasosTot++; }
+    });
+    var nomes = Object.keys(porNome).sort(function(a,b){ return a.localeCompare(b,"pt-BR"); });
+    var previstosTot = nomes.reduce(function(a,n){ return a + porNome[n].previstos; }, 0);
+    var freq = previstosTot ? Math.round(regsMes.length / previstosTot * 100) : 0;
+
+    var h = '<div class="toolbar">'
+      + '<label class="fld">Período<input type="month" id="f-mes" value="'+esc(mesFiltro)+'"></label>'
+      + '<span class="spacer"></span>'
+      + '<button class="btn ghost" id="btn-coord-gps">Minhas coordenadas</button>'
+      + '<button class="btn ghost" id="btn-recarregar">Atualizar</button>'
+      + '<button class="btn" id="btn-csv">Baixar CSV</button></div>'
+      + '<div id="saida-gps"></div>';
+
+    h += '<div class="tiles">'
+      + tile("Presenças", String(regsMes.length))
+      + tile("Turnos previstos", String(previstosTot))
+      + tile("Frequência", freq+"%")
+      + tile("Chegadas com atraso", String(atrasosTot))
+      + '</div>';
+
+    h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
+    if(!nomes.length){
+      h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>';
+    } else {
+      h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor</th>'
+        + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
+        + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>';
+      nomes.forEach(function(n){
+        var s = porNome[n];
+        var faltas = Math.max(0, s.previstos - s.presentes);
+        var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
+        h += '<tr><td>'+esc(n)+'</td>'
+          + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
+          + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
+          + '<td class="num"'+(s.atrasos?' style="color:var(--warn)"':'')+'>'+s.atrasos+'</td>'
+          + '<td class="num">'+pc+'%</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+    h += '</div>';
+
+    var ordenados = regsMes.slice().sort(function(a,b){ return new Date(b.chegada) - new Date(a.chegada); });
+    if(ordenados.length){
+      h += '<div><div class="sec-head"><h2>Registros</h2><p>'+ordenados.length+' chegada'+(ordenados.length===1?"":"s")+' · mais recentes primeiro</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor</th>'
+        + '<th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
+      ordenados.slice(0,200).forEach(function(r, i){
+        var at = atrasoDe(r.turno, r.chegada);
+        var t = turnoDe(r.turno);
+        var dow = new Date(r.data+"T12:00:00").getDay();
+        h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dow]+'</span></td>'
+          + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(r.nome)+'</td>'
+          + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
+          + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')+'</td>'
+          + '<td><button class="btn icon ghost" data-fix="'+i+'">Corrigir</button></td></tr>';
+      });
+      h += '</tbody></table></div>';
+      if(ordenados.length>200) h += '<p class="tiny muted" style="margin:8px 0 0">Mostrando os 200 mais recentes; o CSV traz o período inteiro.</p>';
+      h += '</div>';
+    }
+
+    box.innerHTML = h;
+
+    el("f-mes").addEventListener("change", function(){ mesFiltro = this.value || hojeKey().slice(0,7); carregarMes(); });
+    el("btn-recarregar").addEventListener("click", carregarMes);
+    el("btn-coord-gps").addEventListener("click", async function(){
+      var alvo = el("saida-gps");
+      alvo.innerHTML = '<div class="geo" style="margin-top:12px">'+SVG_PIN+'<span>Lendo o GPS…</span></div>';
+      try{
+        var p = await posicao();
+        alvo.innerHTML = '<div class="geo ok" style="margin-top:12px">'+SVG_PIN
+          + '<span>Você está aqui, com precisão de cerca de '+Math.round(p.coords.accuracy)+' m.<br>'
+          + 'Cole estes dois números no <span class="mono">config.js</span>:<br>'
+          + '<span class="mono" style="font-size:14px">lat: '+p.coords.latitude.toFixed(6)
+          + ',&nbsp; lng: '+p.coords.longitude.toFixed(6)+'</span></span></div>';
+      }catch(e){
+        alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN
+          + '<span>Não consegui ler o GPS. Permita o acesso à localização e tente de novo.</span></div>';
+      }
+    });
+    el("btn-csv").addEventListener("click", function(){ baixarCSV(ordenados); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-fix]"), function(b){
+      b.addEventListener("click", function(){ abrirFix(ordenados[+b.dataset.fix]); });
+    });
+  }
+  function tile(k,v){ return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'; }
+
+  function entrarCoord(){
+    var v = el("cod").value;
+    if(v && v === CFG.CODIGO_COORDENACAO){
+      coordOk = true;
+      try{ sessionStorage.setItem("paespe-coord","1"); }catch(e){}
+      carregarMes();
+    } else {
+      aviso("Código incorreto.", "warn");
+    }
+  }
+
+  function abrirFix(r){
+    alvoFix = r;
+    var t = turnoDe(r.turno);
+    el("df-sub").textContent = r.nome + " · " + (t?t.nome:r.turno) + " · " + brData(r.data);
+    el("df-h").value = hhmm(r.chegada);
+    el("dlg-fix").showModal();
+  }
+  el("df-no").addEventListener("click", function(){ el("dlg-fix").close(); });
+  el("df-ok").addEventListener("click", async function(){
+    var r = alvoFix; if(!r) return;
+    var v = el("df-h").value;
+    if(!v){ aviso("Informe o horário."); return; }
+    var p = v.split(":");
+    var d = new Date(r.data+"T00:00:00"); d.setHours(+p[0], +p[1], 0, 0);
+    el("dlg-fix").close();
+    try{ await alterar(r.id, d.toISOString()); aviso("Registro corrigido."); await carregarMes(); await carregarHoje(); }
+    catch(e){ aviso("Não consegui corrigir. ("+e.message+")", "warn"); }
+  });
+  el("df-del").addEventListener("click", async function(){
+    var r = alvoFix; if(!r) return;
+    el("dlg-fix").close();
+    try{ await remover(r.id); aviso("Registro apagado."); await carregarMes(); await carregarHoje(); }
+    catch(e){ aviso("Não consegui apagar. ("+e.message+")", "warn"); }
+  });
+
+  /* ---------- CSV ---------- */
+  function baixarCSV(rows){
+    var head = ["Data","Dia","Turno","Instrutor","Chegada","Atraso (min)","Situação"];
+    var out = [head.join(";")];
+    rows.slice().reverse().forEach(function(r){
+      var at = atrasoDe(r.turno, r.chegada);
+      var t = turnoDe(r.turno);
+      var dow = new Date(r.data+"T12:00:00").getDay();
+      out.push([brData(r.data), DIA_CURTO[dow], t?t.nome:r.turno, r.nome, hhmm(r.chegada),
+        at!=null?String(at):"", at!=null?"Atraso":"No horário"]
+        .map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(";"));
+    });
+    var blob = new Blob(["﻿"+out.join("\r\n")], { type:"text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ponto-paespe-"+mesFiltro+".csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  /* ---------- início ---------- */
+  function turnoAtual(){
+    var m = agoraMin(), melhor = null;
+    for(var i=0;i<TURNOS.length;i++){
+      var t = TURNOS[i];
+      if(m >= minOf(t.inicio) - 60 && m <= minOf(t.fim) + 30) return t.id;
+      if(m < minOf(t.inicio) && !melhor) melhor = t.id;
+    }
+    return melhor || (TURNOS[0] && TURNOS[0].id);
+  }
+
+  el("rodape").textContent = CFG.RODAPE || "";
+  el("modo").textContent = DEMO ? "Modo demonstração — registros salvos só neste navegador" : "";
+  turnoSel = turnoAtual();
+  try{ if(sessionStorage.getItem("paespe-coord")==="1") coordOk = true; }catch(e){}
+  mesFiltro = hojeKey().slice(0,7);
+
+  tick();
+  setInterval(function(){
+    tick();
+    if(view==="ponto") render();
+  }, 30000);
+  setInterval(function(){ if(view==="ponto") carregarHoje(); }, 45000);
+
+  render();
+  carregarHoje();
+  if(DEMO) aviso("Modo demonstração: preencha o arquivo config.js com os dados do Supabase para valer de verdade.", "fixo");
+})();
+</script>
+</body>
+</html>
