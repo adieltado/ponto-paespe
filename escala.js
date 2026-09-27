@@ -1,14 +1,12 @@
 /* =============================================================
-   ESCALA DOS INSTRUTORES — PAESPE
+   CONFIGURAÇÃO DA ESCALA — PAESPE
    -------------------------------------------------------------
-   Este é o único arquivo que a coordenação precisa editar.
+   Aqui ficam só as peças fixas do sistema: os turnos, a tolerância
+   de atraso e os nomes das diretorias.
 
-   Regras gerais:
-     • Escreva o nome SEMPRE igual em todos os lugares — é por ele
-       que o sistema junta os registros de cada pessoa.
-     • Depois de salvar no GitHub, o site atualiza em ~1 minuto.
-
-   Semestre: 2026.2   ·   Última atualização: 27/09/2026
+   As PESSOAS e a GRADE não moram mais neste arquivo — elas ficam
+   no banco e são editadas pela coordenação, dentro do próprio site
+   (aba Coordenação → Pessoas e Coordenação → Escala).
    ============================================================= */
 
 window.ESCALA = {
@@ -16,7 +14,7 @@ window.ESCALA = {
   /* ---------------------------------------------------------------
      TURNOS
      O turno com "sabado: true" só aparece aos sábados, e quem está
-     escalado nele vem da lista SÁBADOS lá embaixo, não da grade.
+     escalado nele vem das datas de sábado cadastradas na aba Escala.
      --------------------------------------------------------------- */
   turnos: [
     { id: "matutino",   nome: "Matutino",   inicio: "08:00", fim: "12:00" },
@@ -35,93 +33,6 @@ window.ESCALA = {
   diretorias: ["Acadêmica", "Administrativa", "Captação de Recursos", "Marketing & Comunicação"],
 
   /* Versão curta, usada só no rótulo dentro dos cartões. */
-  diretoriasCurtas: { "Captação de Recursos": "Captação", "Marketing & Comunicação": "Marketing" },
-
-  /* ---------------------------------------------------------------
-     INSTRUTORES
-     A chave à esquerda é o APELIDO: é ela que aparece na grade
-     abaixo e é ela que o banco de dados guarda. Não mude um apelido
-     depois que o sistema estiver em uso — os registros antigos
-     ficariam órfãos. Para corrigir a grafia que as pessoas veem,
-     altere só o "completo".
-     O "completo" é o nome que aparece na tela e nos relatórios.
-     "curso" é a graduação da pessoa (aparece na lista de instrutores).
-     "diretor: true" marca quem dirige a diretoria — o nome sai em negrito.
-     --------------------------------------------------------------- */
-  instrutores: {
-    "Adonias":            { completo: "Adonias Valdevino da Silva", diretoria: "Marketing & Comunicação", curso: "Educação Física" },
-    "Ana Luíza":          { completo: "Ana Luíza Bezerra Cavalcante", diretoria: "Marketing & Comunicação", curso: "Serviço Social" },
-    "Antônio Ryksson":    { completo: "Antônio Ryksson Batista da Silva", diretoria: "Acadêmica", curso: "Eng. Química" },
-    "Beatriz":            { completo: "Beatriz Alvez Ferreira", diretoria: "Acadêmica", curso: "Pedagogia" },
-    "Eduarda":            { completo: "Eduarda Rayane Costa Monteiro", diretoria: "Marketing & Comunicação", curso: "Ciências Biológicas", diretor: true },
-    "Ellis":              { completo: "Ellis Regina Santos Tavares", diretoria: "Acadêmica", curso: "Medicina" },
-    "Emilly Júlia":       { completo: "Emilly Júlia da Silva Ferreira", diretoria: "Administrativa", curso: "Eng. Florestal" },
-    "Emilly Campelo":     { completo: "Emilly Samara Araújo Assis Campelo", diretoria: "Acadêmica", curso: "Educação Física" },
-    "Emilly Vitória":     { completo: "Emilly Vitoria Rodrigues Oliveira", diretoria: "Administrativa", curso: "Ciências Biológicas" },
-    "Gyldson":            { completo: "Gyldson Luiz Rodrigues dos Santos", diretoria: "Marketing & Comunicação", curso: "Eng. Ambiental e Sanitária" },
-    "Isadora Soares":     { completo: "Isadora Soares Lopes do Nascimento", diretoria: "Acadêmica", curso: "Enfermagem", diretor: true },
-    "Jackeline":          { completo: "Jackeline Salviano da Silva", diretoria: "Administrativa", curso: "Odontologia" },
-    "Julia Cavalcante":   { completo: "Julia Cavalcante Lopes dos Santos", diretoria: "Captação de Recursos", curso: "Letras – Português" },
-    "Júlia Emylly":       { completo: "Júlia Emylly dos Santos", diretoria: "Administrativa", curso: "Eng. Química" },
-    "Kariny":             { completo: "Kariny Gabrielly Ramos Santos", diretoria: "Acadêmica", curso: "Psicologia" },
-    "Kerolayne":          { completo: "Kerolayne Vitoria Ferreira Santos", diretoria: "Marketing & Comunicação", curso: "Eng. Química" },
-    "Maria Isadora":      { completo: "Maria Isadora Gomes Profirio", diretoria: "Captação de Recursos", curso: "Psicologia" },
-    "Maria Jaqueline":    { completo: "Maria Jaqueline Silva dos Santos", diretoria: "Captação de Recursos", curso: "Serviço Social" },
-    "Sara Vitória":       { completo: "Sara Vitória Isabel Candido", diretoria: "Captação de Recursos", curso: "Matemática", diretor: true },
-    "Sarah Kessya":       { completo: "Sarah Kessya Lopes Muniz de Almeida", diretoria: "Administrativa", curso: "Ciências Biológicas", diretor: true },
-    "Thiago":             { completo: "Thiago Rocha dos Santos", diretoria: "Marketing & Comunicação", curso: "Psicologia" }
-  },
-
-  /* ---------------------------------------------------------------
-     GRADE DE SEGUNDA A SEXTA
-     Dias: 1 = segunda, 2 = terça, 3 = quarta, 4 = quinta, 5 = sexta.
-     --------------------------------------------------------------- */
-  grade: {
-
-    matutino: {
-      1: ["Eduarda", "Júlia Emylly", "Sara Vitória"],
-      2: ["Eduarda", "Julia Cavalcante", "Maria Jaqueline"],
-      3: ["Emilly Júlia", "Gyldson", "Julia Cavalcante", "Ana Luíza"],
-      4: ["Emilly Vitória", "Júlia Emylly", "Sara Vitória"],
-      5: ["Kerolayne", "Maria Jaqueline", "Kariny"]
-    },
-
-    vespertino: {
-      1: ["Antônio Ryksson", "Emilly Júlia", "Ellis", "Sara Vitória"],
-      2: ["Beatriz", "Kariny", "Sarah Kessya", "Ana Luíza"],
-      3: ["Isadora Soares", "Maria Isadora", "Sarah Kessya", "Beatriz"],
-      4: ["Emilly Vitória", "Emilly Campelo", "Thiago"],
-      5: ["Adonias", "Ellis", "Jackeline", "Emilly Campelo", "Ana Luíza", "Maria Isadora"]
-    },
-
-    noturno: {
-      1: ["Adonias", "Emilly Júlia", "Maria Jaqueline", "Isadora Soares", "Ellis"],
-      2: ["Antônio Ryksson", "Sarah Kessya", "Eduarda", "Júlia Emylly", "Thiago"],
-      3: ["Gyldson", "Isadora Soares", "Kerolayne", "Emilly Vitória", "Maria Isadora", "Jackeline"],
-      4: ["Adonias", "Beatriz", "Emilly Campelo", "Kariny", "Thiago"],
-      5: ["Antônio Ryksson", "Jackeline", "Julia Cavalcante", "Gyldson", "Kerolayne"]
-    }
-
-  },
-
-  /* ---------------------------------------------------------------
-     SÁBADOS
-     Uma linha por sábado, com a data no formato ANO-MÊS-DIA e as
-     diretorias convocadas. Use "todos" quando for o programa inteiro.
-
-     Exemplos:
-       { data: "2026-10-03", diretorias: ["Acadêmica", "Captação de Recursos"] },
-       { data: "2026-10-10", diretorias: "todos" },
-
-     Sábado que não estiver nesta lista não aceita registro de ponto.
-     Lembre de acrescentar as datas do mês seguinte antes que ele
-     comece.
-     --------------------------------------------------------------- */
-  sabados: [
-    { data: "2026-09-05", diretorias: ["Acadêmica", "Captação de Recursos"] },
-    { data: "2026-09-12", diretorias: "todos" },
-    { data: "2026-09-19", diretorias: ["Administrativa", "Marketing & Comunicação"] },
-    { data: "2026-09-26", diretorias: "todos" }
-  ]
+  diretoriasCurtas: { "Captação de Recursos": "Captação", "Marketing & Comunicação": "Marketing" }
 
 };

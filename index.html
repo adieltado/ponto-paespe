@@ -406,12 +406,16 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   var TURNO_SAB = TURNOS.filter(function(t){ return t.sabado; })[0] || null;
   var DIRETORIAS = ESC.diretorias || [];
   var DIR_CURTA = ESC.diretoriasCurtas || {};
-  var INSTRUTORES = {};
-  Object.keys(ESC.instrutores || {}).forEach(function(k){ INSTRUTORES[k] = ESC.instrutores[k]; });
-  var instrutoresDoBanco = false;
-  var SABADOS = (ESC.sabados || []).slice();
-  var GRADE = JSON.parse(JSON.stringify(ESC.grade || {}));
-  var escalaDoBanco = false;
+  var INSTRUTORES = {};          /* vem do banco — aba Coordenação → Pessoas */
+  var SABADOS = [];
+  var GRADE = {};                /* vem do banco — aba Coordenação → Escala */
+  var PROBLEMAS = [];            /* falhas de leitura, mostradas no topo da Coordenação */
+  function anota(tab, e){
+    var m = (e && e.message) || String(e || "");
+    if(/does not exist|Could not find the table|schema cache/i.test(m))
+      m = "a tabela ainda n\u00e3o existe no banco \u2014 rode o arquivo banco.sql no SQL Editor do Supabase";
+    PROBLEMAS.push({ tabela:tab, msg:m });
+  }
   var BOLSA = (typeof CFG.BOLSA === "number") ? CFG.BOLSA : 700;
   var JUSTIFICATIVAS = [];
   var historico = [];
@@ -679,23 +683,32 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     erro(await sb.from("convites").delete().eq("email", email));
   }
 
-  async function listarInstrutores(){
-    if(DEMO) return null;
-    var r = await sb.from("instrutores").select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
-    if(r.error || !r.data || !r.data.length) return null;
-    return r.data;
+  /* No modo demonstração (sem Supabase) usamos um quadro fictício só para
+     a tela ter o que mostrar. Nada disso vai para o banco. */
+  function quadroDemo(){
+    INSTRUTORES = {
+      "Ana":   { completo:"Ana Exemplo",   diretoria:DIRETORIAS[0]||"", curso:"Eng. Química", diretor:true,  ativo:true },
+      "Bruno": { completo:"Bruno Exemplo", diretoria:DIRETORIAS[1]||"", curso:"Pedagogia",     diretor:false, ativo:true },
+      "Carla": { completo:"Carla Exemplo", diretoria:DIRETORIAS[2]||"", curso:"Medicina",      diretor:false, ativo:true }
+    };
+    GRADE = { matutino:{1:["Ana","Bruno"],2:["Carla"],3:["Ana"],4:["Bruno","Carla"],5:["Ana"]},
+              vespertino:{1:["Carla"],2:["Ana","Bruno"],3:["Carla"],4:["Ana"],5:["Bruno"]},
+              noturno:{1:["Bruno"],2:["Carla"],3:["Ana","Bruno"],4:["Carla"],5:["Ana","Carla"]} };
+    SABADOS = [];
   }
   async function carregarInstrutores(){
-    var lista = null;
-    try{ lista = await listarInstrutores(); }catch(e){}
-    if(!lista) return;                       // sem tabela ou vazia: segue com o escala.js
+    if(DEMO){ quadroDemo(); return; }
     var m = {};
-    lista.forEach(function(x){
-      m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "",
-                    diretor:!!x.diretor, ativo:(x.ativo !== false), desligadoEm:x.desligado_em || null };
-    });
-    INSTRUTORES = m;
-    instrutoresDoBanco = true;
+    try{
+      var r = await sb.from("instrutores")
+        .select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
+      if(r.error) throw new Error(r.error.message);
+      (r.data || []).forEach(function(x){
+        m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "",
+                      diretor:!!x.diretor, ativo:(x.ativo !== false), desligadoEm:x.desligado_em || null };
+      });
+      INSTRUTORES = m;
+    }catch(e){ anota("instrutores", e); }
   }
   async function salvarInstrutor(nome, patch){
     if(DEMO) return;
@@ -703,11 +716,6 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
   async function criarInstrutor(x){
     if(DEMO) return;
-    /* se o quadro ainda vem do escala.js, leva os 21 junto — senao a tabela
-       passaria a ter so esta pessoa e a lista inteira sumiria da tela. */
-    if(!instrutoresDoBanco && Object.keys(INSTRUTORES).length){
-      try{ await importarInstrutores(); }catch(e){}
-    }
     var r = await sb.from("instrutores").insert(x).select("nome");
     if(r.error && r.error.code === "23505") throw new Error("Já existe um instrutor com esse apelido.");
     erroW(r, "instrutores");
@@ -736,27 +744,25 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(DEMO) return;
     try{
       var r = await sb.from("escala").select("turno,dia,nome");
-      if(!r.error && r.data && r.data.length){
-        var g = {};
-        r.data.forEach(function(x){
-          if(!g[x.turno]) g[x.turno] = {};
-          if(!g[x.turno][x.dia]) g[x.turno][x.dia] = [];
-          g[x.turno][x.dia].push(x.nome);
-        });
-        Object.keys(g).forEach(function(t){
-          Object.keys(g[t]).forEach(function(d){ g[t][d].sort(ordenaPorNome); });
-        });
-        GRADE = g; escalaDoBanco = true;
-      }
-    }catch(e){}
+      if(r.error) throw new Error(r.error.message);
+      var g = {};
+      (r.data || []).forEach(function(x){
+        if(!g[x.turno]) g[x.turno] = {};
+        if(!g[x.turno][x.dia]) g[x.turno][x.dia] = [];
+        g[x.turno][x.dia].push(x.nome);
+      });
+      Object.keys(g).forEach(function(t){
+        Object.keys(g[t]).forEach(function(d){ g[t][d].sort(ordenaPorNome); });
+      });
+      GRADE = g;
+    }catch(e){ anota("escala", e); }
     try{
       var r2 = await sb.from("sabados").select("data,todos,diretorias").order("data");
-      if(!r2.error && r2.data && r2.data.length){
-        SABADOS = r2.data.map(function(x){
-          return { data:x.data, diretorias: x.todos ? "todos" : (x.diretorias || []) };
-        });
-      }
-    }catch(e){}
+      if(r2.error) throw new Error(r2.error.message);
+      SABADOS = (r2.data || []).map(function(x){
+        return { data:x.data, diretorias: x.todos ? "todos" : (x.diretorias || []) };
+      });
+    }catch(e){ anota("sabados", e); }
   }
   async function carregarExcecoes(){
     if(DEMO) return;
@@ -858,34 +864,6 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(DEMO) return;
     erro(await sb.from("justificativas").delete().eq("nome", nome).eq("data", data).eq("turno", turno));
   }
-  async function importarInstrutores(){
-    if(DEMO) return;
-    var base = ESC.instrutores || {};
-    var linhas = Object.keys(base).map(function(n){
-      var v = base[n];
-      if(typeof v === "string") v = { diretoria:v };
-      return { nome:n, completo:v.completo || n, diretoria:v.diretoria || null,
-               curso:v.curso || null, diretor:!!v.diretor };
-    });
-    if(!linhas.length) throw new Error("o arquivo escala.js não tem instrutores");
-    erroW(await sb.from("instrutores").upsert(linhas, { onConflict:"nome", ignoreDuplicates:true }).select("nome"), "instrutores", true);
-  }
-  async function importarEscala(){
-    if(DEMO) return;
-    var slots = [];
-    Object.keys(ESC.grade || {}).forEach(function(t){
-      Object.keys(ESC.grade[t] || {}).forEach(function(d){
-        (ESC.grade[t][d] || []).forEach(function(n){ slots.push({ turno:t, dia:+d, nome:n }); });
-      });
-    });
-    if(slots.length) erro(await sb.from("escala").upsert(slots, { onConflict:"turno,dia,nome", ignoreDuplicates:true }));
-    var sabs = (ESC.sabados || []).map(function(e){
-      var todos = (e.diretorias === "todos" || e.diretorias === "Todos");
-      return { data:e.data, todos:todos, diretorias: todos ? [] : (e.diretorias || []) };
-    });
-    if(sabs.length) erro(await sb.from("sabados").upsert(sabs, { onConflict:"data", ignoreDuplicates:true }));
-  }
-
   async function listarPerfis(){
     if(DEMO) return [perfil];
     return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
@@ -1059,6 +1037,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
 
   async function entrarNoApp(){
+    PROBLEMAS = [];
     await carregarInstrutores();
     await carregarEscala();
     await carregarExcecoes();
@@ -1687,6 +1666,21 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         }).join("")
       + '</nav><div class="coordmain">';
 
+    if(PROBLEMAS.length){
+      var vistos = {}, unicos = [];
+      PROBLEMAS.forEach(function(x){
+        var k = x.tabela + "|" + x.msg;
+        if(!vistos[k]){ vistos[k] = 1; unicos.push(x); }
+      });
+      h += '<div class="card" style="border-color:var(--alert)">'
+        + '<h2 style="font-size:15px;margin-bottom:6px;color:var(--alert)">O banco n\u00e3o respondeu a tudo</h2>'
+        + '<ul class="tiny" style="margin:0;padding-left:18px">'
+        + unicos.map(function(x){
+            return '<li><b>' + esc(x.tabela) + '</b> \u2014 ' + esc(x.msg) + '</li>';
+          }).join("")
+        + '</ul></div>';
+    }
+
     h += barraPeriodo(true);
 
     /* ---------------- visão geral ---------------- */
@@ -1831,14 +1825,6 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){
         basePadrao(t.id, d, "").forEach(function(n){ turnosPor[n] = (turnosPor[n]||0)+1; }); }); });
 
-      if(!instrutoresDoBanco){
-        h += '<div class="card" style="border-color:var(--warn);background:var(--warn-soft)">'
-          + '<h2 style="font-size:15px;margin-bottom:4px">O quadro ainda não está no banco</h2>'
-          + '<p class="tiny" style="margin:0 0 12px;color:var(--warn)">Os '+chaves.length+' instrutores abaixo estão sendo lidos do '
-          + 'arquivo <span class="mono">escala.js</span>. Enquanto for assim, o que você editar aqui não aparece na lista. '
-          + 'Clique abaixo para copiá-los para o banco — é uma vez só; daí em diante tudo é editado nesta tela.</p>'
-          + '<button class="btn primary" id="imp-instr">Importar os '+chaves.length+' para o banco</button></div>';
-      }
       h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+(chaves.length - desligados)+' ativos</p></div>'
         + '<div class="tblwrap"><table class="data"><thead><tr><th>Apelido</th><th>Nome completo</th>'
         + '<th>Diretoria</th><th>Curso</th><th>Dir.</th><th class="num">Turnos</th><th>Situação</th>'
@@ -2035,13 +2021,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(coordSec === "escala" && modoEscala === "padrao"){
       var nomesAtivos = Object.keys(INSTRUTORES).sort(ordenaPorNome).filter(function(n){ return infoDe(n).ativo !== false; });
 
-      if(!escalaDoBanco){
-        h += '<div class="card" style="border-color:var(--warn);background:var(--warn-soft)">'
-          + '<h2 style="font-size:15px;margin-bottom:4px">A escala ainda não está no banco</h2>'
-          + '<p class="tiny" style="margin:0 0 12px;color:var(--warn)">A grade e os sábados estão sendo lidos do arquivo '
-          + '<span class="mono">escala.js</span>. Enquanto for assim, suas edições não aparecem. '
-          + 'Clique abaixo para copiá-los para o banco — uma vez só.</p>'
-          + '<button class="btn primary" id="imp-escala">Importar a escala para o banco</button></div>';
+      if(!nomesAtivos.length){
+        h += '<div class="empty"><h3>Nenhum instrutor cadastrado ainda</h3>'
+          + '<p>A grade só aceita quem está na lista de instrutores. Cadastre as pessoas em '
+          + '<b>Coordenação → Pessoas</b> e volte aqui para montá-la.</p>'
+          + '<button class="btn primary" data-ir="pessoas">Ir para Pessoas</button></div>';
       }
       h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
         + '<p>clique no × para tirar alguém, ou use o seletor para acrescentar</p></div>'
@@ -2243,17 +2227,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         await carregarMes();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ccb.disabled = false; }
     });
-    var impI = el("imp-instr");
-    if(impI) impI.addEventListener("click", async function(){
-      impI.disabled = true;
-      try{ await importarInstrutores(); await carregarInstrutores(); aviso("Quadro importado. A partir de agora ele vive no banco."); render(); }
-      catch(e){ aviso("Não consegui importar. ("+e.message+")", "warn"); impI.disabled = false; }
-    });
-    var impE = el("imp-escala");
-    if(impE) impE.addEventListener("click", async function(){
-      impE.disabled = true;
-      try{ await importarEscala(); await carregarEscala(); aviso("Escala importada. A partir de agora ela vive no banco."); render(); }
-      catch(e){ aviso("Não consegui importar. ("+e.message+")", "warn"); impE.disabled = false; }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-ir]"), function(bt){
+      bt.addEventListener("click", function(){ coordSec = bt.dataset.ir; render(); });
     });
     ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor excluído do quadro.");
     ligar(box, "data-desliga", function(n){ return desligarInstrutor(n, true); }, "Instrutor desligado — sai das escalas a partir de hoje.");
