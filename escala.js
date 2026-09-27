@@ -25,8 +25,8 @@ window.ESCALA = {
     { id: "sabado",     nome: "Sábado",     inicio: "07:30", fim: "12:00", sabado: true }
   ],
 
-  /* Minutos de tolerância antes de a chegada contar como atraso. */
-  toleranciaMin: 10,
+  /* Minutos de tolerância: chegar até este atraso NÃO conta como atraso. */
+  toleranciaMin: 5,
 
   /* ---------------------------------------------------------------
      DIRETORIAS

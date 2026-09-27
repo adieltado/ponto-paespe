@@ -19,6 +19,7 @@
   --accent:#3B78C8; --accent-strong:#2B5E9E; --accent-ink:#FFFFFF; --accent-soft:#D9ECFF;
   --warn:#8A5A00; --warn-soft:#FBEFD9;
   --alert:#A62F26; --alert-soft:#FAE3E1;
+  --d0:#2B5E9E; --d1:#6B4FA8; --d2:#0C6A5D; --d3:#A8386B;
   --scrim:rgba(26,35,64,.48);
   --shadow:0 1px 2px rgba(26,35,64,.07), 0 10px 28px -18px rgba(26,35,64,.38);
   --r:12px;
@@ -33,7 +34,9 @@
     --accent:#9BC8FF; --accent-strong:#9BC8FF; --accent-ink:#12203A; --accent-soft:#25355F;
     --warn:#E5B461; --warn-soft:#372D15;
     --alert:#F08C80; --alert-soft:#3F2320;
-    --scrim:rgba(4,8,18,.66);
+    --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
+    --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
+  --scrim:rgba(4,8,18,.66);
     --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px -18px rgba(0,0,0,.85);
   }
 }
@@ -44,6 +47,7 @@
   --accent:#9BC8FF; --accent-strong:#9BC8FF; --accent-ink:#12203A; --accent-soft:#25355F;
   --warn:#E5B461; --warn-soft:#372D15;
   --alert:#F08C80; --alert-soft:#3F2320;
+  --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
   --scrim:rgba(4,8,18,.66);
   --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px -18px rgba(0,0,0,.85);
 }
@@ -135,8 +139,8 @@ label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transfo
 .namecard:hover{border-color:var(--accent)}
 .namecard .n{font-family:var(--sans);font-size:16px;font-weight:600;line-height:1.25}
 .dir{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--ink-2)}
-.namecard.done .dir{color:var(--accent-strong);opacity:.75}
-.namecard.late .dir{color:var(--warn);opacity:.8}
+.dir-0{color:var(--d0)} .dir-1{color:var(--d1)} .dir-2{color:var(--d2)} .dir-3{color:var(--d3)}
+td.dirc{font-weight:600}
 tr.passou td{opacity:.5}
 .namecard .s{font-size:12.5px;color:var(--ink-2);display:flex;align-items:flex-start;gap:7px}
 .namecard .s>span{flex:1;min-width:0}
@@ -189,7 +193,7 @@ table th{font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-
 table tr:last-child td{border-bottom:0}
 td.num,th.num{text-align:right}
 td.num{font-family:var(--sans);font-variant-numeric:tabular-nums}
-table.grade{min-width:1100px}
+table.grade{min-width:900px}
 table.grade td{vertical-align:top;border-right:1px solid var(--line)}
 table.grade th{border-right:1px solid var(--line)}
 table.grade th:last-child,table.grade td:last-child{border-right:0}
@@ -321,6 +325,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function infoDe(n){ var v = INSTRUTORES[n]; return (typeof v === "string") ? { diretoria:v } : (v || {}); }
   function diretoriaDe(n){ return infoDe(n).diretoria || ""; }
   function nomeCheio(n){ return infoDe(n).completo || n; }
+  function nomeCurto(n){ return nomeCheio(n).split(/\s+/).slice(0,2).join(" "); }
+  function classeDir(d){ var i = DIRETORIAS.indexOf(d); return i >= 0 ? " dir-"+i : ""; }
   function ordenaPorNome(a,b){ return nomeCheio(a).localeCompare(nomeCheio(b),"pt-BR"); }
 
   /* ---------- escala ---------- */
@@ -537,7 +543,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '<span class="bar"><i style="width:'+Math.round(feitos/nomes.length*100)+'%"></i></span></div><div class="grid">';
       nomes.forEach(function(n){
         var r = reg[n], d = diretoriaDe(n);
-        var rot = d ? '<span class="dir">'+esc(d)+'</span>' : '';
+        var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(d)+'</span>' : '';
         if(r){
           var at = atrasoDe(turnoSel, r.chegada);
           h += '<div class="namecard done'+(at!=null?" late":"")+'">'+rot
@@ -591,9 +597,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       } else {
         chegaram.forEach(function(n){
           var at = atrasoDe(t.id, reg[n].chegada);
-          corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(nomeCheio(n))+' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
+          corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(nomeCurto(n))+' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
         });
-        faltam.forEach(function(n){ corpo += '<span class="chip">'+esc(nomeCheio(n))+'</span>'; });
+        faltam.forEach(function(n){ corpo += '<span class="chip">'+esc(nomeCurto(n))+'</span>'; });
       }
       corpo += '</div><div class="cont"'+(nomes.length && chegaram.length===nomes.length ? ' style="color:var(--accent-strong)"' : '')+'>'
         + chegaram.length+'/'+nomes.length+'</div></div>';
@@ -668,7 +674,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       UTEIS.forEach(function(d){
         var ns = escalados(t.id, d, "").filter(passa);
         h += '<td'+(d===dow?' class="hoje"':'')+'>'
-          + (ns.length ? ns.map(function(n){ return '<span class="nm">'+esc(nomeCheio(n))+'</span>'; }).join("") : '<span class="muted">—</span>')
+          + (ns.length ? ns.map(function(n){ return '<span class="nm'+classeDir(diretoriaDe(n))+'">'+esc(nomeCurto(n))+'</span>'; }).join("") : '<span class="muted">—</span>')
           + '</td>';
       });
       h += '</tr>';
@@ -707,7 +713,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Diretoria</th><th class="num">Turnos/semana</th></tr></thead><tbody>'
       + todos.map(function(n){
           var d = diretoriaDe(n);
-          return '<tr><td>'+esc(nomeCheio(n))+'</td><td'+(d?'':' class="muted"')+'>'+esc(d||"a definir")+'</td>'
+          return '<tr><td>'+esc(nomeCheio(n))+'</td><td class="'+(d?('dirc'+classeDir(d)):'muted')+'">'+esc(d||"a definir")+'</td>'
             + '<td class="num">'+(turnosSem[n]||0)+'</td></tr>';
         }).join("")
       + '</tbody></table></div></div>';
@@ -792,7 +798,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
             var s = porDir[d];
             var faltas = Math.max(0, s.previstos - s.presentes);
             var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
-            return '<tr><td>'+esc(d)+'</td><td class="num">'+s.pessoas+'</td>'
+            return '<tr><td class="dirc'+classeDir(d)+'">'+esc(d)+'</td><td class="num">'+s.pessoas+'</td>'
               + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
               + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
               + '<td class="num"'+(s.atrasos?' style="color:var(--warn)"':'')+'>'+s.atrasos+'</td>'
