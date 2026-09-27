@@ -702,6 +702,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     try{
       var r = await sb.from("instrutores")
         .select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
+      /* tabela antiga pode não ter todas as colunas: tenta de novo pegando o que houver */
+      if(r.error && (r.error.code === "42703" || /column .* does not exist/i.test(r.error.message || ""))){
+        anota("instrutores", new Error("faltam colunas na tabela \u2014 rode o banco.sql de novo (ele acrescenta as que faltarem)"));
+        r = await sb.from("instrutores").select("*");
+      }
       if(r.error) throw new Error(r.error.message);
       (r.data || []).forEach(function(x){
         m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "",
@@ -744,6 +749,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(DEMO) return;
     try{
       var r = await sb.from("escala").select("turno,dia,nome");
+      if(r.error && (r.error.code === "42703" || /column .* does not exist/i.test(r.error.message || "")))
+        r = await sb.from("escala").select("*");
       if(r.error) throw new Error(r.error.message);
       var g = {};
       (r.data || []).forEach(function(x){
@@ -758,6 +765,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     }catch(e){ anota("escala", e); }
     try{
       var r2 = await sb.from("sabados").select("data,todos,diretorias").order("data");
+      if(r2.error && (r2.error.code === "42703" || /column .* does not exist/i.test(r2.error.message || "")))
+        r2 = await sb.from("sabados").select("*");
       if(r2.error) throw new Error(r2.error.message);
       SABADOS = (r2.data || []).map(function(x){
         return { data:x.data, diretorias: x.todos ? "todos" : (x.diretorias || []) };
@@ -2396,8 +2405,15 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       }catch(e){ L.push("eh_coord(): erro " + e.message); }
       try{
         var rs = await sb.from("instrutores").select("nome");
-        L.push("select: " + resumo(rs));
-      }catch(e){ L.push("select: erro " + e.message); }
+        L.push("select simples: " + resumo(rs));
+      }catch(e){ L.push("select simples: erro " + e.message); }
+      try{
+        var rq = await sb.from("instrutores")
+          .select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
+        L.push("select do app: " + resumo(rq));
+      }catch(e){ L.push("select do app: erro " + e.message); }
+      L.push("no app agora: " + Object.keys(INSTRUTORES).length + " instrutor(es)");
+      if(PROBLEMAS.length) L.push("problemas: " + JSON.stringify(PROBLEMAS));
       var alvo = "__teste_" + Date.now();
       try{
         var ri = await sb.from("instrutores").insert({ nome:alvo, completo:alvo }).select("nome");
