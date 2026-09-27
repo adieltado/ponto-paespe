@@ -225,6 +225,7 @@ th.hoje{color:var(--accent-strong)}
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .trocacard .txt{flex:1;min-width:200px}
 .trocacard h2{font-size:15px;font-weight:600;margin-bottom:2px}
+select.mini{font-size:12.5px;padding:4px 6px;max-width:210px}
 .uchip{display:flex;align-items:center;gap:9px}
 .uchip .ut{display:flex;flex-direction:column;line-height:1.2;text-align:right}
 .uchip .ut b{font-size:13px;font-weight:600}
@@ -512,6 +513,22 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(DEMO){ var a = demoLer("paespe-trocas"); a.forEach(function(x){ if(String(x.id)===String(id)) x.status = status; }); demoGravar("paespe-trocas", a); return; }
     erro(await sb.from("trocas").update({ status:status }).eq("id", id));
   }
+  var convites = [];
+  async function listarConvites(){
+    if(DEMO) return [];
+    var r = await sb.from("convites").select("email,nome,papel,criado_em").order("criado_em", { ascending:false });
+    if(r.error) return [];
+    return r.data || [];
+  }
+  async function criarConvite(c){
+    if(DEMO) return;
+    erro(await sb.from("convites").upsert(c, { onConflict:"email" }));
+  }
+  async function apagarConvite(email){
+    if(DEMO) return;
+    erro(await sb.from("convites").delete().eq("email", email));
+  }
+
   async function listarPerfis(){
     if(DEMO) return [perfil];
     return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
@@ -552,6 +569,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var ate = new Date(+p[0], +p[1], 0).toLocaleDateString("sv-SE");
     try{ trocas = await listarTrocas(); }catch(e){}
     try{ perfis = await listarPerfis(); }catch(e){}
+    try{ convites = await listarConvites(); }catch(e){}
     try{ regsMes = await listar(mesFiltro+"-01", ate); }
     catch(e){ regsMes = []; aviso("Não consegui carregar o período. ("+e.message+")"); }
     render();
@@ -599,6 +617,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
   async function carregarMeuPerfil(){
     var uid = sessao.user.id;
+    var rpc = await sb.rpc("registrar_perfil");
+    if(!rpc.error && rpc.data && rpc.data.length) return rpc.data[0];
     var r = await sb.from("perfis").select("id,email,nome,papel,aprovado").eq("id", uid).maybeSingle();
     if(r.error) throw new Error(r.error.message);
     if(!r.data){
@@ -638,7 +658,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       + '<div class="eyebrow">Cadastro recebido</div>'
       + '<h2>Aguardando liberação</h2>'
       + '<p>Entramos com <b>'+esc(sessao.user.email)+'</b>. Diga quem você é e a coordenação libera seu acesso.</p>'
-      + '<label class="fld" style="margin-bottom:14px">Seu nome na escala'
+      + '<label class="fld" style="margin-bottom:14px">Seu nome'
       +   '<select id="p-nome"><option value="">Escolha seu nome</option>'
       +   livres.map(function(n){ return '<option value="'+esc(n)+'"'+(perfil.nome===n?" selected":"")+'>'+esc(nomeCheio(n))+'</option>'; }).join("")
       +   '</select></label>'
@@ -1067,23 +1087,59 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       + '</div>';
 
     /* contas */
+    var usados = {};
+    perfis.forEach(function(x){ if(x.nome) usados[x.nome] = x.id; });
+    function opcoesNome(sel, dono){
+      return '<option value="">— sem nome —</option>' + Object.keys(INSTRUTORES).sort(ordenaPorNome)
+        .filter(function(n){ return !usados[n] || usados[n] === dono || n === sel; })
+        .map(function(n){ return '<option value="'+esc(n)+'"'+(n===sel?" selected":"")+'>'+esc(nomeCheio(n))+'</option>'; }).join("");
+    }
     var pendentes = perfis.filter(function(x){ return !x.aprovado; });
+    var emailsComConta = {};
+    perfis.forEach(function(x){ if(x.email) emailsComConta[x.email.toLowerCase()] = 1; });
+    var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
+
     h += '<div><div class="sec-head"><h2>Contas</h2><p>'
-      + (pendentes.length ? pendentes.length+' aguardando liberação' : 'nenhuma pendente')+'</p></div>'
-      + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome na escala</th>'
+      + (pendentes.length ? pendentes.length+' aguardando liberação' : 'nenhuma pendente')
+      + (convAbertos.length ? ' · '+convAbertos.length+' convite'+(convAbertos.length===1?'':'s')+' sem uso' : '')
+      + '</p></div>';
+
+    h += '<div class="card" style="margin-bottom:12px">'
+      + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+      +   '<label class="fld">E-mail<input id="cv-email" type="email" placeholder="pessoa@gmail.com" size="24"></label>'
+      +   '<label class="fld">Nome<select id="cv-nome">'+opcoesNome("", null)+'</select></label>'
+      +   '<label class="fld">Perfil<select id="cv-papel">'
+      +     '<option value="instrutor">Instrutor(a)</option><option value="coordenacao">Coordenação</option>'
+      +   '</select></label>'
+      +   '<button class="btn primary" id="cv-ok">Adicionar</button>'
+      + '</div>'
+      + '<p class="tiny muted" style="margin:10px 0 0">Quem for adicionado aqui entra com o Google usando esse e-mail e já cai liberado, '
+      + 'sem precisar de aprovação. Contas Google não podem ser criadas por aqui — a pessoa usa a dela.</p></div>';
+
+    if(convAbertos.length){
+      h += '<div class="tblwrap" style="margin-bottom:12px"><table class="data"><thead><tr>'
+        + '<th>Convite em aberto</th><th>Nome</th><th>Perfil</th><th></th></tr></thead><tbody>'
+        + convAbertos.map(function(c){
+            return '<tr><td>'+esc(c.email)+'</td>'
+              + '<td>'+(c.nome ? esc(nomeCheio(c.nome)) : '<span class="muted">—</span>')+'</td>'
+              + '<td>'+(c.papel==="coordenacao" ? 'coordenação' : 'instrutor(a)')+'</td>'
+              + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'" style="color:var(--alert)">Remover</button></td></tr>';
+          }).join("")
+        + '</tbody></table></div>';
+    }
+
+    h += '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th>'
       + '<th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody>';
     perfis.slice().sort(function(a,b){ return (a.aprovado?1:0) - (b.aprovado?1:0); }).forEach(function(x){
       h += '<tr><td>'+esc(x.email||"—")+'</td>'
-        + '<td>'+(x.nome ? esc(nomeCheio(x.nome)) : '<span class="muted">não informou</span>')+'</td>'
+        + '<td><select class="mini" data-nome="'+esc(x.id)+'">'+opcoesNome(x.nome, x.id)+'</select></td>'
         + '<td>'+(x.papel==="coordenacao" ? '<span class="pill p-on"><span class="dot"></span>coordenação</span>' : 'instrutor(a)')+'</td>'
         + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
         + '<td style="white-space:nowrap">'
         + (x.aprovado
             ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
-            : '<button class="btn icon" data-lib="'+esc(x.id)+'"'+(x.nome?'':' disabled title="precisa escolher o nome primeiro"')+'>Liberar</button> ')
-        + (x.papel==="coordenacao"
-            ? '<button class="btn icon ghost" data-reb="'+esc(x.id)+'">Tornar instrutor(a)</button>'
-            : '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>')
+            : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
+        + (x.papel==="coordenacao" ? '' : '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>')
         + '</td></tr>';
     });
     h += '</tbody></table></div></div>';
@@ -1203,7 +1259,25 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     ligar(box, "data-lib",  function(id){ return mudarPerfil(id, { aprovado:true }); }, "Conta liberada.");
     ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
     ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Perfil alterado.");
-    ligar(box, "data-reb",  function(id){ return mudarPerfil(id, { papel:"instrutor" }); }, "Perfil alterado.");
+    ligar(box, "data-delconv", function(em){ return apagarConvite(em); }, "Convite removido.");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-nome]"), function(sel){
+      sel.addEventListener("change", async function(){
+        sel.disabled = true;
+        try{ await mudarPerfil(sel.dataset.nome, { nome: sel.value || null }); aviso("Nome atualizado."); await carregarMes(); }
+        catch(e){ aviso(/duplicate|unique/i.test(e.message) ? "Esse nome já está em outra conta." : e.message, "warn"); sel.disabled = false; }
+      });
+    });
+    var cv = el("cv-ok");
+    if(cv) cv.addEventListener("click", async function(){
+      var em = (el("cv-email").value||"").trim().toLowerCase();
+      if(!em || em.indexOf("@") < 0){ aviso("Informe um e-mail válido."); return; }
+      cv.disabled = true;
+      try{
+        await criarConvite({ email:em, nome: el("cv-nome").value || null, papel: el("cv-papel").value });
+        aviso("Adicionado. Peça para a pessoa entrar com o Google usando esse e-mail.");
+        await carregarMes();
+      }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); cv.disabled = false; }
+    });
   }
   function ligar(box, attr, fn, ok){
     Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"), function(b){
