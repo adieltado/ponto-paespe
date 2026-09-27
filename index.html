@@ -604,6 +604,20 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   function demoLer(k){ try{ return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
   function demoGravar(k,a){ try{ localStorage.setItem(k, JSON.stringify(a)); }catch(e){} }
   function erro(r){ if(r.error) throw new Error(r.error.message || "erro"); return r.data; }
+  /* escrita: traduz a recusa do RLS numa frase que diz o que fazer */
+  function semPermissao(tab){
+    return new Error("o banco recusou a gravação na tabela “" + tab + "” — "
+      + "falta rodar o bloco de permissões dessa tabela no Supabase (SQL Editor).");
+  }
+  function erroW(r, tab, podeVazio){
+    if(r.error){
+      var m = r.error.message || "erro";
+      if(r.error.code === "42501" || /row-level security|violates row-level/i.test(m)) throw semPermissao(tab);
+      throw new Error(m);
+    }
+    if(!podeVazio && (!r.data || !r.data.length)) throw semPermissao(tab);
+    return r.data;
+  }
 
   async function listar(de, ate){
     if(DEMO) return demoLer("paespe-regs").filter(function(r){ return r.data >= de && r.data <= ate; });
@@ -685,7 +699,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
   async function salvarInstrutor(nome, patch){
     if(DEMO) return;
-    erro(await sb.from("instrutores").update(patch).eq("nome", nome));
+    erroW(await sb.from("instrutores").update(patch).eq("nome", nome).select("nome"), "instrutores");
   }
   async function criarInstrutor(x){
     if(DEMO) return;
@@ -694,17 +708,15 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(!instrutoresDoBanco && Object.keys(INSTRUTORES).length){
       try{ await importarInstrutores(); }catch(e){}
     }
-    var r = await sb.from("instrutores").insert(x);
-    if(r.error){
-      if(r.error.code === "23505") throw new Error("Já existe um instrutor com esse nome-chave.");
-      throw new Error(r.error.message);
-    }
+    var r = await sb.from("instrutores").insert(x).select("nome");
+    if(r.error && r.error.code === "23505") throw new Error("Já existe um instrutor com esse apelido.");
+    erroW(r, "instrutores");
   }
   async function desligarInstrutor(nome, desligar){
     if(DEMO) return;
-    erro(await sb.from("instrutores").update(
+    erroW(await sb.from("instrutores").update(
       desligar ? { ativo:false, desligado_em: hojeKey() } : { ativo:true, desligado_em:null }
-    ).eq("nome", nome));
+    ).eq("nome", nome).select("nome"), "instrutores");
   }
   async function excluirPerfil(id, email){
     if(DEMO) return;
@@ -717,7 +729,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
   async function apagarInstrutor(nome){
     if(DEMO) return;
-    erro(await sb.from("instrutores").delete().eq("nome", nome));
+    erroW(await sb.from("instrutores").delete().eq("nome", nome).select("nome"), "instrutores");
   }
 
   async function carregarEscala(){
@@ -810,16 +822,17 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
   async function addSlot(turno, dia, nome){
     if(DEMO) return;
-    var r = await sb.from("escala").insert({ turno:turno, dia:+dia, nome:nome });
-    if(r.error && r.error.code !== "23505") throw new Error(r.error.message);
+    var r = await sb.from("escala").insert({ turno:turno, dia:+dia, nome:nome }).select("nome");
+    if(r.error && r.error.code === "23505") return;   /* ja estava na grade */
+    erroW(r, "escala");
   }
   async function delSlot(turno, dia, nome){
     if(DEMO) return;
-    erro(await sb.from("escala").delete().eq("turno", turno).eq("dia", +dia).eq("nome", nome));
+    erroW(await sb.from("escala").delete().eq("turno", turno).eq("dia", +dia).eq("nome", nome).select("nome"), "escala");
   }
   async function salvarSabado(data, patch){
     if(DEMO) return;
-    erro(await sb.from("sabados").upsert(Object.assign({ data:data }, patch), { onConflict:"data" }));
+    erroW(await sb.from("sabados").upsert(Object.assign({ data:data }, patch), { onConflict:"data" }).select("data"), "sabados");
   }
   async function apagarSabado(data){
     if(DEMO) return;
@@ -855,7 +868,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
                curso:v.curso || null, diretor:!!v.diretor };
     });
     if(!linhas.length) throw new Error("o arquivo escala.js não tem instrutores");
-    erro(await sb.from("instrutores").upsert(linhas, { onConflict:"nome", ignoreDuplicates:true }));
+    erroW(await sb.from("instrutores").upsert(linhas, { onConflict:"nome", ignoreDuplicates:true }).select("nome"), "instrutores", true);
   }
   async function importarEscala(){
     if(DEMO) return;
