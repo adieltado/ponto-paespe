@@ -111,6 +111,11 @@ input,select{font:inherit;font-size:14px;color:var(--ink);background:var(--surfa
   border:1px solid var(--line-2);border-radius:8px;padding:8px 9px;max-width:100%}
 label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transform:uppercase;
   letter-spacing:.07em;color:var(--ink-2);font-weight:600;font-family:var(--sans)}
+.addform{display:flex;gap:16px 12px;flex-wrap:wrap;align-items:flex-end;
+  border-top:1px dashed var(--line-2);padding-top:14px;margin-top:4px}
+.addform label.fld{flex:0 1 auto}
+.addform .btn{margin-top:4px}
+.addform input,.addform select{min-width:0}
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;
   font-size:12px;font-weight:600;font-family:var(--sans);white-space:nowrap}
 .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
@@ -232,7 +237,7 @@ th.hoje{color:var(--accent-strong)}
   padding:0 3px;color:var(--ink-2);border-radius:4px}
 .chipx button:hover{background:var(--alert-soft);color:var(--alert)}
 table.grade.editor td{min-width:180px}
-select.addslot{width:100%;margin-top:2px;font-size:11.5px;max-width:none}
+select.addslot{width:100%;margin-top:7px;font-size:11.5px;max-width:none}
 .opcao{display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:12.5px;white-space:nowrap}
 .acesso{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .acesso .em{font-size:12px;color:var(--ink-2)}
@@ -689,7 +694,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v8 · pessoas unificado";
+    var VERSAO = "v10 · coordenação sem cerca";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
@@ -852,6 +857,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var data = hojeKey();
     var lista = turnosDe(dow);
     var eu = meuNome();
+    var podeTodos = ehCoord();
 
     if(!lista.length){
       box.innerHTML = '<div class="empty"><h3>Sem plantão hoje</h3>'
@@ -877,7 +883,11 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     h += '</div>';
     if(GEO_ATIVO){
-      h += '<div class="regra">'+SVG_PIN+'O ponto só é aceito a até '+RAIO+' m do '+esc(LOCAL_NOME)+'.</div>';
+      h += '<div class="regra">'+SVG_PIN
+        + (podeTodos ? 'Como coordenação, você registra de qualquer lugar. Para os instrutores, o ponto só é aceito a até '
+                       + RAIO+' m do '+esc(LOCAL_NOME)+'.'
+                     : 'O ponto só é aceito a até '+RAIO+' m do '+esc(LOCAL_NOME)+'.')
+        + '</div>';
     }
     h += '</div>';
 
@@ -905,10 +915,10 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
             + '<path d="M5.8 10.3l2.7 2.7 5.7-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
             + '<span>Chegou às <span class="mono">'+esc(hhmm(r.chegada))+'</span>'
             + (at!=null ? ' &middot; '+at+' min de atraso' : '')+'</span></span></div>';
-        } else if(sou){
-          h += '<button class="namecard eu" data-n="'+esc(n)+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+' <span class="tag">você</span></span>'
-            + '<span class="s">Toque para registrar sua chegada</span></button>';
+        } else if(sou || podeTodos){
+          h += '<button class="namecard'+(sou?" eu":"")+'" data-n="'+esc(n)+'">'+rot
+            + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+'</span>'
+            + '<span class="s">'+(sou ? "Toque para registrar sua chegada" : "Registrar chegada pela coordenação")+'</span></button>';
         } else {
           h += '<div class="namecard esperando">'+rot
             + '<span class="n">'+esc(nomeCheio(n))+'</span>'
@@ -992,6 +1002,11 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   async function checarNoDialogo(){
     var faixa = el("dc-geo"), ok = el("dc-ok"), retry = el("dc-retry");
     if(!GEO_ATIVO){ faixa.hidden = true; ok.disabled = false; retry.hidden = true; return; }
+    if(ehCoord()){
+      faixa.hidden = false; retry.hidden = true; faixa.className = "geo";
+      faixa.innerHTML = SVG_PIN + "<span>Coordenação: registro liberado em qualquer local.</span>";
+      ok.disabled = false; return;
+    }
     faixa.hidden = false; retry.hidden = true; faixa.className = "geo";
     faixa.innerHTML = SVG_PIN + "<span>Verificando sua localização…</span>";
     ok.disabled = true;
@@ -1061,6 +1076,11 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   async function checarGeoTroca(){
     var faixa = el("tr-geo"), ok = el("tr-ok");
     if(!GEO_ATIVO){ faixa.hidden = true; trocaGeoOk = true; ok.disabled = false; return; }
+    if(ehCoord()){
+      faixa.hidden = false; faixa.className = "geo";
+      faixa.innerHTML = SVG_PIN + "<span>Coordenação: registro liberado em qualquer local.</span>";
+      trocaGeoOk = true; ok.disabled = !trocaSel; return;
+    }
     faixa.hidden = false; faixa.className = "geo";
     faixa.innerHTML = SVG_PIN + "<span>Verificando sua localização…</span>";
     ok.disabled = true;
@@ -1207,9 +1227,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     h += '<div class="toolbar">'
       + '<label class="fld">Período<input type="month" id="f-mes" value="'+esc(mesFiltro)+'"></label>'
       + '<span class="spacer"></span>'
-      + '<button class="btn ghost" id="btn-coord-gps">Minhas coordenadas</button>'
       + '<button class="btn ghost" id="btn-recarregar">Atualizar</button>'
-      + '<button class="btn" id="btn-csv">Baixar CSV</button></div><div id="saida-gps"></div>';
+      + '<button class="btn" id="btn-csv">Baixar CSV</button></div>';
 
     /* ---------------- visão geral ---------------- */
     if(coordSec === "visao"){
@@ -1320,12 +1339,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar instrutor(a)</h2>'
         + '<p>o apelido é curto e não muda depois</p></div>'
         + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-        +   '<label class="fld">Apelido<input id="in-chave" placeholder="Maria Isadora" size="14"></label>'
-        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Maria Isadora Gomes Profirio" size="24"></label>'
+        +   '<label class="fld">Apelido<input id="in-chave" placeholder="Izaías Silva" size="14"></label>'
+        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Izaías dos Santos Silva" size="24"></label>'
         +   '<label class="fld">Diretoria<select id="in-dir"><option value="">—</option>'
         +     DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join("")
         +   '</select></label>'
-        +   '<label class="fld">Curso<input id="in-curso" placeholder="Psicologia" size="14"></label>'
+        +   '<label class="fld">Curso<input id="in-curso" placeholder="Eng. Ambiental e Sanitária" size="18"></label>'
         +   '<label class="fld">E-mail (opcional)<input id="in-email" type="email" placeholder="pessoa@gmail.com" size="20"></label>'
         +   '<button class="btn primary" id="in-ok">Adicionar</button>'
         + '</div>'
@@ -1532,17 +1551,6 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     el("f-mes").addEventListener("change", function(){ mesFiltro = this.value || hojeKey().slice(0,7); carregarMes(); });
     el("btn-recarregar").addEventListener("click", carregarMes);
     el("btn-csv").addEventListener("click", function(){ baixarCSV(ordenados); });
-    el("btn-coord-gps").addEventListener("click", async function(){
-      var alvo = el("saida-gps");
-      alvo.innerHTML = '<div class="geo" style="margin-top:12px">'+SVG_PIN+'<span>Lendo o GPS…</span></div>';
-      try{
-        var pos = await posicao();
-        alvo.innerHTML = '<div class="geo ok" style="margin-top:12px">'+SVG_PIN
-          + '<span>Precisão de cerca de '+Math.round(pos.coords.accuracy)+' m. Cole no <span class="mono">config.js</span>:<br>'
-          + '<span class="mono" style="font-size:14px">lat: '+pos.coords.latitude.toFixed(6)
-          + ',&nbsp; lng: '+pos.coords.longitude.toFixed(6)+'</span></span></div>';
-      }catch(e){ alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN+'<span>Não consegui ler o GPS.</span></div>'; }
-    });
 
     Array.prototype.forEach.call(box.querySelectorAll("[data-fix]"), function(b){
       b.addEventListener("click", function(){ abrirFix(ordenados[+b.dataset.fix]); });
