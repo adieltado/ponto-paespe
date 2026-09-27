@@ -225,7 +225,24 @@ th.hoje{color:var(--accent-strong)}
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .trocacard .txt{flex:1;min-width:200px}
 .trocacard h2{font-size:15px;font-weight:600;margin-bottom:2px}
-select.mini{font-size:12.5px;padding:4px 6px;max-width:210px}
+.mini{font-size:12.5px;padding:4px 7px;max-width:200px}
+.coordwrap{display:grid;grid-template-columns:184px 1fr;gap:22px;align-items:start}
+.coordmain{min-width:0;display:flex;flex-direction:column;gap:20px}
+.railnav{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:12px;
+  padding:6px;background:var(--surface);position:sticky;top:calc(env(safe-area-inset-top,0px) + 108px)}
+.railnav button{border:0;background:transparent;text-align:left;padding:9px 11px;border-radius:8px;
+  font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink-2);font-family:var(--sans);
+  display:flex;align-items:center;gap:8px;width:100%}
+.railnav button:hover{background:var(--surface-2)}
+.railnav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent-strong)}
+.railnav .badge{margin-left:auto;background:var(--warn);color:#fff;border-radius:999px;
+  font-size:10.5px;font-weight:700;min-width:18px;height:18px;display:inline-flex;
+  align-items:center;justify-content:center;padding:0 5px}
+@media (max-width:760px){
+  .coordwrap{grid-template-columns:1fr;gap:16px}
+  .railnav{flex-direction:row;overflow-x:auto;position:static}
+  .railnav button{white-space:nowrap;width:auto}
+}
 .uchip{display:flex;align-items:center;gap:9px}
 .uchip .ut{display:flex;flex-direction:column;line-height:1.2;text-align:right}
 .uchip .ut b{font-size:13px;font-weight:600}
@@ -1045,6 +1062,14 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   }
 
   /* ================= COORDENAÇÃO ================= */
+  var coordSec = "visao";
+  var SECOES = [
+    { id:"visao",     nome:"Visão geral" },
+    { id:"contas",    nome:"Contas" },
+    { id:"trocas",    nome:"Trocas" },
+    { id:"registros", nome:"Registros" }
+  ];
+
   function viewCoord(){
     var box = el("v-coord");
     if(!ehCoord()){ box.innerHTML = '<div class="empty"><h3>Área restrita à coordenação</h3></div>'; return; }
@@ -1065,176 +1090,220 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
     var atrasosTot = 0;
     regsMes.forEach(function(r){
-      var s = slot(r.nome); s.presentes++;
-      if(atrasoDe(r.turno, r.chegada) != null){ s.atrasos++; atrasosTot++; }
+      var s2 = slot(r.nome); s2.presentes++;
+      if(atrasoDe(r.turno, r.chegada) != null){ s2.atrasos++; atrasosTot++; }
     });
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
     var previstosTot = nomes.reduce(function(a,n){ return a + porNome[n].previstos; }, 0);
     var freq = previstosTot ? Math.round(regsMes.length / previstosTot * 100) : 0;
+    var ordenados = regsMes.slice().sort(function(a,b){ return new Date(b.chegada) - new Date(a.chegada); });
+    var pendConta = perfis.filter(function(x){ return !x.aprovado; }).length;
+    var pendTroca = trocas.filter(function(x){ return x.status === "pendente"; }).length;
 
-    var h = '<div class="toolbar">'
+    var h = '<div class="coordwrap"><nav class="railnav" aria-label="Seções da coordenação">'
+      + SECOES.map(function(sc){
+          var badge = (sc.id==="contas" && pendConta) ? pendConta : (sc.id==="trocas" && pendTroca ? pendTroca : 0);
+          return '<button data-sec="'+sc.id+'" aria-current="'+(sc.id===coordSec)+'">'+esc(sc.nome)
+            + (badge ? '<span class="badge">'+badge+'</span>' : '')+'</button>';
+        }).join("")
+      + '</nav><div class="coordmain">';
+
+    h += '<div class="toolbar">'
       + '<label class="fld">Período<input type="month" id="f-mes" value="'+esc(mesFiltro)+'"></label>'
       + '<span class="spacer"></span>'
       + '<button class="btn ghost" id="btn-coord-gps">Minhas coordenadas</button>'
       + '<button class="btn ghost" id="btn-recarregar">Atualizar</button>'
       + '<button class="btn" id="btn-csv">Baixar CSV</button></div><div id="saida-gps"></div>';
 
-    h += '<div class="tiles">'
-      + tile("Presenças", String(regsMes.length))
-      + tile("Turnos previstos", String(previstosTot))
-      + tile("Frequência", freq+"%")
-      + tile("Chegadas com atraso", String(atrasosTot))
-      + '</div>';
+    /* ---------------- visão geral ---------------- */
+    if(coordSec === "visao"){
+      h += '<div class="tiles">'
+        + tile("Presenças", String(regsMes.length))
+        + tile("Turnos previstos", String(previstosTot))
+        + tile("Frequência", freq+"%")
+        + tile("Chegadas com atraso", String(atrasosTot))
+        + '</div>';
 
-    /* contas */
-    var usados = {};
-    perfis.forEach(function(x){ if(x.nome) usados[x.nome] = x.id; });
-    function opcoesNome(sel, dono){
-      return '<option value="">— sem nome —</option>' + Object.keys(INSTRUTORES).sort(ordenaPorNome)
-        .filter(function(n){ return !usados[n] || usados[n] === dono || n === sel; })
-        .map(function(n){ return '<option value="'+esc(n)+'"'+(n===sel?" selected":"")+'>'+esc(nomeCheio(n))+'</option>'; }).join("");
-    }
-    var pendentes = perfis.filter(function(x){ return !x.aprovado; });
-    var emailsComConta = {};
-    perfis.forEach(function(x){ if(x.email) emailsComConta[x.email.toLowerCase()] = 1; });
-    var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
+      var porDir = {};
+      nomes.forEach(function(n){
+        var dd = diretoriaDe(n) || "Sem diretoria";
+        var sd = porDir[dd] || (porDir[dd] = { previstos:0, presentes:0, atrasos:0, pessoas:0 });
+        sd.previstos += porNome[n].previstos; sd.presentes += porNome[n].presentes;
+        sd.atrasos += porNome[n].atrasos; sd.pessoas++;
+      });
+      var dirs = DIRETORIAS.filter(function(dd){ return porDir[dd]; });
+      Object.keys(porDir).forEach(function(dd){ if(dirs.indexOf(dd) < 0) dirs.push(dd); });
+      if(dirs.length){
+        h += '<div><div class="sec-head"><h2>Por diretoria</h2><p>'+esc(nomeMes(mesFiltro))+'</p></div>'
+          + '<div class="tblwrap"><table class="data"><thead><tr><th>Diretoria</th><th class="num">Pessoas</th>'
+          + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
+          + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>'
+          + dirs.map(function(dd){
+              var sd = porDir[dd], faltas = Math.max(0, sd.previstos - sd.presentes);
+              var pc = sd.previstos ? Math.round(sd.presentes/sd.previstos*100) : 0;
+              return '<tr><td class="dirc'+classeDir(dd)+'">'+esc(dd)+'</td><td class="num">'+sd.pessoas+'</td>'
+                + '<td class="num">'+sd.previstos+'</td><td class="num">'+sd.presentes+'</td>'
+                + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
+                + '<td class="num"'+(sd.atrasos?' style="color:var(--warn)"':'')+'>'+sd.atrasos+'</td>'
+                + '<td class="num">'+pc+'%</td></tr>';
+            }).join("") + '</tbody></table></div></div>';
+      }
 
-    h += '<div><div class="sec-head"><h2>Contas</h2><p>'
-      + (pendentes.length ? pendentes.length+' aguardando liberação' : 'nenhuma pendente')
-      + (convAbertos.length ? ' · '+convAbertos.length+' convite'+(convAbertos.length===1?'':'s')+' sem uso' : '')
-      + '</p></div>';
-
-    h += '<div class="card" style="margin-bottom:12px">'
-      + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-      +   '<label class="fld">E-mail<input id="cv-email" type="email" placeholder="pessoa@gmail.com" size="24"></label>'
-      +   '<label class="fld">Nome<select id="cv-nome">'+opcoesNome("", null)+'</select></label>'
-      +   '<label class="fld">Perfil<select id="cv-papel">'
-      +     '<option value="instrutor">Instrutor(a)</option><option value="coordenacao">Coordenação</option>'
-      +   '</select></label>'
-      +   '<button class="btn primary" id="cv-ok">Adicionar</button>'
-      + '</div>'
-      + '<p class="tiny muted" style="margin:10px 0 0">Quem for adicionado aqui entra com o Google usando esse e-mail e já cai liberado, '
-      + 'sem precisar de aprovação. Contas Google não podem ser criadas por aqui — a pessoa usa a dela.</p></div>';
-
-    if(convAbertos.length){
-      h += '<div class="tblwrap" style="margin-bottom:12px"><table class="data"><thead><tr>'
-        + '<th>Convite em aberto</th><th>Nome</th><th>Perfil</th><th></th></tr></thead><tbody>'
-        + convAbertos.map(function(c){
-            return '<tr><td>'+esc(c.email)+'</td>'
-              + '<td>'+(c.nome ? esc(nomeCheio(c.nome)) : '<span class="muted">—</span>')+'</td>'
-              + '<td>'+(c.papel==="coordenacao" ? 'coordenação' : 'instrutor(a)')+'</td>'
-              + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'" style="color:var(--alert)">Remover</button></td></tr>';
-          }).join("")
-        + '</tbody></table></div>';
-    }
-
-    h += '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th>'
-      + '<th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody>';
-    perfis.slice().sort(function(a,b){ return (a.aprovado?1:0) - (b.aprovado?1:0); }).forEach(function(x){
-      h += '<tr><td>'+esc(x.email||"—")+'</td>'
-        + '<td><select class="mini" data-nome="'+esc(x.id)+'">'+opcoesNome(x.nome, x.id)+'</select></td>'
-        + '<td>'+(x.papel==="coordenacao" ? '<span class="pill p-on"><span class="dot"></span>coordenação</span>' : 'instrutor(a)')+'</td>'
-        + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
-        + '<td style="white-space:nowrap">'
-        + (x.aprovado
-            ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
-            : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
-        + (x.papel==="coordenacao" ? '' : '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>')
-        + '</td></tr>';
-    });
-    h += '</tbody></table></div></div>';
-
-    /* diretorias */
-    var porDir = {};
-    nomes.forEach(function(n){
-      var dd = diretoriaDe(n) || "Sem diretoria";
-      var s = porDir[dd] || (porDir[dd] = { previstos:0, presentes:0, atrasos:0, pessoas:0 });
-      s.previstos += porNome[n].previstos; s.presentes += porNome[n].presentes;
-      s.atrasos += porNome[n].atrasos; s.pessoas++;
-    });
-    var dirs = DIRETORIAS.filter(function(d){ return porDir[d]; });
-    Object.keys(porDir).forEach(function(d){ if(dirs.indexOf(d) < 0) dirs.push(d); });
-    if(dirs.length){
-      h += '<div><div class="sec-head"><h2>Por diretoria</h2><p>'+esc(nomeMes(mesFiltro))+'</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>Diretoria</th><th class="num">Pessoas</th>'
-        + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
-        + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>'
-        + dirs.map(function(d){
-            var s = porDir[d], faltas = Math.max(0, s.previstos - s.presentes);
-            var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
-            return '<tr><td class="dirc'+classeDir(d)+'">'+esc(d)+'</td><td class="num">'+s.pessoas+'</td>'
-              + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
-              + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
-              + '<td class="num"'+(s.atrasos?' style="color:var(--warn)"':'')+'>'+s.atrasos+'</td>'
-              + '<td class="num">'+pc+'%</td></tr>';
-          }).join("") + '</tbody></table></div></div>';
+      h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
+      if(!nomes.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
+          + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
+          + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>';
+        nomes.forEach(function(n){
+          var sn = porNome[n], faltas = Math.max(0, sn.previstos - sn.presentes);
+          var pc = sn.previstos ? Math.round(sn.presentes/sn.previstos*100) : 0;
+          h += '<tr><td>'+esc(nomeCheio(n))+'</td><td class="muted">'+esc(diretoriaDe(n) || "—")+'</td>'
+            + '<td class="num">'+sn.previstos+'</td><td class="num">'+sn.presentes+'</td>'
+            + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
+            + '<td class="num"'+(sn.atrasos?' style="color:var(--warn)"':'')+'>'+sn.atrasos+'</td>'
+            + '<td class="num">'+pc+'%</td></tr>';
+        });
+        h += '</tbody></table></div>';
+      }
+      h += '</div>';
     }
 
-    /* trocas */
-    var pend = trocas.filter(function(x){ return x.status === "pendente"; });
-    var decid = trocas.filter(function(x){ return x.status !== "pendente"; }).slice(0,20);
-    if(pend.length || decid.length){
-      h += '<div><div class="sec-head"><h2>Solicitações de troca</h2><p>'
-        + (pend.length ? pend.length+' aguardando decisão' : 'nenhuma pendente')+'</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Compareceu</th>'
-        + '<th>Plantão que sai</th><th>Situação</th><th></th></tr></thead><tbody>';
-      pend.concat(decid).forEach(function(x){
-        var te = turnoDe(x.turno), ta = turnoDe(x.turno_abater);
-        var sit = x.status === "pendente" ? '<span class="pill p-late">Pendente</span>'
-          : (x.status === "aprovada" ? '<span class="pill p-on"><span class="dot"></span>Aprovada</span>'
-          : '<span class="pill p-miss">Recusada</span>');
-        h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
-          + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+esc(te?te.nome:x.turno)+'</span></td>'
-          + '<td class="mono">'+esc(brData(x.data_abater))+' <span class="muted">'+esc(ta?ta.nome:x.turno_abater)+'</span></td>'
-          + '<td>'+sit+'</td><td style="white-space:nowrap">'
-          + (x.status==="pendente"
-              ? '<button class="btn icon" data-ap="'+esc(x.id)+'">Aprovar</button> <button class="btn icon ghost" data-re="'+esc(x.id)+'" style="color:var(--alert)">Recusar</button>'
-              : '<button class="btn icon ghost" data-ap="'+esc(x.id)+'">Reabrir como aprovada</button>')
+    /* ---------------- contas ---------------- */
+    if(coordSec === "contas"){
+      h += '<datalist id="nomes-escala">'
+        + Object.keys(INSTRUTORES).sort(ordenaPorNome)
+            .map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
+        + '</datalist>';
+
+      var emailsComConta = {};
+      perfis.forEach(function(x){ if(x.email) emailsComConta[x.email.toLowerCase()] = 1; });
+      var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
+      var coords = perfis.filter(function(x){ return x.papel === "coordenacao"; });
+      var instrs = perfis.filter(function(x){ return x.papel !== "coordenacao"; });
+
+      h += '<div class="card" style="margin-bottom:18px">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar pessoa</h2>'
+        + '<p>a conta Google é dela; aqui você só libera o e-mail</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">E-mail<input id="cv-email" type="email" placeholder="pessoa@gmail.com" size="24"></label>'
+        +   '<label class="fld">Perfil<select id="cv-papel">'
+        +     '<option value="instrutor">Instrutor(a)</option><option value="coordenacao">Coordenação</option>'
+        +   '</select></label>'
+        +   '<label class="fld" id="cv-nome-wrap">Nome na escala'
+        +     '<input class="mini" id="cv-nome" list="nomes-escala" placeholder="digite ou escolha" spellcheck="false">'
+        +   '</label>'
+        +   '<button class="btn primary" id="cv-ok">Adicionar</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">Quando a pessoa entrar com o Google usando esse e-mail, '
+        + 'ela já cai liberada, sem passar pela fila de aprovação.</p></div>';
+
+      if(convAbertos.length){
+        h += '<div><div class="sec-head"><h2>Convites em aberto</h2><p>ainda não entraram no site</p></div>'
+          + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Perfil</th><th>Nome</th><th></th></tr></thead><tbody>'
+          + convAbertos.map(function(c){
+              var coord = c.papel === "coordenacao";
+              return '<tr><td>'+esc(c.email)+'</td>'
+                + '<td>'+(coord ? '<span class="pill p-on"><span class="dot"></span>coordenação</span>' : 'instrutor(a)')+'</td>'
+                + '<td>'+(coord ? '<span class="muted">sem escala</span>' : (c.nome ? esc(nomeCheio(c.nome)) : '<span class="muted">—</span>'))+'</td>'
+                + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'" style="color:var(--alert)">Remover</button></td></tr>';
+            }).join("") + '</tbody></table></div></div>';
+      }
+
+      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+' · não entram na escala</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Situação</th><th></th></tr></thead><tbody>';
+      if(!coords.length) h += '<tr><td colspan="3" class="muted">Nenhuma.</td></tr>';
+      coords.forEach(function(x){
+        h += '<tr><td>'+esc(x.email||"—")+(x.id===perfil.id?' <span class="tag">você</span>':'')+'</td>'
+          + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
+          + '<td style="white-space:nowrap">'
+          + (x.id===perfil.id ? '<span class="muted tiny">sua conta</span>'
+              : (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button>'
+                            : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button>'))
+          + '</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+
+      h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+instrs.length+' conta'+(instrs.length===1?'':'s')
+        + (pendConta ? ' · '+pendConta+' aguardando liberação' : '')+'</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th>'
+        + '<th>Situação</th><th></th></tr></thead><tbody>';
+      if(!instrs.length) h += '<tr><td colspan="4" class="muted">Nenhuma.</td></tr>';
+      instrs.slice().sort(function(a,b){ return (a.aprovado?1:0) - (b.aprovado?1:0); }).forEach(function(x){
+        var solto = x.nome && !INSTRUTORES[x.nome];
+        h += '<tr><td>'+esc(x.email||"—")+'</td>'
+          + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" '
+          +   'placeholder="digite ou escolha" spellcheck="false">'
+          +   (solto ? ' <span class="pill p-late" title="Não existe na escala">fora da escala</span>' : '')+'</td>'
+          + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
+          + '<td style="white-space:nowrap">'
+          + (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
+                        : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
+          + '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button>'
           + '</td></tr>';
       });
       h += '</tbody></table></div></div>';
     }
 
-    h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
-    if(!nomes.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
-    else {
-      h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
-        + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
-        + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>';
-      nomes.forEach(function(n){
-        var s = porNome[n], faltas = Math.max(0, s.previstos - s.presentes);
-        var pc = s.previstos ? Math.round(s.presentes/s.previstos*100) : 0;
-        h += '<tr><td>'+esc(nomeCheio(n))+'</td><td class="muted">'+esc(diretoriaDe(n) || "—")+'</td>'
-          + '<td class="num">'+s.previstos+'</td><td class="num">'+s.presentes+'</td>'
-          + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
-          + '<td class="num"'+(s.atrasos?' style="color:var(--warn)"':'')+'>'+s.atrasos+'</td>'
-          + '<td class="num">'+pc+'%</td></tr>';
-      });
-      h += '</tbody></table></div>';
-    }
-    h += '</div>';
-
-    var ordenados = regsMes.slice().sort(function(a,b){ return new Date(b.chegada) - new Date(a.chegada); });
-    if(ordenados.length){
-      h += '<div><div class="sec-head"><h2>Registros</h2><p>'+ordenados.length+' chegada'+(ordenados.length===1?"":"s")+' · mais recentes primeiro</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor(a)</th>'
-        + '<th>Diretoria</th><th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
-      ordenados.slice(0,200).forEach(function(r, i){
-        var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
-        h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dowDe(r.data)]+'</span></td>'
-          + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(nomeCheio(r.nome))+'</td>'
-          + '<td class="muted">'+esc(diretoriaDe(r.nome) || "—")+'</td>'
-          + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
-          + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')
-          + (tx ? ' <span class="pill '+(tx.status==="aprovada"?"p-on":(tx.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tx.status)+'</span>' : '')+'</td>'
-          + '<td><button class="btn icon ghost" data-fix="'+i+'">Corrigir</button></td></tr>';
-      });
-      h += '</tbody></table></div>';
-      if(ordenados.length>200) h += '<p class="tiny muted" style="margin:8px 0 0">Mostrando os 200 mais recentes; o CSV traz o período inteiro.</p>';
+    /* ---------------- trocas ---------------- */
+    if(coordSec === "trocas"){
+      var pend = trocas.filter(function(x){ return x.status === "pendente"; });
+      var decid = trocas.filter(function(x){ return x.status !== "pendente"; }).slice(0,30);
+      h += '<div><div class="sec-head"><h2>Solicitações de troca</h2><p>'
+        + (pend.length ? pend.length+' aguardando decisão' : 'nenhuma pendente')+'</p></div>';
+      if(!pend.length && !decid.length){
+        h += '<div class="empty"><h3>Nenhuma solicitação até agora</h3></div>';
+      } else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Compareceu</th>'
+          + '<th>Plantão que sai</th><th>Situação</th><th></th></tr></thead><tbody>';
+        pend.concat(decid).forEach(function(x){
+          var te = turnoDe(x.turno), ta = turnoDe(x.turno_abater);
+          var sit = x.status === "pendente" ? '<span class="pill p-late">Pendente</span>'
+            : (x.status === "aprovada" ? '<span class="pill p-on"><span class="dot"></span>Aprovada</span>'
+            : '<span class="pill p-miss">Recusada</span>');
+          h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
+            + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+esc(te?te.nome:x.turno)+'</span></td>'
+            + '<td class="mono">'+esc(brData(x.data_abater))+' <span class="muted">'+esc(ta?ta.nome:x.turno_abater)+'</span></td>'
+            + '<td>'+sit+'</td><td style="white-space:nowrap">'
+            + (x.status==="pendente"
+                ? '<button class="btn icon" data-ap="'+esc(x.id)+'">Aprovar</button> <button class="btn icon ghost" data-re="'+esc(x.id)+'" style="color:var(--alert)">Recusar</button>'
+                : '<button class="btn icon ghost" data-ap="'+esc(x.id)+'">Reabrir como aprovada</button>')
+            + '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+      }
       h += '</div>';
     }
 
+    /* ---------------- registros ---------------- */
+    if(coordSec === "registros"){
+      h += '<div><div class="sec-head"><h2>Registros</h2><p>'+ordenados.length+' chegada'+(ordenados.length===1?"":"s")+' · mais recentes primeiro</p></div>';
+      if(!ordenados.length){ h += '<div class="empty"><h3>Nenhuma chegada neste período</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor(a)</th>'
+          + '<th>Diretoria</th><th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
+        ordenados.slice(0,200).forEach(function(r, i2){
+          var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
+          h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dowDe(r.data)]+'</span></td>'
+            + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(nomeCheio(r.nome))+'</td>'
+            + '<td class="muted">'+esc(diretoriaDe(r.nome) || "—")+'</td>'
+            + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
+            + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')
+            + (tx ? ' <span class="pill '+(tx.status==="aprovada"?"p-on":(tx.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tx.status)+'</span>' : '')+'</td>'
+            + '<td><button class="btn icon ghost" data-fix="'+i2+'">Corrigir</button></td></tr>';
+        });
+        h += '</tbody></table></div>';
+        if(ordenados.length>200) h += '<p class="tiny muted" style="margin:8px 0 0">Mostrando os 200 mais recentes; o CSV traz o período inteiro.</p>';
+      }
+      h += '</div>';
+    }
+
+    h += '</div></div>';
     box.innerHTML = h;
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-sec]"), function(b){
+      b.addEventListener("click", function(){ coordSec = b.dataset.sec; render(); });
+    });
     el("f-mes").addEventListener("change", function(){ mesFiltro = this.value || hojeKey().slice(0,7); carregarMes(); });
     el("btn-recarregar").addEventListener("click", carregarMes);
     el("btn-csv").addEventListener("click", function(){ baixarCSV(ordenados); });
@@ -1247,10 +1316,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
           + '<span>Precisão de cerca de '+Math.round(pos.coords.accuracy)+' m. Cole no <span class="mono">config.js</span>:<br>'
           + '<span class="mono" style="font-size:14px">lat: '+pos.coords.latitude.toFixed(6)
           + ',&nbsp; lng: '+pos.coords.longitude.toFixed(6)+'</span></span></div>';
-      }catch(e){
-        alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN+'<span>Não consegui ler o GPS.</span></div>';
-      }
+      }catch(e){ alvo.innerHTML = '<div class="geo bad" style="margin-top:12px">'+SVG_PIN+'<span>Não consegui ler o GPS.</span></div>'; }
     });
+
     Array.prototype.forEach.call(box.querySelectorAll("[data-fix]"), function(b){
       b.addEventListener("click", function(){ abrirFix(ordenados[+b.dataset.fix]); });
     });
@@ -1258,27 +1326,41 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     ligar(box, "data-re", function(id){ return decidirTroca(id, "recusada"); }, "Troca recusada.");
     ligar(box, "data-lib",  function(id){ return mudarPerfil(id, { aprovado:true }); }, "Conta liberada.");
     ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
-    ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Perfil alterado.");
+    ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao", nome:null }); }, "Agora é coordenação.");
     ligar(box, "data-delconv", function(em){ return apagarConvite(em); }, "Convite removido.");
-    Array.prototype.forEach.call(box.querySelectorAll("[data-nome]"), function(sel){
-      sel.addEventListener("change", async function(){
-        sel.disabled = true;
-        try{ await mudarPerfil(sel.dataset.nome, { nome: sel.value || null }); aviso("Nome atualizado."); await carregarMes(); }
-        catch(e){ aviso(/duplicate|unique/i.test(e.message) ? "Esse nome já está em outra conta." : e.message, "warn"); sel.disabled = false; }
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-nome]"), function(inp){
+      var antes = inp.value;
+      inp.addEventListener("change", async function(){
+        var novo = inp.value.trim();
+        if(novo === antes) return;
+        inp.disabled = true;
+        try{ await mudarPerfil(inp.dataset.nome, { nome: novo || null }); antes = novo; aviso("Nome atualizado."); await carregarMes(); }
+        catch(e){
+          aviso(/duplicate|unique/i.test(e.message) ? "Esse nome já está vinculado a outra conta." : e.message, "warn");
+          inp.value = antes; inp.disabled = false;
+        }
       });
     });
+
+    var papelSel = el("cv-papel");
+    function ajustaNome(){ el("cv-nome-wrap").hidden = (papelSel.value === "coordenacao"); }
+    if(papelSel){ papelSel.addEventListener("change", ajustaNome); ajustaNome(); }
     var cv = el("cv-ok");
     if(cv) cv.addEventListener("click", async function(){
       var em = (el("cv-email").value||"").trim().toLowerCase();
       if(!em || em.indexOf("@") < 0){ aviso("Informe um e-mail válido."); return; }
+      var coord = papelSel.value === "coordenacao";
       cv.disabled = true;
       try{
-        await criarConvite({ email:em, nome: el("cv-nome").value || null, papel: el("cv-papel").value });
+        await criarConvite({ email:em, papel: papelSel.value,
+                             nome: coord ? null : ((el("cv-nome").value||"").trim() || null) });
         aviso("Adicionado. Peça para a pessoa entrar com o Google usando esse e-mail.");
         await carregarMes();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); cv.disabled = false; }
     });
   }
+
   function ligar(box, attr, fn, ok){
     Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"), function(b){
       b.addEventListener("click", async function(){
