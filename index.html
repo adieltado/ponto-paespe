@@ -19,7 +19,8 @@
   --accent:#3B78C8; --accent-strong:#2B5E9E; --accent-ink:#FFFFFF; --accent-soft:#D9ECFF;
   --warn:#8A5A00; --warn-soft:#FBEFD9;
   --alert:#A62F26; --alert-soft:#FAE3E1;
-  --d0:#2B5E9E; --d1:#6B4FA8; --d2:#0C6A5D; --d3:#A8386B;
+  --d0:#2B5E9E; --d1:#8A6A00; --d2:#146B49; --d3:#6B3FA0;
+  --ok:#146B49; --ok-soft:#DBF1E6;
   --scrim:rgba(26,35,64,.48);
   --shadow:0 1px 2px rgba(26,35,64,.07), 0 10px 28px -18px rgba(26,35,64,.38);
   --r:12px;
@@ -34,8 +35,10 @@
     --accent:#9BC8FF; --accent-strong:#9BC8FF; --accent-ink:#12203A; --accent-soft:#25355F;
     --warn:#E5B461; --warn-soft:#372D15;
     --alert:#F08C80; --alert-soft:#3F2320;
-    --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
-    --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
+    --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
+    --ok:#63D3A0; --ok-soft:#123528;
+    --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
+    --ok:#63D3A0; --ok-soft:#123528;
   --scrim:rgba(4,8,18,.66);
     --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px -18px rgba(0,0,0,.85);
   }
@@ -47,7 +50,8 @@
   --accent:#9BC8FF; --accent-strong:#9BC8FF; --accent-ink:#12203A; --accent-soft:#25355F;
   --warn:#E5B461; --warn-soft:#372D15;
   --alert:#F08C80; --alert-soft:#3F2320;
-  --d0:#9BC8FF; --d1:#C6AEF5; --d2:#62D2BC; --d3:#F5A3C3;
+  --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
+  --ok:#63D3A0; --ok-soft:#123528;
   --scrim:rgba(4,8,18,.66);
   --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px -18px rgba(0,0,0,.85);
 }
@@ -110,7 +114,7 @@ label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transfo
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;
   font-size:12px;font-weight:600;font-family:var(--sans);white-space:nowrap}
 .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
-.p-on{background:var(--accent-soft);color:var(--accent-strong)}
+.p-on{background:var(--ok-soft);color:var(--ok)}
 .p-wait{background:var(--surface-2);color:var(--ink-2)}
 .p-late{background:var(--warn-soft);color:var(--warn)}
 .p-miss{background:var(--alert-soft);color:var(--alert)}
@@ -141,13 +145,14 @@ label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transfo
 .dir{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--ink-2)}
 .dir-0{color:var(--d0)} .dir-1{color:var(--d1)} .dir-2{color:var(--d2)} .dir-3{color:var(--d3)}
 td.dirc{font-weight:600}
+.tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;background:var(--surface-2);color:var(--ink-2);border-radius:5px;padding:1px 5px;margin-left:5px;white-space:nowrap;vertical-align:1px}
 tr.passou td{opacity:.5}
 .namecard .s{font-size:12.5px;color:var(--ink-2);display:flex;align-items:flex-start;gap:7px}
 .namecard .s>span{flex:1;min-width:0}
 .namecard .check{margin-top:1px}
-.namecard.done{background:var(--accent-soft);border-color:transparent;cursor:default}
-.namecard.done .n{color:var(--accent-strong)}
-.namecard.done .s{color:var(--accent-strong)}
+.namecard.done{background:var(--ok-soft);border-color:transparent;cursor:default}
+.namecard.done .n{color:var(--ok)}
+.namecard.done .s{color:var(--ok)}
 .namecard.done .s .mono{font-weight:600}
 .namecard.late{background:var(--warn-soft)}
 .namecard.late .n,.namecard.late .s{color:var(--warn)}
@@ -155,7 +160,7 @@ tr.passou td{opacity:.5}
 
 .progress{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .bar{flex:1;min-width:140px;height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px}
 
 /* painel do dia */
 .painel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -166,7 +171,8 @@ tr.passou td{opacity:.5}
 .painel .cont{font-family:var(--sans);font-size:14px;font-weight:600;white-space:nowrap}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{font-size:11.5px;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
-.chip.ok{background:var(--accent-soft);color:var(--accent-strong);font-weight:600}
+.chip.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.chip.no{background:var(--alert-soft);color:var(--alert);font-weight:500}
 .chip.late{background:var(--warn-soft);color:var(--warn);font-weight:600}
 .chip .mono{font-weight:500;opacity:.85}
 @media (max-width:560px){
@@ -177,7 +183,7 @@ tr.passou td{opacity:.5}
 /* localização */
 .geo{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;border-radius:10px;padding:10px 12px;
   border:1px solid var(--line);background:var(--surface);color:var(--ink-2);line-height:1.45}
-.geo.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent-strong);font-weight:600}
+.geo.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok);font-weight:600}
 .geo.bad{background:var(--alert-soft);border-color:transparent;color:var(--alert);font-weight:600}
 .geo svg{width:15px;height:15px;flex:none;margin-top:2px}
 .regra{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:7px;margin-top:10px}
@@ -210,6 +216,15 @@ th.hoje{color:var(--accent-strong)}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .toolbar .spacer{flex:1;min-width:0}
 
+.optlist{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding:2px}
+.opt{display:flex;align-items:center;gap:10px;border:1px solid var(--line-2);border-radius:9px;
+  padding:9px 11px;cursor:pointer;background:var(--surface);text-align:left;width:100%;font:inherit;font-size:13.5px}
+.opt b{font-weight:600}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
+.trocacard{border:1px dashed var(--line-2);border-radius:var(--r);padding:16px 18px;background:var(--surface);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.trocacard .txt{flex:1;min-width:200px}
+.trocacard h2{font-size:15px;font-weight:600;margin-bottom:2px}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);
   padding:20px;max-width:390px;width:calc(100% - 32px);box-shadow:var(--shadow)}
 dialog::backdrop{background:var(--scrim)}
@@ -272,6 +287,19 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   </div>
 </dialog>
 
+<dialog id="dlg-troca">
+  <h3>Registrar fora da escala</h3>
+  <p class="tiny muted" id="tr-sub" style="margin:0 0 14px"></p>
+  <label class="fld">Seu nome<select id="tr-nome"></select></label>
+  <label class="fld" style="margin-top:12px">Mês do plantão que sai no lugar<input type="month" id="tr-mes"></label>
+  <div id="tr-lista" style="margin-top:10px"></div>
+  <div class="geo" id="tr-geo" style="margin-top:14px" hidden></div>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+    <button class="btn primary" id="tr-ok" style="flex:1" disabled>Enviar solicitação</button>
+    <button class="btn ghost" id="tr-no">Cancelar</button>
+  </div>
+</dialog>
+
 <script src="config.js"></script>
 <script src="escala.js"></script>
 <script>
@@ -284,6 +312,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var TURNOS_SEMANA = TURNOS.filter(function(t){ return !t.sabado; });
   var TURNO_SAB = TURNOS.filter(function(t){ return t.sabado; })[0] || null;
   var DIRETORIAS = ESC.diretorias || [];
+  var DIR_CURTA = ESC.diretoriasCurtas || {};
+  function dirCurta(d){ return DIR_CURTA[d] || d; }
   var INSTRUTORES = ESC.instrutores || {};
   var SABADOS = ESC.sabados || [];
   var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
@@ -309,6 +339,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var filtroDir = "";
   var coordOk = false;
   var alvoConf = null, alvoFix = null;
+  var trocas = [];
+  var trocaSel = null, trocaMes = "", trocaGeoOk = false;
 
   /* ---------- utilidades ---------- */
   function el(id){ return document.getElementById(id); }
@@ -325,7 +357,15 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function infoDe(n){ var v = INSTRUTORES[n]; return (typeof v === "string") ? { diretoria:v } : (v || {}); }
   function diretoriaDe(n){ return infoDe(n).diretoria || ""; }
   function nomeCheio(n){ return infoDe(n).completo || n; }
-  function nomeCurto(n){ return nomeCheio(n).split(/\s+/).slice(0,2).join(" "); }
+  var PARTICULAS = ["de","do","da","dos","das","e"];
+  function nomeCurto(n){
+    var ps = nomeCheio(n).split(/\s+/).filter(Boolean);
+    if(ps.length < 2) return ps[0] || n;
+    for(var i=1;i<ps.length;i++){
+      if(PARTICULAS.indexOf(ps[i].toLowerCase()) < 0) return ps[0]+" "+ps[i];
+    }
+    return ps[0];
+  }
   function classeDir(d){ var i = DIRETORIAS.indexOf(d); return i >= 0 ? " dir-"+i : ""; }
   function ordenaPorNome(a,b){ return nomeCheio(a).localeCompare(nomeCheio(b),"pt-BR"); }
 
@@ -344,7 +384,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(ds === "todos" || ds === "Todos") return todos.slice();
     var set = {};
     (ds || []).forEach(function(d){ set[d] = 1; });
-    return todos.filter(function(n){ return set[INSTRUTORES[n]]; });
+    return todos.filter(function(n){ return set[diretoriaDe(n)]; });
   }
   function rotuloSabado(e){
     if(!e) return "";
@@ -460,7 +500,59 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     if(!r.ok) throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
   }
+  function demoTrocas(){ try{ return JSON.parse(localStorage.getItem("paespe-trocas")||"[]"); }catch(e){ return []; } }
+  function demoTrocasGravar(a){ try{ localStorage.setItem("paespe-trocas", JSON.stringify(a)); }catch(e){} }
+
+  async function listarTrocas(){
+    if(DEMO) return demoTrocas();
+    var r = await fetch(base()+"/rest/v1/trocas?select=id,nome,data,turno,data_abater,turno_abater,status&order=id.desc", { headers: headers() });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return await r.json();
+  }
+  async function inserirTroca(t){
+    if(DEMO){ var a = demoTrocas(); t.id = "t"+Date.now(); t.status = "pendente"; a.push(t); demoTrocasGravar(a); return; }
+    var r = await fetch(base()+"/rest/v1/trocas", {
+      method:"POST", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify(t) });
+    if(!r.ok){
+      var txt = await r.text();
+      if(r.status===409 || txt.indexOf("duplicate") >= 0) throw new Error("Já existe uma solicitação para esse plantão.");
+      throw new Error("HTTP "+r.status+" — "+txt.slice(0,160));
+    }
+  }
+  async function decidirTroca(id, status){
+    if(DEMO){ var a = demoTrocas(); a.forEach(function(x){ if(String(x.id)===String(id)) x.status = status; }); demoTrocasGravar(a); return; }
+    var r = await fetch(base()+"/rest/v1/trocas?id=eq."+encodeURIComponent(id), {
+      method:"PATCH", headers:headers({ "Prefer":"return=minimal" }), body: JSON.stringify({ status:status }) });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+  }
+  function abatido(nome, data, turno){
+    return trocas.some(function(x){ return x.status==="aprovada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
+  }
+  function jaPedido(nome, data, turno){
+    return trocas.some(function(x){ return x.status!=="recusada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
+  }
+  function trocaDoRegistro(r){
+    for(var i=0;i<trocas.length;i++){
+      var x = trocas[i];
+      if(x.nome===r.nome && x.data===r.data && x.turno===r.turno) return x;
+    }
+    return null;
+  }
+  function plantoesDe(nome, ym){
+    var p = ym.split("-"), ult = new Date(+p[0], +p[1], 0).getDate(), out = [];
+    for(var d=1; d<=ult; d++){
+      var dt = new Date(+p[0], +p[1]-1, d);
+      var key = dt.toLocaleDateString("sv-SE"), dow = dt.getDay();
+      turnosDe(dow).forEach(function(t){
+        if(escalados(t.id, dow, key).indexOf(nome) >= 0 && !jaPedido(nome, key, t.id))
+          out.push({ data:key, turno:t.id, dow:dow });
+      });
+    }
+    return out;
+  }
+
   async function carregarHoje(){
+    try{ trocas = await listarTrocas(); }catch(e){}
     try{ regsHoje = await listar(hojeKey(), hojeKey()); }
     catch(e){ aviso("Não consegui falar com o banco de dados. Confira o config.js ou a conexão. ("+e.message+")", "fixo"); }
     render();
@@ -468,6 +560,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   async function carregarMes(){
     var p = mesFiltro.split("-");
     var ate = new Date(+p[0], +p[1], 0).toLocaleDateString("sv-SE");
+    try{ trocas = await listarTrocas(); }catch(e){}
     try{ regsMes = await listar(mesFiltro+"-01", ate); }
     catch(e){ regsMes = []; aviso("Não consegui carregar o período. ("+e.message+")"); }
     render();
@@ -543,7 +636,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '<span class="bar"><i style="width:'+Math.round(feitos/nomes.length*100)+'%"></i></span></div><div class="grid">';
       nomes.forEach(function(n){
         var r = reg[n], d = diretoriaDe(n);
-        var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(d)+'</span>' : '';
+        var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(dirCurta(d))+'</span>' : '';
         if(r){
           var at = atrasoDe(turnoSel, r.chegada);
           h += '<div class="namecard done'+(at!=null?" late":"")+'">'+rot
@@ -563,6 +656,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
     h += '</div>';
 
+    h += '<div class="trocacard"><div class="txt">'
+      + '<h2>Veio fora da sua escala?</h2>'
+      + '<p class="tiny muted" style="margin:0">Registre a presença de hoje e escolha qual plantão seu sai no lugar. '
+      + 'A coordenação aprova a troca.</p></div>'
+      + '<button class="btn" id="btn-troca">Registrar troca</button></div>';
+
     var fora = regsHoje.filter(function(r){ return r.turno===turnoSel && nomes.indexOf(r.nome) < 0; });
     if(fora.length){
       h += '<div><div class="sec-head"><h2>Fora da escala</h2><p>Registraram neste turno sem estar escalados</p></div>'
@@ -578,6 +677,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     Array.prototype.forEach.call(box.querySelectorAll(".namecard[data-n]"), function(b){
       b.addEventListener("click", function(){ abrirConfirma(b.dataset.n); });
     });
+    var bt = el("btn-troca");
+    if(bt) bt.addEventListener("click", abrirTroca);
   }
 
   function painelHoje(dow, data){
@@ -599,13 +700,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
           var at = atrasoDe(t.id, reg[n].chegada);
           corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(nomeCurto(n))+' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
         });
-        faltam.forEach(function(n){ corpo += '<span class="chip">'+esc(nomeCurto(n))+'</span>'; });
+        faltam.forEach(function(n){ corpo += '<span class="chip no">'+esc(nomeCurto(n))+'</span>'; });
       }
-      corpo += '</div><div class="cont"'+(nomes.length && chegaram.length===nomes.length ? ' style="color:var(--accent-strong)"' : '')+'>'
+      corpo += '</div><div class="cont"'+(nomes.length && chegaram.length===nomes.length ? ' style="color:var(--ok)"' : '')+'>'
         + chegaram.length+'/'+nomes.length+'</div></div>';
     });
     return '<div class="painel"><div class="sec-head" style="margin-bottom:2px"><h2>Quem já chegou hoje</h2>'
-      + '<p>'+presentes+' de '+total+' turnos preenchidos · verde é presente, âmbar é atraso, cinza ainda não chegou</p>'
+      + '<p>'+presentes+' de '+total+' turnos preenchidos · verde é presente, amarelo é atraso, vermelho ainda não chegou</p>'
       + '</div>' + corpo + '</div>';
   }
 
@@ -645,6 +746,87 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }catch(e){
       el("dlg-conf").close();
       aviso("Não consegui registrar. Tente de novo. ("+e.message+")", "warn");
+    }
+    btn.disabled = false;
+  });
+
+  /* ---------- troca de escala ---------- */
+  function abrirTroca(){
+    var t = turnoDe(turnoSel);
+    trocaSel = null; trocaGeoOk = false;
+    trocaMes = hojeKey().slice(0,7);
+    el("tr-sub").textContent = "Presença de hoje: " + t.nome + ", "
+      + new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) + ".";
+    var nomes = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+    el("tr-nome").innerHTML = '<option value="">Escolha seu nome</option>'
+      + nomes.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("");
+    el("tr-mes").value = trocaMes;
+    el("tr-lista").innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Escolha seu nome para ver seus plantões.</p>';
+    el("tr-geo").hidden = true;
+    el("tr-ok").disabled = true;
+    el("dlg-troca").showModal();
+  }
+
+  function pintarPlantoes(){
+    var nome = el("tr-nome").value;
+    var alvo = el("tr-lista");
+    trocaSel = null; trocaGeoOk = false;
+    el("tr-ok").disabled = true;
+    el("tr-geo").hidden = true;
+    if(!nome){ alvo.innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Escolha seu nome para ver seus plantões.</p>'; return; }
+    var lista = plantoesDe(nome, trocaMes);
+    if(!lista.length){
+      alvo.innerHTML = '<p class="tiny muted" style="margin:6px 0 0">Nenhum plantão disponível neste mês '
+        + '(ou todos já têm troca solicitada). Escolha outro mês.</p>';
+      return;
+    }
+    alvo.innerHTML = '<div class="optlist">' + lista.map(function(x, i){
+      var t = turnoDe(x.turno);
+      return '<button class="opt" data-i="'+i+'" aria-pressed="false">'
+        + '<b>'+DIA_CURTO[x.dow]+' '+esc(brData(x.data).slice(0,5))+'</b>'
+        + '<span>'+esc(t.nome)+' · '+esc(t.inicio)+'–'+esc(t.fim)+'</span></button>';
+    }).join("") + '</div>';
+    Array.prototype.forEach.call(alvo.querySelectorAll(".opt"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call(alvo.querySelectorAll(".opt"), function(o){ o.setAttribute("aria-pressed","false"); });
+        b.setAttribute("aria-pressed","true");
+        trocaSel = lista[+b.dataset.i];
+        checarGeoTroca();
+      });
+    });
+  }
+
+  async function checarGeoTroca(){
+    var faixa = el("tr-geo"), ok = el("tr-ok");
+    if(!GEO_ATIVO){ faixa.hidden = true; trocaGeoOk = true; ok.disabled = false; return; }
+    faixa.hidden = false; faixa.className = "geo";
+    faixa.innerHTML = SVG_PIN + "<span>Verificando sua localização…</span>";
+    ok.disabled = true;
+    var r = await verificarLocal();
+    if(!el("dlg-troca").open) return;
+    trocaGeoOk = r.ok;
+    faixa.className = "geo " + (r.ok ? "ok" : "bad");
+    faixa.innerHTML = SVG_PIN + "<span>" + esc(r.msg) + "</span>";
+    ok.disabled = !r.ok || !trocaSel;
+  }
+
+  el("tr-no").addEventListener("click", function(){ el("dlg-troca").close(); });
+  el("tr-nome").addEventListener("change", pintarPlantoes);
+  el("tr-mes").addEventListener("change", function(){ trocaMes = this.value || hojeKey().slice(0,7); pintarPlantoes(); });
+  el("tr-ok").addEventListener("click", async function(){
+    var nome = el("tr-nome").value;
+    if(!nome || !trocaSel || !trocaGeoOk) return;
+    var btn = el("tr-ok"); btn.disabled = true;
+    var agora = new Date().toISOString();
+    try{
+      await inserirTroca({ nome:nome, data:hojeKey(), turno:turnoSel,
+                           data_abater:trocaSel.data, turno_abater:trocaSel.turno, status:"pendente" });
+      await inserir(nome, turnoSel, hojeKey(), agora);
+      el("dlg-troca").close();
+      aviso("Presença registrada e troca enviada para aprovação da coordenação.");
+      await carregarHoje();
+    }catch(e){
+      aviso("Não consegui enviar. " + e.message, "warn");
     }
     btn.disabled = false;
   });
@@ -710,10 +892,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var turnosSem = {};
     TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){ escalados(t.id,d,"").forEach(function(n){ turnosSem[n] = (turnosSem[n]||0)+1; }); }); });
     h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+todos.length+' pessoas · turnos por semana</p></div>'
-      + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Diretoria</th><th class="num">Turnos/semana</th></tr></thead><tbody>'
+      + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Curso</th><th>Diretoria</th><th class="num">Turnos/semana</th></tr></thead><tbody>'
       + todos.map(function(n){
           var d = diretoriaDe(n);
-          return '<tr><td>'+esc(nomeCheio(n))+'</td><td class="'+(d?('dirc'+classeDir(d)):'muted')+'">'+esc(d||"a definir")+'</td>'
+          var i = infoDe(n);
+          return '<tr><td>'+(i.diretor?'<b>'+esc(nomeCheio(n))+'</b> <span class="tag">diretor(a)</span>':esc(nomeCheio(n)))+'</td>'
+            + '<td'+(i.curso?'':' class="muted"')+'>'+esc(i.curso || "—")+'</td>'
+            + '<td class="'+(d?('dirc'+classeDir(d)):'muted')+'">'+esc(d||"a definir")+'</td>'
             + '<td class="num">'+(turnosSem[n]||0)+'</td></tr>';
         }).join("")
       + '</tbody></table></div></div>';
@@ -750,7 +935,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       if(key > hoje) break;
       var dow = dt.getDay();
       turnosDe(dow).forEach(function(t){
-        escalados(t.id, dow, key).forEach(function(n){ slot(n).previstos++; });
+        escalados(t.id, dow, key).forEach(function(n){ if(!abatido(n, key, t.id)) slot(n).previstos++; });
       });
     }
     var atrasosTot = 0;
@@ -807,6 +992,31 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + '</tbody></table></div></div>';
     }
 
+    var pend = trocas.filter(function(x){ return x.status === "pendente"; });
+    var decid = trocas.filter(function(x){ return x.status !== "pendente"; }).slice(0,20);
+    if(pend.length || decid.length){
+      h += '<div><div class="sec-head"><h2>Solicitações de troca</h2><p>'
+        + (pend.length ? pend.length+' aguardando decisão' : 'nenhuma pendente')+'</p></div>'
+        + '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Compareceu</th>'
+        + '<th>Plantão que sai</th><th>Situação</th><th></th></tr></thead><tbody>';
+      pend.concat(decid).forEach(function(x){
+        var te = turnoDe(x.turno), ta = turnoDe(x.turno_abater);
+        var sit = x.status === "pendente" ? '<span class="pill p-late">Pendente</span>'
+          : (x.status === "aprovada" ? '<span class="pill p-on"><span class="dot"></span>Aprovada</span>'
+          : '<span class="pill p-miss">Recusada</span>');
+        h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
+          + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+esc(te?te.nome:x.turno)+'</span></td>'
+          + '<td class="mono">'+esc(brData(x.data_abater))+' <span class="muted">'+esc(ta?ta.nome:x.turno_abater)+'</span></td>'
+          + '<td>'+sit+'</td>'
+          + '<td>'+(x.status==="pendente"
+              ? '<button class="btn icon" data-ap="'+esc(x.id)+'">Aprovar</button> '
+                +'<button class="btn icon ghost" data-re="'+esc(x.id)+'" style="color:var(--alert)">Recusar</button>'
+              : '<button class="btn icon ghost" data-ap="'+esc(x.id)+'">Reabrir como aprovada</button>')
+          + '</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+    }
+
     h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
     if(!nomes.length){
       h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>';
@@ -836,11 +1046,13 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       ordenados.slice(0,200).forEach(function(r, i){
         var at = atrasoDe(r.turno, r.chegada);
         var t = turnoDe(r.turno);
+        var tr_ = trocaDoRegistro(r);
         h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dowDe(r.data)]+'</span></td>'
           + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(nomeCheio(r.nome))+'</td>'
           + '<td class="muted">'+esc(diretoriaDe(r.nome) || "—")+'</td>'
           + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
-          + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')+'</td>'
+          + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')
+          + (tr_ ? ' <span class="pill '+(tr_.status==="aprovada"?"p-on":(tr_.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tr_.status)+'</span>' : '')+'</td>'
           + '<td><button class="btn icon ghost" data-fix="'+i+'">Corrigir</button></td></tr>';
       });
       h += '</tbody></table></div>';
@@ -869,6 +1081,20 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     });
     Array.prototype.forEach.call(box.querySelectorAll("[data-fix]"), function(b){
       b.addEventListener("click", function(){ abrirFix(ordenados[+b.dataset.fix]); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-ap]"), function(b){
+      b.addEventListener("click", async function(){
+        b.disabled = true;
+        try{ await decidirTroca(b.dataset.ap, "aprovada"); aviso("Troca aprovada."); await carregarMes(); }
+        catch(e){ aviso("Não consegui aprovar. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-re]"), function(b){
+      b.addEventListener("click", async function(){
+        b.disabled = true;
+        try{ await decidirTroca(b.dataset.re, "recusada"); aviso("Troca recusada."); await carregarMes(); }
+        catch(e){ aviso("Não consegui recusar. ("+e.message+")", "warn"); b.disabled = false; }
+      });
     });
   }
   function tile(k,v){ return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'; }
@@ -908,13 +1134,14 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
   /* ---------- CSV ---------- */
   function baixarCSV(rows){
-    var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Chegada","Atraso (min)","Situação"];
+    var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Chegada","Atraso (min)","Situação","Troca"];
     var out = [head.join(";")];
     rows.slice().reverse().forEach(function(r){
       var at = atrasoDe(r.turno, r.chegada);
       var t = turnoDe(r.turno);
       out.push([brData(r.data), DIA_CURTO[dowDe(r.data)], t?t.nome:r.turno, nomeCheio(r.nome),
-        diretoriaDe(r.nome), hhmm(r.chegada), at!=null?String(at):"", at!=null?"Atraso":"No horário"]
+        diretoriaDe(r.nome), hhmm(r.chegada), at!=null?String(at):"", at!=null?"Atraso":"No horário",
+        (function(){ var x = trocaDoRegistro(r); return x ? x.status : ""; })()]
         .map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(";"));
     });
     var blob = new Blob(["﻿"+out.join("\r\n")], { type:"text/csv;charset=utf-8" });

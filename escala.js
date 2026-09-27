@@ -32,7 +32,10 @@ window.ESCALA = {
      DIRETORIAS
      A ordem aqui é a ordem em que aparecem nos filtros e relatórios.
      --------------------------------------------------------------- */
-  diretorias: ["Acadêmica", "Administrativa", "Captação", "Marketing"],
+  diretorias: ["Acadêmica", "Administrativa", "Captação de Recursos", "Marketing & Comunicação"],
+
+  /* Versão curta, usada só no rótulo dentro dos cartões. */
+  diretoriasCurtas: { "Captação de Recursos": "Captação", "Marketing & Comunicação": "Marketing" },
 
   /* ---------------------------------------------------------------
      INSTRUTORES
@@ -42,29 +45,31 @@ window.ESCALA = {
      ficariam órfãos. Para corrigir a grafia que as pessoas veem,
      altere só o "completo".
      O "completo" é o nome que aparece na tela e nos relatórios.
+     "curso" é a graduação da pessoa (aparece na lista de instrutores).
+     "diretor: true" marca quem dirige a diretoria — o nome sai em negrito.
      --------------------------------------------------------------- */
   instrutores: {
-    "Adonias":          { completo: "Adonias Valdevino da Silva", diretoria: "Marketing" },
-    "Ana Luíza":        { completo: "Ana Luíza Bezerra Cavalcante", diretoria: "Marketing" },
-    "Antônio Ryksson":  { completo: "Antônio Ryksson Batista da Silva", diretoria: "Acadêmica" },
-    "Beatriz":          { completo: "Beatriz Alvez Ferreira", diretoria: "Acadêmica" },
-    "Eduarda":          { completo: "Eduarda Rayane Costa Monteiro", diretoria: "Marketing" },
-    "Ellis":            { completo: "Ellis Regina Santos Tavares", diretoria: "Acadêmica" },
-    "Emilly Júlia":     { completo: "Emilly Júlia da Silva Ferreira", diretoria: "Administrativa" },
-    "Emilly Campelo":   { completo: "Emilly Samara Araújo Assis Campelo", diretoria: "Acadêmica" },
-    "Emilly Vitória":   { completo: "Emilly Vitoria Rodrigues Oliveira", diretoria: "Administrativa" },
-    "Gyldson":          { completo: "Gyldson Luiz Rodrigues dos Santos", diretoria: "Marketing" },
-    "Isadora Soares":   { completo: "Isadora Soares Lopes do Nascimento", diretoria: "Acadêmica" },
-    "Jackeline":        { completo: "Jackeline Salviano da Silva", diretoria: "Administrativa" },
-    "Julia Cavalcante": { completo: "Julia Cavalcante Lopes dos Santos", diretoria: "Captação" },
-    "Júlia Emylly":     { completo: "Júlia Emylly dos Santos", diretoria: "Administrativa" },
-    "Kariny":           { completo: "Kariny Gabrielly Ramos Santos", diretoria: "Acadêmica" },
-    "Kerolayne":        { completo: "Kerolayne Vitoria Ferreira Santos", diretoria: "Marketing" },
-    "Maria Isadora":    { completo: "Maria Isadora Gomes Profirio", diretoria: "Captação" },
-    "Maria Jaqueline":  { completo: "Maria Jaqueline Silva dos Santos", diretoria: "Captação" },
-    "Sara Vitória":     { completo: "Sara Vitória Isabel Candido", diretoria: "Captação" },
-    "Sarah Kessya":     { completo: "Sarah Kessya Lopes Muniz de Almeida", diretoria: "Administrativa" },
-    "Thiago":           { completo: "Thiago Rocha dos Santos", diretoria: "Marketing" }
+    "Adonias":            { completo: "Adonias Valdevino da Silva", diretoria: "Marketing & Comunicação", curso: "Educação Física" },
+    "Ana Luíza":          { completo: "Ana Luíza Bezerra Cavalcante", diretoria: "Marketing & Comunicação", curso: "Serviço Social" },
+    "Antônio Ryksson":    { completo: "Antônio Ryksson Batista da Silva", diretoria: "Acadêmica", curso: "Eng. Química" },
+    "Beatriz":            { completo: "Beatriz Alvez Ferreira", diretoria: "Acadêmica", curso: "Pedagogia" },
+    "Eduarda":            { completo: "Eduarda Rayane Costa Monteiro", diretoria: "Marketing & Comunicação", curso: "Ciências Biológicas", diretor: true },
+    "Ellis":              { completo: "Ellis Regina Santos Tavares", diretoria: "Acadêmica", curso: "Medicina" },
+    "Emilly Júlia":       { completo: "Emilly Júlia da Silva Ferreira", diretoria: "Administrativa", curso: "Eng. Florestal" },
+    "Emilly Campelo":     { completo: "Emilly Samara Araújo Assis Campelo", diretoria: "Acadêmica", curso: "Educação Física" },
+    "Emilly Vitória":     { completo: "Emilly Vitoria Rodrigues Oliveira", diretoria: "Administrativa", curso: "Ciências Biológicas" },
+    "Gyldson":            { completo: "Gyldson Luiz Rodrigues dos Santos", diretoria: "Marketing & Comunicação", curso: "Eng. Ambiental e Sanitária" },
+    "Isadora Soares":     { completo: "Isadora Soares Lopes do Nascimento", diretoria: "Acadêmica", curso: "Enfermagem", diretor: true },
+    "Jackeline":          { completo: "Jackeline Salviano da Silva", diretoria: "Administrativa", curso: "Odontologia" },
+    "Julia Cavalcante":   { completo: "Julia Cavalcante Lopes dos Santos", diretoria: "Captação de Recursos", curso: "Letras – Português" },
+    "Júlia Emylly":       { completo: "Júlia Emylly dos Santos", diretoria: "Administrativa", curso: "Eng. Química" },
+    "Kariny":             { completo: "Kariny Gabrielly Ramos Santos", diretoria: "Acadêmica", curso: "Psicologia" },
+    "Kerolayne":          { completo: "Kerolayne Vitoria Ferreira Santos", diretoria: "Marketing & Comunicação", curso: "Eng. Química" },
+    "Maria Isadora":      { completo: "Maria Isadora Gomes Profirio", diretoria: "Captação de Recursos", curso: "Psicologia" },
+    "Maria Jaqueline":    { completo: "Maria Jaqueline Silva dos Santos", diretoria: "Captação de Recursos", curso: "Serviço Social" },
+    "Sara Vitória":       { completo: "Sara Vitória Isabel Candido", diretoria: "Captação de Recursos", curso: "Matemática", diretor: true },
+    "Sarah Kessya":       { completo: "Sarah Kessya Lopes Muniz de Almeida", diretoria: "Administrativa", curso: "Ciências Biológicas", diretor: true },
+    "Thiago":             { completo: "Thiago Rocha dos Santos", diretoria: "Marketing & Comunicação", curso: "Psicologia" }
   },
 
   /* ---------------------------------------------------------------
@@ -105,7 +110,7 @@ window.ESCALA = {
      diretorias convocadas. Use "todos" quando for o programa inteiro.
 
      Exemplos:
-       { data: "2026-10-03", diretorias: ["Acadêmica", "Captação"] },
+       { data: "2026-10-03", diretorias: ["Acadêmica", "Captação de Recursos"] },
        { data: "2026-10-10", diretorias: "todos" },
 
      Sábado que não estiver nesta lista não aceita registro de ponto.
@@ -113,9 +118,9 @@ window.ESCALA = {
      comece.
      --------------------------------------------------------------- */
   sabados: [
-    { data: "2026-09-05", diretorias: ["Acadêmica", "Captação"] },
+    { data: "2026-09-05", diretorias: ["Acadêmica", "Captação de Recursos"] },
     { data: "2026-09-12", diretorias: "todos" },
-    { data: "2026-09-19", diretorias: ["Administrativa", "Marketing"] },
+    { data: "2026-09-19", diretorias: ["Administrativa", "Marketing & Comunicação"] },
     { data: "2026-09-26", diretorias: "todos" }
   ]
 
