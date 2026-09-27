@@ -38,6 +38,10 @@ window.CONFIG = {
     nome: "prédio do PAESPE"
   },
 
+  /* Valor cheio da bolsa, em reais. A bolsa de cada instrutor é
+     esse valor multiplicado pela frequência dele no mês. */
+  BOLSA: 700,
+
   /* Texto do rodapé. */
   RODAPE: "PAESPE · Programa de Apoio aos Estudantes das Escolas Públicas do Estado"
 };

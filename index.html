@@ -20,6 +20,7 @@
   --warn:#8A5A00; --warn-soft:#FBEFD9;
   --alert:#A62F26; --alert-soft:#FAE3E1;
   --d0:#2B5E9E; --d1:#8A6A00; --d2:#146B49; --d3:#6B3FA0;
+  --c0:#2B5E9E; --c1:#9A5B00; --c2:#00795C; --c3:#6B3FA0;
   --ok:#146B49; --ok-soft:#DBF1E6;
   --scrim:rgba(26,35,64,.48);
   --shadow:0 1px 2px rgba(26,35,64,.07), 0 10px 28px -18px rgba(26,35,64,.38);
@@ -36,6 +37,7 @@
     --warn:#E5B461; --warn-soft:#372D15;
     --alert:#F08C80; --alert-soft:#3F2320;
     --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
+    --c0:#4A90E2; --c1:#B98520; --c2:#189A6E; --c3:#8E68D4;
     --ok:#63D3A0; --ok-soft:#123528;
     --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
     --ok:#63D3A0; --ok-soft:#123528;
@@ -51,6 +53,7 @@
   --warn:#E5B461; --warn-soft:#372D15;
   --alert:#F08C80; --alert-soft:#3F2320;
   --d0:#9BC8FF; --d1:#E8C15E; --d2:#63D3A0; --d3:#C6AEF5;
+  --c0:#4A90E2; --c1:#B98520; --c2:#189A6E; --c3:#8E68D4;
   --ok:#63D3A0; --ok-soft:#123528;
   --scrim:rgba(4,8,18,.66);
   --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px -18px rgba(0,0,0,.85);
@@ -214,7 +217,7 @@ table.grade td.turno small{display:block;font-family:var(--sans);font-weight:400
 th.hoje,td.hoje{background:var(--accent-soft)}
 th.hoje{color:var(--accent-strong)}
 
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px}
 .tile{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
 .tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);font-weight:600;font-family:var(--sans)}
 .tile .v{font-family:var(--sans);font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
@@ -236,10 +239,25 @@ th.hoje{color:var(--accent-strong)}
 .chipx button{border:0;background:transparent;cursor:pointer;font-size:14px;line-height:1;
   padding:0 3px;color:var(--ink-2);border-radius:4px}
 .chipx button:hover{background:var(--alert-soft);color:var(--alert)}
+.chipx i.mais{font-style:normal;font-weight:700;color:var(--accent-strong);font-size:11px}
 table.grade.editor td{min-width:180px}
 select.addslot{width:100%;margin-top:7px;font-size:11.5px;max-width:none}
 .opcao{display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:12.5px;white-space:nowrap}
 .acesso{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.chartwrap{width:100%;overflow-x:auto}
+.chart{width:100%;min-width:420px;height:auto;display:block;font-family:var(--sans)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .corte{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3}
+.chart .lbl{fill:var(--ink-2);font-size:11px;dominant-baseline:middle}
+.chart .val{fill:var(--ink);font-size:11.5px;font-weight:600;dominant-baseline:middle}
+.chart .val.baixo{fill:var(--alert)}
+.chart .linha{fill:none;stroke:var(--c0);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .ponto{fill:var(--c0);stroke:var(--surface);stroke-width:2}
+.chart .mark{cursor:default}
+.chart .mark:hover{opacity:.82}
+#tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--ground);
+  border-radius:7px;padding:6px 9px;font-size:12px;font-weight:500;max-width:280px;box-shadow:var(--shadow)}
+tr.somatorio td{background:var(--surface-2);border-top:2px solid var(--line-2)}
 .acesso .em{font-size:12px;color:var(--ink-2)}
 .coordwrap{display:grid;grid-template-columns:184px 1fr;gap:22px;align-items:start}
 .coordmain{min-width:0;display:flex;flex-direction:column;gap:20px}
@@ -269,6 +287,7 @@ select.addslot{width:100%;margin-top:7px;font-size:11.5px;max-width:none}
 .gatecard .btn.big{width:100%}
 .namecard.esperando{opacity:.62;cursor:default}
 .namecard.eu{border-color:var(--accent);border-width:2px}
+.namecard.fj{background:var(--surface-2)}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);
   padding:20px;max-width:390px;width:calc(100% - 32px);box-shadow:var(--shadow)}
 dialog::backdrop{background:var(--scrim)}
@@ -316,11 +335,26 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 <dialog id="dlg-conf">
   <h3 id="dc-nome">Nome</h3>
   <p class="tiny muted" id="dc-sub" style="margin:0 0 16px"></p>
+  <label class="fld" id="dc-hora-wrap" style="max-width:150px;margin-bottom:16px" hidden>Horário da chegada<input type="time" id="dc-hora"></label>
   <div class="geo" id="dc-geo" style="margin-bottom:16px" hidden></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button class="btn primary big" id="dc-ok" style="flex:1">Confirmar chegada</button>
     <button class="btn ghost big" id="dc-retry" hidden>Tentar de novo</button>
     <button class="btn ghost big" id="dc-no">Cancelar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-fj">
+  <h3>Justificar falta</h3>
+  <p class="tiny muted" id="fj-sub" style="margin:0 0 14px"></p>
+  <label class="fld">Motivo<input id="fj-motivo" placeholder="Atestado, prova, viagem…" style="width:100%"></label>
+  <p class="tiny muted" style="margin:12px 0 0">A justificativa fica registrada no relatório, mas a falta continua
+  descontando da frequência.</p>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+    <button class="btn primary" id="fj-ok">Salvar</button>
+    <button class="btn ghost" id="fj-no">Cancelar</button>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="fj-del" style="color:var(--alert)">Remover justificativa</button>
   </div>
 </dialog>
 
@@ -335,6 +369,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     <button class="btn ghost" id="df-del" style="color:var(--alert)">Apagar</button>
   </div>
 </dialog>
+
+<div id="tip" hidden></div>
 
 <dialog id="dlg-troca">
   <h3>Registrar fora da escala</h3>
@@ -369,6 +405,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var SABADOS = (ESC.sabados || []).slice();
   var GRADE = JSON.parse(JSON.stringify(ESC.grade || {}));
   var escalaDoBanco = false;
+  var BOLSA = (typeof CFG.BOLSA === "number") ? CFG.BOLSA : 700;
+  var JUSTIFICATIVAS = [];
+  var historico = [];
+  var EXCECOES = [];
+  var SUSPENSOES = {};
+  var CONVOCACOES = {};
   var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
   var DIA_CURTO = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   var DIA_LONGO = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
@@ -392,8 +434,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var sb = null, sessao = null, perfil = null, perfis = [];
   var view = "ponto";
   var turnoSel = null;
-  var regsHoje = [], regsMes = [], trocas = [];
-  var mesFiltro = "", filtroDir = "";
+  var regsHoje = [], regsMes = [], regsHist = [], trocas = [];
+  var mesFiltro = "", filtroDir = "", dataSel = "";
+  var modoEscala = "padrao", semanaRef = "";
   var alvoConf = null, alvoFix = null;
   var trocaSel = null, trocaMes = "", trocaGeoOk = false;
   var pronto = false;
@@ -402,6 +445,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function el(id){ return document.getElementById(id); }
   function esc(s){ var d=document.createElement("div"); d.textContent = (s==null?"":String(s)); return d.innerHTML; }
   function hojeKey(){ return new Date().toLocaleDateString("sv-SE"); }
+  function dataAtiva(){ return dataSel || hojeKey(); }
   function hhmm(iso){ return iso ? new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : ""; }
   function minOf(hm){ var p=String(hm).split(":"); return (+p[0])*60 + (+p[1]||0); }
   function minIso(iso){ var d=new Date(iso); return d.getHours()*60 + d.getMinutes(); }
@@ -447,11 +491,41 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(!e) return "";
     return (e.diretorias === "todos" || e.diretorias === "Todos") ? "Todas as diretorias" : (e.diretorias || []).join(" e ");
   }
-  function escalados(turnoId, dow, data){
+  function estaAtivoEm(n, data){
+    var i = infoDe(n);
+    if(i.ativo === false){
+      if(!i.desligadoEm) return false;          // desligado sem data: fora de tudo
+      if(!data) return false;                    // visão sem data (editor, listas)
+      return data < i.desligadoEm;               // antes do desligamento continua valendo
+    }
+    return true;
+  }
+  function excDe(data, turno){
+    return EXCECOES.filter(function(x){ return x.data === data && x.turno === turno; });
+  }
+  function convocacaoDe(data, turno){
+    if(!data) return null;
+    return CONVOCACOES[data+"|"+turno] || CONVOCACOES[data+"|*"] || null;
+  }
+  function basePadrao(turnoId, dow, data){
     var t = turnoDe(turnoId);
+    var cv = convocacaoDe(data, turnoId);
+    if(cv) return nomesDasDiretorias(cv.todos ? "todos" : (cv.diretorias || []));
     if(t && t.sabado){ var e = sabadoDe(data); return e ? nomesDasDiretorias(e.diretorias) : []; }
-    var g = GRADE[turnoId] || {};
-    return (g[dow] || []).slice();
+    return ((GRADE[turnoId] || {})[dow] || []).slice();
+  }
+  function escalados(turnoId, dow, data){
+    var lista = basePadrao(turnoId, dow, data);
+    if(data){
+      if(suspenso(data, turnoId)) return [];
+      var ex = excDe(data, turnoId);
+      var fora = {}, dentro = [];
+      ex.forEach(function(x){ if(x.acao === "remover") fora[x.nome] = 1; else dentro.push(x.nome); });
+      lista = lista.filter(function(n){ return !fora[n]; });
+      dentro.forEach(function(n){ if(lista.indexOf(n) < 0) lista.push(n); });
+      lista.sort(ordenaPorNome);
+    }
+    return lista.filter(function(n){ return estaAtivoEm(n, data); });
   }
   function atrasoDe(turnoId, iso){
     var t = turnoDe(turnoId); if(!t) return null;
@@ -567,7 +641,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
   async function listarInstrutores(){
     if(DEMO) return null;
-    var r = await sb.from("instrutores").select("nome,completo,diretoria,curso,diretor").order("completo");
+    var r = await sb.from("instrutores").select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
     if(r.error || !r.data || !r.data.length) return null;
     return r.data;
   }
@@ -577,7 +651,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(!lista) return;                       // sem tabela ou vazia: segue com o escala.js
     var m = {};
     lista.forEach(function(x){
-      m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "", diretor:!!x.diretor };
+      m[x.nome] = { completo:x.completo || x.nome, diretoria:x.diretoria || "", curso:x.curso || "",
+                    diretor:!!x.diretor, ativo:(x.ativo !== false), desligadoEm:x.desligado_em || null };
     });
     INSTRUTORES = m;
     instrutoresDoBanco = true;
@@ -593,6 +668,17 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       if(r.error.code === "23505") throw new Error("Já existe um instrutor com esse nome-chave.");
       throw new Error(r.error.message);
     }
+  }
+  async function desligarInstrutor(nome, desligar){
+    if(DEMO) return;
+    erro(await sb.from("instrutores").update(
+      desligar ? { ativo:false, desligado_em: hojeKey() } : { ativo:true, desligado_em:null }
+    ).eq("nome", nome));
+  }
+  async function excluirPerfil(id, email){
+    if(DEMO) return;
+    erro(await sb.from("perfis").delete().eq("id", id));
+    if(email){ try{ await sb.from("convites").delete().eq("email", email); }catch(e){} }
   }
   async function apagarInstrutor(nome){
     if(DEMO) return;
@@ -625,6 +711,68 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       }
     }catch(e){}
   }
+  async function carregarExcecoes(){
+    if(DEMO) return;
+    try{
+      var r = await sb.from("excecoes").select("data,turno,nome,acao");
+      EXCECOES = (!r.error && r.data) ? r.data : [];
+    }catch(e){ EXCECOES = []; }
+    try{
+      var r3 = await sb.from("convocacoes").select("data,turno,diretorias,todos");
+      CONVOCACOES = {};
+      if(!r3.error && r3.data) r3.data.forEach(function(x){ CONVOCACOES[x.data+"|"+x.turno] = x; });
+    }catch(e){ CONVOCACOES = {}; }
+    try{
+      var r2 = await sb.from("suspensoes").select("data,turno,motivo");
+      SUSPENSOES = {};
+      if(!r2.error && r2.data) r2.data.forEach(function(x){ SUSPENSOES[x.data+"|"+x.turno] = x.motivo || ""; });
+    }catch(e){ SUSPENSOES = {}; }
+  }
+  async function porExcecao(data, turno, nome, acao){
+    if(DEMO) return;
+    erro(await sb.from("excecoes").upsert({ data:data, turno:turno, nome:nome, acao:acao },
+                                          { onConflict:"data,turno,nome" }));
+  }
+  async function limparExcecao(data, turno, nome){
+    if(DEMO) return;
+    erro(await sb.from("excecoes").delete().eq("data", data).eq("turno", turno).eq("nome", nome));
+  }
+  function excecaoDe(data, turno, nome){
+    for(var i=0;i<EXCECOES.length;i++){
+      var x = EXCECOES[i];
+      if(x.data===data && x.turno===turno && x.nome===nome) return x;
+    }
+    return null;
+  }
+  async function tirarDaData(data, turno, nome){
+    var x = excecaoDe(data, turno, nome);
+    if(x && x.acao === "incluir") return limparExcecao(data, turno, nome);
+    return porExcecao(data, turno, nome, "remover");
+  }
+  async function porNaData(data, turno, nome){
+    var x = excecaoDe(data, turno, nome);
+    if(x && x.acao === "remover") return limparExcecao(data, turno, nome);
+    return porExcecao(data, turno, nome, "incluir");
+  }
+  async function salvarConvocacao(data, turno, dirs, todos){
+    if(DEMO) return;
+    erro(await sb.from("convocacoes").upsert({ data:data, turno:turno, diretorias:dirs || [], todos:!!todos },
+                                             { onConflict:"data,turno" }));
+  }
+  async function limparConvocacao(data, turno){
+    if(DEMO) return;
+    erro(await sb.from("convocacoes").delete().eq("data", data).eq("turno", turno));
+  }
+  function suspenso(data, turno){
+    return SUSPENSOES.hasOwnProperty(data+"|*") || SUSPENSOES.hasOwnProperty(data+"|"+turno);
+  }
+  async function marcarSuspensao(data, turno, ligar2, motivo){
+    if(DEMO) return;
+    if(ligar2) erro(await sb.from("suspensoes").upsert({ data:data, turno:turno, motivo:motivo || null },
+                                                       { onConflict:"data,turno" }));
+    else erro(await sb.from("suspensoes").delete().eq("data", data).eq("turno", turno));
+  }
+
   async function addSlot(turno, dia, nome){
     if(DEMO) return;
     var r = await sb.from("escala").insert({ turno:turno, dia:+dia, nome:nome });
@@ -643,6 +791,25 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     erro(await sb.from("sabados").delete().eq("data", data));
   }
 
+  async function carregarExtras(){
+    if(DEMO) return;
+    try{
+      var r = await sb.from("justificativas").select("data,turno,nome,motivo");
+      JUSTIFICATIVAS = (!r.error && r.data) ? r.data : [];
+    }catch(e){ JUSTIFICATIVAS = []; }
+  }
+  function temFJ(nome, data, turno){
+    return JUSTIFICATIVAS.some(function(x){ return x.nome===nome && x.data===data && x.turno===turno; });
+  }
+  async function porFJ(nome, data, turno, motivo){
+    if(DEMO) return;
+    erro(await sb.from("justificativas").upsert({ nome:nome, data:data, turno:turno, motivo:motivo || null },
+                                                { onConflict:"data,turno,nome" }));
+  }
+  async function tirarFJ(nome, data, turno){
+    if(DEMO) return;
+    erro(await sb.from("justificativas").delete().eq("nome", nome).eq("data", data).eq("turno", turno));
+  }
   async function listarPerfis(){
     if(DEMO) return [perfil];
     return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
@@ -674,7 +841,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
   async function carregarHoje(){
     try{ trocas = await listarTrocas(); }catch(e){}
-    try{ regsHoje = await listar(hojeKey(), hojeKey()); }
+    try{ regsHoje = await listar(dataAtiva(), dataAtiva()); }
     catch(e){ aviso("Não consegui falar com o banco de dados. ("+e.message+")", "fixo"); }
     render();
   }
@@ -683,7 +850,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var ate = new Date(+p[0], +p[1], 0).toLocaleDateString("sv-SE");
     try{ trocas = await listarTrocas(); }catch(e){}
     try{ perfis = await listarPerfis(); }catch(e){}
+    await carregarExtras();
     try{ convites = await listarConvites(); }catch(e){}
+    try{
+      var ini = new Date(+p[0], +p[1]-6, 1).toLocaleDateString("sv-SE");
+      regsHist = await listar(ini, ate);
+    }catch(e){ regsHist = []; }
     try{ regsMes = await listar(mesFiltro+"-01", ate); }
     catch(e){ regsMes = []; aviso("Não consegui carregar o período. ("+e.message+")"); }
     render();
@@ -694,7 +866,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v10 · coordenação sem cerca";
+    var VERSAO = "v17";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
@@ -813,6 +985,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   async function entrarNoApp(){
     await carregarInstrutores();
     await carregarEscala();
+    await carregarExcecoes();
+    await carregarExtras();
     pronto = true;
     el("gate").hidden = true;
     el("app").hidden = false;
@@ -853,29 +1027,47 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   /* ================= REGISTRAR ================= */
   function viewPonto(){
     var box = el("v-ponto");
-    var dow = new Date().getDay();
-    var data = hojeKey();
+    var data = dataAtiva();
+    var hoje = (data === hojeKey());
+    var dow = dowDe(data);
     var lista = turnosDe(dow);
     var eu = meuNome();
     var podeTodos = ehCoord();
 
+    var barraData = podeTodos
+      ? '<div class="toolbar" style="margin-bottom:16px"><label class="fld">Data do registro'
+        + '<input type="date" id="p-data" value="'+esc(data)+'"></label>'
+        + (hoje ? '' : '<button class="btn ghost" id="p-hoje">Voltar para hoje</button>')
+        + '<span class="spacer"></span>'
+        + (hoje ? '' : '<span class="pill p-late">registrando em '+esc(brData(data))+'</span>')
+        + '</div>'
+      : '';
+    function ligarBarraData(){
+      var dd = el("p-data");
+      if(dd) dd.addEventListener("change", function(){ dataSel = this.value || ""; carregarHoje(); });
+      var bh = el("p-hoje");
+      if(bh) bh.addEventListener("click", function(){ dataSel = ""; carregarHoje(); });
+    }
+
     if(!lista.length){
-      box.innerHTML = '<div class="empty"><h3>Sem plantão hoje</h3>'
-        + '<p class="tiny" style="margin:0">O PAESPE não tem turno aos domingos. Bom descanso.</p></div>';
+      box.innerHTML = barraData + '<div class="empty"><h3>Sem plantão neste dia</h3>'
+        + '<p class="tiny" style="margin:0">O PAESPE não tem turno aos domingos.</p></div>';
+      ligarBarraData();
       return;
     }
     var entradaSab = (dow===6) ? sabadoDe(data) : null;
     if(dow===6 && !entradaSab){
-      box.innerHTML = '<div class="empty"><h3>Este sábado não está na escala</h3>'
+      box.innerHTML = barraData + '<div class="empty"><h3>Este sábado não está na escala</h3>'
         + '<p class="tiny" style="margin:0">Só é possível registrar nos sábados marcados pela coordenação.</p></div>';
+      ligarBarraData();
       return;
     }
     if(!lista.some(function(t){ return t.id === turnoSel; })) turnoSel = lista[0].id;
 
-    var h = painelHoje(dow, data);
+    var h = barraData + painelHoje(dow, data);
 
     h += '<div><div class="eyebrow" style="margin-bottom:8px">Registrar chegada · '
-      + esc(DIA_LONGO[dow])+', '+esc(new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long"}))
+      + esc(DIA_LONGO[dow])+', '+esc(brData(data))
       + (entradaSab ? ' · '+esc(rotuloSabado(entradaSab)) : '')+'</div><div class="turnos">';
     lista.forEach(function(t){
       h += '<button class="turnobtn" data-t="'+esc(t.id)+'" aria-pressed="'+(t.id===turnoSel)+'">'
@@ -915,10 +1107,19 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
             + '<path d="M5.8 10.3l2.7 2.7 5.7-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
             + '<span>Chegou às <span class="mono">'+esc(hhmm(r.chegada))+'</span>'
             + (at!=null ? ' &middot; '+at+' min de atraso' : '')+'</span></span></div>';
-        } else if(sou || podeTodos){
-          h += '<button class="namecard'+(sou?" eu":"")+'" data-n="'+esc(n)+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+'</span>'
-            + '<span class="s">'+(sou ? "Toque para registrar sua chegada" : "Registrar chegada pela coordenação")+'</span></button>';
+        } else if(sou){
+          h += '<button class="namecard eu" data-n="'+esc(n)+'">'+rot
+            + '<span class="n">'+esc(nomeCheio(n))+' <span class="tag">você</span></span>'
+            + '<span class="s">Toque para registrar sua chegada</span></button>';
+        } else if(podeTodos){
+          var fj = temFJ(n, data, turnoSel);
+          h += '<div class="namecard'+(fj?" fj":"")+'">'+rot
+            + '<span class="n">'+esc(nomeCheio(n))+'</span>'
+            + (fj ? '<span class="s"><span class="pill p-wait">falta justificada</span></span>' : '')
+            + '<span class="s" style="gap:6px;margin-top:4px">'
+            +   '<button class="btn icon" data-n="'+esc(n)+'">Registrar</button>'
+            +   '<button class="btn icon ghost" data-fj="'+esc(n)+'">'+(fj ? "Ver justificativa" : "Justificar")+'</button>'
+            + '</span></div>';
         } else {
           h += '<div class="namecard esperando">'+rot
             + '<span class="n">'+esc(nomeCheio(n))+'</span>'
@@ -929,18 +1130,18 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
     h += '</div>';
 
-    if(eu && nomes.indexOf(eu) < 0){
+    if(eu && hoje && nomes.indexOf(eu) < 0){
       h += '<div class="trocacard"><div class="txt">'
         + '<h2>Você não está escalado neste turno</h2>'
         + '<p class="tiny muted" style="margin:0">Se veio cobrir alguém, registre a presença e escolha qual plantão seu sai no lugar. '
         + 'A coordenação aprova a troca.</p></div>'
         + '<button class="btn primary" id="btn-troca">Registrar troca</button></div>';
-    } else if(eu){
+    } else if(eu && hoje){
       h += '<div class="trocacard"><div class="txt">'
         + '<h2>Precisa trocar um plantão?</h2>'
         + '<p class="tiny muted" style="margin:0">Registre a presença de hoje e escolha qual plantão seu sai no lugar.</p></div>'
         + '<button class="btn" id="btn-troca">Registrar troca</button></div>';
-    } else {
+    } else if(!eu){
       h += '<p class="note">Sua conta não está vinculada a um nome da escala, então você acompanha mas não registra ponto.</p>';
     }
 
@@ -953,11 +1154,15 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     }
 
     box.innerHTML = h;
+    ligarBarraData();
     Array.prototype.forEach.call(box.querySelectorAll(".turnobtn"), function(b){
       b.addEventListener("click", function(){ turnoSel = b.dataset.t; render(); });
     });
-    Array.prototype.forEach.call(box.querySelectorAll(".namecard[data-n]"), function(b){
+    Array.prototype.forEach.call(box.querySelectorAll("[data-n]"), function(b){
       b.addEventListener("click", function(){ abrirConfirma(b.dataset.n); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-fj]"), function(b){
+      b.addEventListener("click", function(){ abrirFJ(b.dataset.fj); });
     });
     var bt = el("btn-troca");
     if(bt) bt.addEventListener("click", abrirTroca);
@@ -985,17 +1190,24 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       corpo += '</div><div class="cont"'+(nomes.length && chegaram.length===nomes.length ? ' style="color:var(--ok)"' : '')+'>'
         + chegaram.length+'/'+nomes.length+'</div></div>';
     });
-    return '<div class="painel"><div class="sec-head" style="margin-bottom:2px"><h2>Quem já chegou hoje</h2>'
+    return '<div class="painel"><div class="sec-head" style="margin-bottom:2px"><h2>Quem já chegou'
+      + (data === hojeKey() ? ' hoje' : ' em '+esc(brData(data)))+'</h2>'
       + '<p>'+presentes+' de '+total+' turnos preenchidos · verde é presente, amarelo é atraso, vermelho ainda não chegou</p>'
       + '</div>' + corpo + '</div>';
   }
 
   function abrirConfirma(nome){
     var t = turnoDe(turnoSel);
-    alvoConf = { nome:nome, turno:turnoSel };
+    var data = dataAtiva(), hoje = (data === hojeKey());
+    alvoConf = { nome:nome, turno:turnoSel, data:data };
     el("dc-nome").textContent = nomeCheio(nome);
-    el("dc-sub").textContent = t.nome + " · " + new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
-      + " · " + new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+    var agoraTxt = new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    el("dc-sub").textContent = t.nome + " · " + brData(data) + (hoje ? " · " + agoraTxt : "");
+    var wrap = el("dc-hora-wrap");
+    if(ehCoord()){
+      wrap.hidden = false;
+      el("dc-hora").value = hoje ? agoraTxt : t.inicio;
+    } else wrap.hidden = true;
     el("dlg-conf").showModal();
     checarNoDialogo();
   }
@@ -1022,17 +1234,50 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   el("dc-ok").addEventListener("click", async function(){
     var a = alvoConf; if(!a) return;
     var btn = el("dc-ok"); btn.disabled = true;
-    var agora = new Date().toISOString();
+    var agora;
+    if(ehCoord() && el("dc-hora").value){
+      var pr = el("dc-hora").value.split(":");
+      var dd = new Date(a.data+"T00:00:00"); dd.setHours(+pr[0], +pr[1], 0, 0);
+      agora = dd.toISOString();
+    } else agora = new Date().toISOString();
     try{
-      await inserir(a.nome, a.turno, hojeKey(), agora);
+      await inserir(a.nome, a.turno, a.data, agora);
       el("dlg-conf").close();
-      aviso("Chegada registrada às "+hhmm(agora)+".");
+      aviso("Chegada registrada em "+brData(a.data)+" às "+hhmm(agora)+".");
       await carregarHoje();
     }catch(e){
       el("dlg-conf").close();
       aviso("Não consegui registrar. "+e.message, "warn");
     }
     btn.disabled = false;
+  });
+
+  /* ---------- falta justificada ---------- */
+  var alvoFJ = null;
+  function abrirFJ(nome){
+    var data = dataAtiva();
+    alvoFJ = { nome:nome, data:data, turno:turnoSel };
+    var t = turnoDe(turnoSel);
+    el("fj-sub").textContent = nomeCheio(nome) + " · " + (t?t.nome:turnoSel) + " · " + brData(data);
+    var atual = JUSTIFICATIVAS.filter(function(x){ return x.nome===nome && x.data===data && x.turno===turnoSel; })[0];
+    el("fj-motivo").value = atual ? (atual.motivo || "") : "";
+    el("fj-del").hidden = !atual;
+    el("dlg-fj").showModal();
+  }
+  el("fj-no").addEventListener("click", function(){ el("dlg-fj").close(); });
+  el("fj-ok").addEventListener("click", async function(){
+    var a = alvoFJ; if(!a) return;
+    el("dlg-fj").close();
+    try{
+      await porFJ(a.nome, a.data, a.turno, (el("fj-motivo").value||"").trim());
+      await carregarExtras(); aviso("Falta justificada registrada."); render();
+    }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); }
+  });
+  el("fj-del").addEventListener("click", async function(){
+    var a = alvoFJ; if(!a) return;
+    el("dlg-fj").close();
+    try{ await tirarFJ(a.nome, a.data, a.turno); await carregarExtras(); aviso("Justificativa removida."); render(); }
+    catch(e){ aviso("Não consegui remover. ("+e.message+")", "warn"); }
   });
 
   /* ---------- troca ---------- */
@@ -1194,24 +1439,58 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     var ultimoDia = new Date(+p[0], +p[1], 0).getDate();
     var hoje = hojeKey();
     var porNome = {};
-    function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0 }); }
+    function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0, fj:0,
+                                                          prevSemana:0, presSemana:0, prevSabado:0, presSabado:0 }); }
     for(var d=1; d<=ultimoDia; d++){
       var dt = new Date(+p[0], +p[1]-1, d);
       var key = dt.toLocaleDateString("sv-SE");
       if(key > hoje) break;
       var dow = dt.getDay();
       turnosDe(dow).forEach(function(t){
-        escalados(t.id, dow, key).forEach(function(n){ if(!abatido(n, key, t.id)) slot(n).previstos++; });
+        escalados(t.id, dow, key).forEach(function(n){
+          if(abatido(n, key, t.id)) return;
+          var sl = slot(n); sl.previstos++;
+          if(t.sabado) sl.prevSabado++; else sl.prevSemana++;
+        });
       });
     }
     var atrasosTot = 0;
     regsMes.forEach(function(r){
       var s2 = slot(r.nome); s2.presentes++;
+      var tt = turnoDe(r.turno);
+      if(tt && tt.sabado) s2.presSabado++; else s2.presSemana++;
       if(atrasoDe(r.turno, r.chegada) != null){ s2.atrasos++; atrasosTot++; }
+    });
+    JUSTIFICATIVAS.forEach(function(j){
+      if(j.data.slice(0,7) === mesFiltro) slot(j.nome).fj++;
     });
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
     var previstosTot = nomes.reduce(function(a,n){ return a + porNome[n].previstos; }, 0);
     var freq = previstosTot ? Math.round(regsMes.length / previstosTot * 100) : 0;
+    historico = [];
+    (function(){
+      if(!regsHist.length) return;
+      var base = mesFiltro.split("-");
+      for(var k=5; k>=0; k--){
+        var m = new Date(+base[0], +base[1]-1-k, 1);
+        var ym = m.toLocaleDateString("sv-SE").slice(0,7);
+        var ud = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+        var prev = 0;
+        for(var dd2=1; dd2<=ud; dd2++){
+          var dt2 = new Date(m.getFullYear(), m.getMonth(), dd2);
+          var k2 = dt2.toLocaleDateString("sv-SE");
+          if(k2 > hoje) break;
+          var dw2 = dt2.getDay();
+          turnosDe(dw2).forEach(function(t){
+            escalados(t.id, dw2, k2).forEach(function(n){ if(!abatido(n, k2, t.id)) prev++; });
+          });
+        }
+        var pres = regsHist.filter(function(r){ return r.data.slice(0,7) === ym; }).length;
+        if(prev > 0 && pres > 0) historico.push({ rotulo:nomeMes(ym), curto:ym.slice(5)+"/"+ym.slice(2,4),
+                                      pct: pres/prev*100, pres:pres, prev:prev });
+      }
+    })();
+
     var ordenados = regsMes.slice().sort(function(a,b){ return new Date(b.chegada) - new Date(a.chegada); });
     var pendConta = perfis.filter(function(x){ return !x.aprovado; }).length;
     var pendTroca = trocas.filter(function(x){ return x.status === "pendente"; }).length;
@@ -1232,205 +1511,218 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
     /* ---------------- visão geral ---------------- */
     if(coordSec === "visao"){
+      var linhas = nomes.map(function(n){
+        var sn = porNome[n];
+        var prevT = sn.prevSemana + sn.prevSabado;
+        var presT = sn.presSemana + sn.presSabado;
+        return {
+          nome:n, dir:diretoriaDe(n) || "Sem diretoria",
+          prevSemana:sn.prevSemana, presSemana:sn.presSemana,
+          prevSabado:sn.prevSabado, presSabado:sn.presSabado,
+          prevT:prevT, presT:presT,
+          pctSemana: sn.prevSemana ? sn.presSemana/sn.prevSemana*100 : null,
+          pctSabado: sn.prevSabado ? sn.presSabado/sn.prevSabado*100 : null,
+          pctTotal:  prevT ? presT/prevT*100 : null,
+          bolsa: prevT ? BOLSA * Math.min(1, presT/prevT) : 0,
+          atrasos:sn.atrasos, fj:sn.fj
+        };
+      });
+      var totalBolsa = linhas.reduce(function(a,x){ return a + x.bolsa; }, 0);
+
       h += '<div class="tiles">'
+        + tile("Frequência", freq+"%")
         + tile("Presenças", String(regsMes.length))
         + tile("Turnos previstos", String(previstosTot))
-        + tile("Frequência", freq+"%")
         + tile("Chegadas com atraso", String(atrasosTot))
         + '</div>';
 
+      /* gráfico 1 — frequência por instrutor */
+      if(linhas.length){
+        var ordF = linhas.slice().filter(function(x){ return x.pctTotal !== null; })
+          .sort(function(a,b){ return a.pctTotal - b.pctTotal; });
+        h += '<div><div class="sec-head"><h2>Frequência por instrutor</h2>'
+          + '<p>'+esc(nomeMes(mesFiltro))+' · a linha marca '+CORTE+'%, o mínimo aceitável</p></div>'
+          + '<div class="card">' + barrasH(ordF) + '</div></div>';
+      }
+
+      /* gráfico 2 — evolução */
+      if(historico.length > 1){
+        h += '<div><div class="sec-head"><h2>Frequência do programa mês a mês</h2>'
+          + '<p>média de todos os instrutores</p></div>'
+          + '<div class="card">' + linhaTempo(historico) + '</div></div>';
+      }
+
+      /* gráfico 3 — diretorias */
       var porDir = {};
-      nomes.forEach(function(n){
-        var dd = diretoriaDe(n) || "Sem diretoria";
-        var sd = porDir[dd] || (porDir[dd] = { previstos:0, presentes:0, atrasos:0, pessoas:0 });
-        sd.previstos += porNome[n].previstos; sd.presentes += porNome[n].presentes;
-        sd.atrasos += porNome[n].atrasos; sd.pessoas++;
+      linhas.forEach(function(x){
+        var sd = porDir[x.dir] || (porDir[x.dir] = { prev:0, pres:0, pessoas:0, atrasos:0, fj:0 });
+        sd.prev += x.prevT; sd.pres += x.presT; sd.pessoas++; sd.atrasos += x.atrasos; sd.fj += x.fj;
       });
-      var dirs = DIRETORIAS.filter(function(dd){ return porDir[dd]; });
-      Object.keys(porDir).forEach(function(dd){ if(dirs.indexOf(dd) < 0) dirs.push(dd); });
+      var dirs = DIRETORIAS.filter(function(d){ return porDir[d]; });
+      Object.keys(porDir).forEach(function(d){ if(dirs.indexOf(d) < 0) dirs.push(d); });
       if(dirs.length){
-        h += '<div><div class="sec-head"><h2>Por diretoria</h2><p>'+esc(nomeMes(mesFiltro))+'</p></div>'
-          + '<div class="tblwrap"><table class="data"><thead><tr><th>Diretoria</th><th class="num">Pessoas</th>'
-          + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
-          + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>'
-          + dirs.map(function(dd){
-              var sd = porDir[dd], faltas = Math.max(0, sd.previstos - sd.presentes);
-              var pc = sd.previstos ? Math.round(sd.presentes/sd.previstos*100) : 0;
-              return '<tr><td class="dirc'+classeDir(dd)+'">'+esc(dd)+'</td><td class="num">'+sd.pessoas+'</td>'
-                + '<td class="num">'+sd.previstos+'</td><td class="num">'+sd.presentes+'</td>'
+        h += '<div><div class="sec-head"><h2>Frequência por diretoria</h2><p>'+esc(nomeMes(mesFiltro))+'</p></div>'
+          + '<div class="card">' + barrasV(dirs.map(function(d){
+              var sd = porDir[d];
+              return { rotulo:dirCurta(d), cheio:d, pct: sd.prev ? sd.pres/sd.prev*100 : 0,
+                       cor: "var(--c"+Math.max(0, DIRETORIAS.indexOf(d))+")",
+                       detalhe: sd.pessoas+" pessoas · "+sd.pres+" de "+sd.prev+" turnos" };
+            })) + '</div>'
+          + '<div class="tblwrap" style="margin-top:14px"><table class="data"><thead><tr><th>Diretoria</th>'
+          + '<th class="num">Pessoas</th><th class="num">Previstos</th><th class="num">Presenças</th>'
+          + '<th class="num">Faltas</th><th class="num">Atrasos</th><th class="num">FJ</th><th class="num">Frequência</th>'
+          + '</tr></thead><tbody>'
+          + dirs.map(function(d){
+              var sd = porDir[d], faltas = Math.max(0, sd.prev - sd.pres);
+              var pc = sd.prev ? Math.round(sd.pres/sd.prev*100) : 0;
+              return '<tr><td class="dirc'+classeDir(d)+'">'+esc(d)+'</td><td class="num">'+sd.pessoas+'</td>'
+                + '<td class="num">'+sd.prev+'</td><td class="num">'+sd.pres+'</td>'
                 + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
                 + '<td class="num"'+(sd.atrasos?' style="color:var(--warn)"':'')+'>'+sd.atrasos+'</td>'
+                + '<td class="num">'+sd.fj+'</td>'
                 + '<td class="num">'+pc+'%</td></tr>';
             }).join("") + '</tbody></table></div></div>';
       }
 
+      /* tabela principal */
       h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(nomeMes(mesFiltro))+' · até hoje</p></div>';
-      if(!nomes.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
+      if(!linhas.length){ h += '<div class="empty"><h3>Nada a mostrar neste período</h3></div>'; }
       else {
         h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Diretoria</th>'
-          + '<th class="num">Previstos</th><th class="num">Presenças</th><th class="num">Faltas</th>'
-          + '<th class="num">Atrasos</th><th class="num">Frequência</th></tr></thead><tbody>';
-        nomes.forEach(function(n){
-          var sn = porNome[n], faltas = Math.max(0, sn.previstos - sn.presentes);
-          var pc = sn.previstos ? Math.round(sn.presentes/sn.previstos*100) : 0;
-          h += '<tr><td>'+esc(nomeCheio(n))+'</td><td class="muted">'+esc(diretoriaDe(n) || "—")+'</td>'
-            + '<td class="num">'+sn.previstos+'</td><td class="num">'+sn.presentes+'</td>'
-            + '<td class="num"'+(faltas?' style="color:var(--alert)"':'')+'>'+faltas+'</td>'
-            + '<td class="num"'+(sn.atrasos?' style="color:var(--warn)"':'')+'>'+sn.atrasos+'</td>'
-            + '<td class="num">'+pc+'%</td></tr>';
-        });
-        h += '</tbody></table></div>';
+          + '<th class="num">P</th><th class="num">Sábados</th><th class="num">% Sábados</th>'
+          + '<th class="num">% Semana</th><th class="num">% Total</th><th class="num">R$</th>'
+          + '<th class="num">Atrasos</th><th class="num">FJ</th></tr></thead><tbody>';
+        linhas.slice().sort(function(a,b){ return (a.pctTotal===null?999:a.pctTotal) - (b.pctTotal===null?999:b.pctTotal); })
+          .forEach(function(x){
+            var baixo = (x.pctTotal !== null && x.pctTotal < CORTE);
+            h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
+              + '<td class="dirc'+classeDir(x.dir)+'">'+esc(dirCurta(x.dir))+'</td>'
+              + '<td class="num">'+x.presT+'<span class="muted">/'+x.prevT+'</span></td>'
+              + '<td class="num">'+x.presSabado+'<span class="muted">/'+x.prevSabado+'</span></td>'
+              + '<td class="num">'+pct(x.pctSabado)+'</td>'
+              + '<td class="num">'+pct(x.pctSemana)+'</td>'
+              + '<td class="num"'+(baixo?' style="color:var(--alert);font-weight:600"':'')+'>'+pct(x.pctTotal)+'</td>'
+              + '<td class="num">'+reais(x.bolsa)+'</td>'
+              + '<td class="num"'+(x.atrasos?' style="color:var(--warn)"':'')+'>'+x.atrasos+'</td>'
+              + '<td class="num">'+(x.fj || '<span class="muted">0</span>')+'</td></tr>';
+          });
+        h += '<tr class="somatorio"><td colspan="7"><b>Total</b></td><td class="num"><b>'+reais(totalBolsa)+'</b></td>'
+          + '<td class="num"></td><td class="num"></td></tr>';
+        h += '</tbody></table></div>'
+          + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre o total de turnos previstos. '
+          + '<b>FJ</b> conta as faltas justificadas: elas ficam registradas, mas a falta continua descontando.</p>';
       }
       h += '</div>';
     }
 
-    /* ---------------- pessoas ---------------- */
-    if(coordSec === "pessoas"){
-      var chaves = Object.keys(INSTRUTORES).sort(ordenaPorNome);
-      var perfilPor = {};
-      perfis.forEach(function(x){ if(x.nome) perfilPor[x.nome] = x; });
-      var emailsComConta = {};
-      perfis.forEach(function(x){ if(x.email) emailsComConta[x.email.toLowerCase()] = 1; });
-      var convitePor = {};
-      convites.forEach(function(c){
-        if(!emailsComConta[(c.email||"").toLowerCase()] && c.nome) convitePor[c.nome] = c;
-      });
-      var coords = perfis.filter(function(x){ return x.papel === "coordenacao"; });
-      var soltas = perfis.filter(function(x){
-        return x.papel !== "coordenacao" && (!x.nome || !INSTRUTORES[x.nome]);
-      });
-      var convAbertos = convites.filter(function(c){ return !emailsComConta[(c.email||"").toLowerCase()]; });
-      var convSoltos = convAbertos.filter(function(c){ return !c.nome || !INSTRUTORES[c.nome]; });
 
-      function celulaAcesso(ap){
-        var pf = perfilPor[ap], cv = convitePor[ap];
-        if(pf){
-          return '<div class="acesso"><span class="em">'+esc(pf.email||"—")+'</span>'
-            + (pf.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>'
-                           : '<span class="pill p-late">pendente</span>')+'</div>';
-        }
-        if(cv){
-          return '<div class="acesso"><span class="em">'+esc(cv.email)+'</span>'
-            + '<span class="pill p-wait">convidado</span></div>';
-        }
-        return '<div class="acesso"><input class="mini" type="email" data-convemail="'+esc(ap)+'" '
-          + 'placeholder="e-mail para convidar" style="max-width:180px">'
-          + '<button class="btn icon" data-convok="'+esc(ap)+'">Convidar</button></div>';
-      }
-      function acoesPessoa(ap){
-        var pf = perfilPor[ap], cv = convitePor[ap], out = "";
-        if(pf){
-          out += pf.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(pf.id)+'">Bloquear</button> '
-                             : '<button class="btn icon" data-lib="'+esc(pf.id)+'">Liberar</button> ';
-          out += '<button class="btn icon ghost" data-prom="'+esc(pf.id)+'">Tornar coordenação</button> ';
-        } else if(cv){
-          out += '<button class="btn icon ghost" data-delconv="'+esc(cv.email)+'">Cancelar convite</button> ';
-        }
-        out += '<button class="btn icon ghost" data-delinstr="'+esc(ap)+'" style="color:var(--alert)">Remover</button>';
-        return out;
-      }
+    if(coordSec === "escala"){
+      var todosNomes = Object.keys(INSTRUTORES).sort(ordenaPorNome).filter(function(n){ return infoDe(n).ativo !== false; });
 
-      h += '<datalist id="nomes-escala">'
-        + chaves.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
-        + '</datalist>';
-
-      /* ---- instrutores ---- */
-      h += '<div class="card">'
-        + '<div class="sec-head" style="margin-bottom:12px"><h2>Adicionar instrutor(a)</h2>'
-        + '<p>o apelido é curto e não muda depois</p></div>'
-        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-        +   '<label class="fld">Apelido<input id="in-chave" placeholder="Izaías Silva" size="14"></label>'
-        +   '<label class="fld">Nome completo<input id="in-completo" placeholder="Izaías dos Santos Silva" size="24"></label>'
-        +   '<label class="fld">Diretoria<select id="in-dir"><option value="">—</option>'
-        +     DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join("")
-        +   '</select></label>'
-        +   '<label class="fld">Curso<input id="in-curso" placeholder="Eng. Ambiental e Sanitária" size="18"></label>'
-        +   '<label class="fld">E-mail (opcional)<input id="in-email" type="email" placeholder="pessoa@gmail.com" size="20"></label>'
-        +   '<button class="btn primary" id="in-ok">Adicionar</button>'
-        + '</div>'
-        + '<p class="tiny muted" style="margin:10px 0 0">O <b>apelido</b> é o nome curto que identifica a pessoa na escala e '
-        + 'é a etiqueta que o banco guarda em cada ponto — por isso não pode mudar depois. '
-        + 'Preenchendo o e-mail, ela já entra liberada quando acessar com o Google.</p></div>';
-
-      var turnosPor = {};
-      TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){
-        escalados(t.id,d,"").forEach(function(n){ turnosPor[n] = (turnosPor[n]||0)+1; }); }); });
-
-      h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+chaves.length+' pessoas'
-        + (instrutoresDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>Apelido</th><th>Nome completo</th>'
-        + '<th>Diretoria</th><th>Curso</th><th>Dir.</th><th class="num">Turnos</th><th>Acesso</th><th></th></tr></thead><tbody>';
-      chaves.forEach(function(n){
-        var i3 = infoDe(n);
-        h += '<tr><td><b>'+esc(n)+'</b></td>'
-          + '<td><input class="mini" style="max-width:230px" data-inf="completo" data-key="'+esc(n)+'" value="'+esc(i3.completo||"")+'"></td>'
-          + '<td><select class="mini" data-inf="diretoria" data-key="'+esc(n)+'"><option value="">—</option>'
-          +   DIRETORIAS.map(function(d){ return '<option value="'+esc(d)+'"'+(d===i3.diretoria?" selected":"")+'>'+esc(d)+'</option>'; }).join("")
-          + '</select></td>'
-          + '<td><input class="mini" style="max-width:145px" data-inf="curso" data-key="'+esc(n)+'" value="'+esc(i3.curso||"")+'"></td>'
-          + '<td><input type="checkbox" data-inf="diretor" data-key="'+esc(n)+'"'+(i3.diretor?" checked":"")+'></td>'
-          + '<td class="num">'+(turnosPor[n]||0)+'</td>'
-          + '<td>'+celulaAcesso(n)+'</td>'
-          + '<td style="white-space:nowrap">'+acoesPessoa(n)+'</td></tr>';
-      });
-      h += '</tbody></table></div></div>';
-
-      /* ---- coordenação ---- */
-      h += '<div><div class="sec-head"><h2>Coordenação</h2><p>'+coords.length+' conta'+(coords.length===1?'':'s')+' · não entram na escala</p></div>'
-        + '<div class="card" style="margin-bottom:12px"><div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
-        +   '<label class="fld">E-mail<input id="cc-email" type="email" placeholder="pessoa@gmail.com" size="22"></label>'
-        +   '<label class="fld">Nome<input id="cc-nome" placeholder="Nome da pessoa" size="18"></label>'
-        +   '<button class="btn primary" id="cc-ok">Adicionar à coordenação</button>'
-        + '</div></div>'
-        + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th><th>Situação</th><th></th></tr></thead><tbody>';
-      if(!coords.length) h += '<tr><td colspan="4" class="muted">Nenhuma.</td></tr>';
-      coords.forEach(function(x){
-        h += '<tr><td>'+esc(x.email||"—")+(x.id===perfil.id?' <span class="tag">você</span>':'')+'</td>'
-          + '<td><input class="mini" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="nome"></td>'
-          + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
-          + '<td style="white-space:nowrap">'
-          + (x.id===perfil.id ? '<span class="muted tiny">sua conta</span>'
-              : (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button>'
-                            : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button>'))
-          + '</td></tr>';
-      });
-      convSoltos.filter(function(c){ return c.papel === "coordenacao"; }).forEach(function(c){
-        h += '<tr><td>'+esc(c.email)+'</td><td class="muted">'+esc(c.nome||"—")+'</td>'
-          + '<td><span class="pill p-wait">convidado</span></td>'
-          + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'">Cancelar convite</button></td></tr>';
-      });
-      h += '</tbody></table></div></div>';
-
-      /* ---- contas sem vínculo ---- */
-      var convSoltosInstr = convSoltos.filter(function(c){ return c.papel !== "coordenacao"; });
-      if(soltas.length || convSoltosInstr.length){
-        h += '<div><div class="sec-head"><h2>Contas sem vínculo</h2>'
-          + '<p>entraram no site mas ainda não estão ligadas a um apelido da escala</p></div>'
-          + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Apelido</th><th>Situação</th><th></th></tr></thead><tbody>';
-        soltas.forEach(function(x){
-          h += '<tr><td>'+esc(x.email||"—")+'</td>'
-            + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="digite o apelido"></td>'
-            + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
-            + '<td style="white-space:nowrap">'
-            + (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
-                          : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
-            + '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button></td></tr>';
-        });
-        convSoltosInstr.forEach(function(c){
-          h += '<tr><td>'+esc(c.email)+'</td><td class="muted">'+esc(c.nome||"—")+'</td>'
-            + '<td><span class="pill p-wait">convidado</span></td>'
-            + '<td><button class="btn icon ghost" data-delconv="'+esc(c.email)+'">Cancelar convite</button></td></tr>';
-        });
-        h += '</tbody></table></div></div>';
-      }
-
-      h += '<p class="note">A grade semanal e os sábados ficam na aba <b>Escala</b>. '
-        + 'Esta tela cuida de quem são as pessoas e de quem consegue entrar no site.</p>';
+      h += '<div class="turnos" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:470px">'
+        + '<button class="turnobtn" data-modo="padrao" aria-pressed="'+(modoEscala==="padrao")+'">'
+        +   '<b>Grade padrão</b><span>vale toda semana</span></button>'
+        + '<button class="turnobtn" data-modo="semana" aria-pressed="'+(modoEscala==="semana")+'">'
+        +   '<b>Uma semana só</b><span>recesso, feriado, exceção</span></button></div>';
     }
 
-    /* ---------------- escala ---------------- */
-    if(coordSec === "escala"){
-      var todosNomes = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+    /* ----- uma semana só ----- */
+    if(coordSec === "escala" && modoEscala === "semana"){
+      if(!semanaRef) semanaRef = hojeKey();
+      var ref = new Date(semanaRef+"T12:00:00");
+      var seg = new Date(ref); seg.setDate(ref.getDate() - ((ref.getDay()+6) % 7));
+      var dias = [];
+      for(var k=0;k<6;k++){ var dd = new Date(seg); dd.setDate(seg.getDate()+k); dias.push(dd.toLocaleDateString("sv-SE")); }
+
+      h += '<div class="toolbar">'
+        + '<button class="btn ghost" id="sem-ant">&lsaquo; Anterior</button>'
+        + '<label class="fld">Semana de<input type="date" id="sem-data" value="'+esc(semanaRef)+'"></label>'
+        + '<button class="btn ghost" id="sem-prox">Próxima &rsaquo;</button>'
+        + '<span class="spacer"></span>'
+        + '<span class="tiny muted">'+esc(brData(dias[0]))+' a '+esc(brData(dias[5]))+'</span></div>';
+
+      h += '<div class="card" style="margin-bottom:18px">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Convocar um dia por diretoria</h2>'
+        + '<p>substitui a escala daquele dia pelas diretorias escolhidas</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Dia<select id="cv-dia">'
+        +     dias.map(function(d){ return '<option value="'+esc(d)+'">'+DIA_CURTO[dowDe(d)]+' '+esc(brData(d))+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Turno<select id="cv-turno"><option value="*">Todos os turnos</option>'
+        +     TURNOS.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<span class="fld" style="gap:6px"><span>Diretorias</span><span>'
+        +     DIRETORIAS.map(function(d){
+                return '<label class="opcao"><input type="checkbox" class="cvdir" value="'+esc(d)+'"> '+esc(dirCurta(d))+'</label>';
+              }).join("")
+        +   '</span></span>'
+        +   '<button class="btn primary" id="cv-aplicar">Aplicar</button>'
+        +   '<button class="btn ghost" id="cv-limpar">Voltar ao padrão</button>'
+        + '</div></div>';
+
+      h += '<div><div class="sec-head"><h2>Semana de '+esc(brData(dias[0]))+'</h2>'
+        + '<p>o que você mudar aqui vale só nestas datas — a grade padrão continua intacta</p></div>'
+        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Turno</th>'
+        + dias.map(function(d){
+            var off = suspenso(d, "*");
+            return '<th'+(d===hojeKey()?' class="hoje"':'')+'>'+DIA_CURTO[dowDe(d)]+' '+esc(brData(d).slice(0,5))
+              + '<br><label class="opcao" style="font-weight:500;text-transform:none;letter-spacing:0;margin:4px 0 0">'
+              + '<input type="checkbox" data-susp="'+esc(d+"|*")+'"'+(off?" checked":"")+'> dia todo</label></th>';
+          }).join("") + '</tr></thead><tbody>';
+
+      TURNOS.forEach(function(t){
+        var algum = dias.some(function(d){
+          var dw = dowDe(d);
+          return t.sabado ? (dw === 6 && (!!sabadoDe(d) || !!convocacaoDe(d, t.id))) : (dw >= 1 && dw <= 5);
+        });
+        if(!algum) return;
+        h += '<tr><td class="turno">'+esc(t.nome)+'<small>'+esc(t.inicio)+' – '+esc(t.fim)+'</small></td>';
+        dias.forEach(function(d){
+          var dw = dowDe(d);
+          var vale = t.sabado ? (dw === 6 && (!!sabadoDe(d) || !!convocacaoDe(d, t.id))) : (dw >= 1 && dw <= 5);
+          if(!vale){ h += '<td style="background:var(--surface-2)"></td>'; return; }
+          if(suspenso(d, "*")){
+            h += '<td><span class="pill p-wait">dia suspenso</span></td>'; return;
+          }
+          var offT = suspenso(d, t.id);
+          var cvv = convocacaoDe(d, t.id);
+          var ns = escalados(t.id, dw, d);
+          var base = basePadrao(t.id, dw, d);
+          var livres = todosNomes.filter(function(n){ return ns.indexOf(n) < 0; });
+          h += '<td>'
+            + '<label class="opcao" style="margin-bottom:6px"><input type="checkbox" data-susp="'+esc(d+"|"+t.id)+'"'
+            +   (offT?" checked":"")+'> suspender turno</label>';
+          if(offT){
+            h += '<div class="tiny muted">Ninguém é cobrado neste turno.</div></td>'; return;
+          }
+          if(cvv){
+            h += '<div style="margin-bottom:6px"><span class="pill p-on"><span class="dot"></span>'
+              + esc(cvv.todos ? "todas as diretorias" : (cvv.diretorias||[]).map(dirCurta).join(" e "))
+              + '</span></div>';
+          }
+          h += ns.map(function(n){
+                var extra = base.indexOf(n) < 0;
+                return '<span class="chipx'+classeDir(diretoriaDe(n))+'">'+esc(nomeCurto(n))
+                  + (extra ? '<i class="mais" title="fora da grade padrão">+</i>' : '')
+                  + '<button data-rmdia="'+esc(d+"|"+t.id+"|"+n)+'" title="Tirar deste dia">&times;</button></span>';
+              }).join("")
+            + '<select class="mini addslot" data-adddia="'+esc(d+"|"+t.id)+'">'
+            +   '<option value="">+ adicionar</option>'
+            +   livres.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
+            + '</select></td>';
+        });
+        h += '</tr>';
+      });
+      h += '</tbody></table></div>'
+        + '<p class="note" style="margin-top:10px">Turno ou dia suspenso não gera presença nem falta: some do plantão, '
+        + 'some do painel e deixa de contar como previsto no relatório. O <b>+</b> ao lado de um nome marca quem entrou '
+        + 'só nesta semana, fora da grade padrão.</p></div>';
+    }
+
+    /* ----- grade padrão ----- */
+    if(coordSec === "escala" && modoEscala === "padrao"){
+      var nomesAtivos = Object.keys(INSTRUTORES).sort(ordenaPorNome).filter(function(n){ return infoDe(n).ativo !== false; });
+
       h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
         + '<p>clique no × para tirar alguém, ou use o seletor para acrescentar'
         + (escalaDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
@@ -1442,8 +1734,8 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       TURNOS_SEMANA.forEach(function(t){
         h += '<tr><td class="turno">'+esc(t.nome)+'<small>'+esc(t.inicio)+' – '+esc(t.fim)+'</small></td>';
         UTEIS.forEach(function(d){
-          var ns = escalados(t.id, d, "");
-          var livres = todosNomes.filter(function(n){ return ns.indexOf(n) < 0; });
+          var ns = basePadrao(t.id, d, "").filter(function(n){ return infoDe(n).ativo !== false; }).sort(ordenaPorNome);
+          var livres = nomesAtivos.filter(function(n){ return ns.indexOf(n) < 0; });
           h += '<td>'
             + ns.map(function(n){
                 return '<span class="chipx'+classeDir(diretoriaDe(n))+'">'+esc(nomeCurto(n))
@@ -1481,13 +1773,37 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
                   + (sel.indexOf(d)>=0?" checked":"") + (todos?" disabled":"") + '> '+esc(dirCurta(d))+'</label>';
               }).join("")
             + '</td>'
-            + '<td class="num">'+nomesDasDiretorias(e.diretorias).length+'</td>'
+            + '<td class="num">'+escalados(TURNO_SAB ? TURNO_SAB.id : "sabado", 6, e.data).length+'</td>'
             + '<td><button class="btn icon ghost" data-delsab="'+esc(e.data)+'" style="color:var(--alert)">Remover</button></td></tr>';
         });
         h += '</tbody></table></div>';
       }
       h += '</div>';
+
+      var feriados = Object.keys(SUSPENSOES).filter(function(k){ return k.indexOf("|*") > 0; })
+        .map(function(k){ return { data:k.split("|")[0], motivo:SUSPENSOES[k] }; })
+        .sort(function(a,b){ return a.data < b.data ? -1 : 1; });
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Feriados e recessos</h2>'
+        + '<p>dias sem expediente: ninguém é cobrado</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Data<input type="date" id="fe-data"></label>'
+        +   '<label class="fld">Motivo<input id="fe-motivo" placeholder="Recesso de fim de ano" size="22"></label>'
+        +   '<button class="btn primary" id="fe-ok">Adicionar</button>'
+        + '</div></div>';
+      h += '<div><div class="sec-head"><h2>Dias suspensos</h2><p>'+feriados.length+' data'+(feriados.length===1?'':'s')+'</p></div>';
+      if(!feriados.length){ h += '<div class="empty"><h3>Nenhum dia suspenso</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Motivo</th><th></th></tr></thead><tbody>'
+          + feriados.map(function(f){
+              return '<tr><td class="mono">'+esc(brData(f.data))+' <span class="muted">'+DIA_CURTO[dowDe(f.data)]+'</span></td>'
+                + '<td>'+(f.motivo ? esc(f.motivo) : '<span class="muted">—</span>')+'</td>'
+                + '<td><button class="btn icon ghost" data-delsusp="'+esc(f.data+"|*")+'" style="color:var(--alert)">Remover</button></td></tr>';
+            }).join("") + '</tbody></table></div>';
+      }
+      h += '</div>';
     }
+
 
     /* ---------------- trocas ---------------- */
     if(coordSec === "trocas"){
@@ -1583,9 +1899,12 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         await carregarMes();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ccb.disabled = false; }
     });
-    ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor removido do quadro.");
+    ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor excluído do quadro.");
+    ligar(box, "data-desliga", function(n){ return desligarInstrutor(n, true); }, "Instrutor desligado — sai das escalas a partir de hoje.");
+    ligar(box, "data-religa",  function(n){ return desligarInstrutor(n, false); }, "Instrutor reativado.");
+    ligar(box, "data-delperf", function(v){ var pr = v.split("|"); return excluirPerfil(pr[0], pr[1]); }, "Perfil excluído.");
 
-    async function recarregarEscala(){ await carregarEscala(); render(); }
+    async function recarregarEscala(){ await carregarEscala(); await carregarExcecoes(); render(); }
     Array.prototype.forEach.call(box.querySelectorAll("[data-rmslot]"), function(b){
       b.addEventListener("click", async function(){
         var pr = b.dataset.rmslot.split("|");
@@ -1623,6 +1942,75 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
       });
     });
     ligar(box, "data-delsab", function(d){ return apagarSabado(d); }, "Sábado removido.");
+    ligar(box, "data-delsusp", function(v){ var pr = v.split("|"); return marcarSuspensao(pr[0], pr[1], false); }, "Dia reativado.");
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-modo]"), function(b){
+      b.addEventListener("click", function(){ modoEscala = b.dataset.modo; render(); });
+    });
+    var sd = el("sem-data");
+    if(sd) sd.addEventListener("change", function(){ semanaRef = this.value || hojeKey(); render(); });
+    function pulaSemana(n){
+      var d = new Date((semanaRef || hojeKey())+"T12:00:00");
+      d.setDate(d.getDate() + n*7);
+      semanaRef = d.toLocaleDateString("sv-SE"); render();
+    }
+    if(el("sem-ant"))  el("sem-ant").addEventListener("click", function(){ pulaSemana(-1); });
+    if(el("sem-prox")) el("sem-prox").addEventListener("click", function(){ pulaSemana(1); });
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-susp]"), function(c){
+      c.addEventListener("change", async function(){
+        var pr = c.dataset.susp.split("|");
+        c.disabled = true;
+        try{ await marcarSuspensao(pr[0], pr[1], c.checked, null); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); c.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-rmdia]"), function(b){
+      b.addEventListener("click", async function(){
+        var pr = b.dataset.rmdia.split("|");
+        b.disabled = true;
+        try{ await tirarDaData(pr[0], pr[1], pr[2]); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui tirar. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-adddia]"), function(sl){
+      sl.addEventListener("change", async function(){
+        if(!sl.value) return;
+        var pr = sl.dataset.adddia.split("|");
+        sl.disabled = true;
+        try{ await porNaData(pr[0], pr[1], sl.value); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui acrescentar. ("+e.message+")", "warn"); sl.disabled = false; }
+      });
+    });
+    ligarTooltips(box);
+    var cvAp = el("cv-aplicar"), cvLp = el("cv-limpar");
+    function dirsMarcadas(){
+      return Array.prototype.filter.call(box.querySelectorAll(".cvdir"), function(c){ return c.checked; })
+        .map(function(c){ return c.value; });
+    }
+    if(cvAp) cvAp.addEventListener("click", async function(){
+      var dirs = dirsMarcadas();
+      if(!dirs.length){ aviso("Marque ao menos uma diretoria."); return; }
+      cvAp.disabled = true;
+      try{
+        await salvarConvocacao(el("cv-dia").value, el("cv-turno").value, dirs, dirs.length === DIRETORIAS.length);
+        await recarregarEscala(); aviso("Dia convocado por diretoria.");
+      }catch(e){ aviso("Não consegui aplicar. ("+e.message+")", "warn"); cvAp.disabled = false; }
+    });
+    if(cvLp) cvLp.addEventListener("click", async function(){
+      cvLp.disabled = true;
+      try{ await limparConvocacao(el("cv-dia").value, el("cv-turno").value); await recarregarEscala(); aviso("Voltou à grade padrão."); }
+      catch(e){ aviso("Não consegui limpar. ("+e.message+")", "warn"); cvLp.disabled = false; }
+    });
+
+    var feb = el("fe-ok");
+    if(feb) feb.addEventListener("click", async function(){
+      var d = el("fe-data").value;
+      if(!d){ aviso("Escolha a data."); return; }
+      feb.disabled = true;
+      try{ await marcarSuspensao(d, "*", true, (el("fe-motivo").value||"").trim() || null); await recarregarEscala(); aviso("Dia suspenso."); }
+      catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); feb.disabled = false; }
+    });
     var sbb = el("sb-ok");
     if(sbb) sbb.addEventListener("click", async function(){
       var d = el("sb-data").value;
@@ -1699,7 +2087,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"), function(b){
       b.addEventListener("click", async function(){
         b.disabled = true;
-        try{ await fn(b.getAttribute(attr)); aviso(ok); await carregarMes(); }
+        try{ await fn(b.getAttribute(attr)); aviso(ok); await carregarInstrutores(); await carregarMes(); }
         catch(e){ aviso("Não consegui. ("+e.message+")", "warn"); b.disabled = false; }
       });
     });
@@ -1708,6 +2096,105 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     if(DEMO) return;
     erro(await sb.from("perfis").update(patch).eq("id", id));
   }
+  /* ================= gráficos ================= */
+  var CORTE = 75;
+  function pct(v){ return v === null ? '<span class="muted">—</span>' : v.toFixed(1).replace(".", ",")+"%"; }
+  function reais(v){ return v.toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+
+  function barrasH(itens){
+    if(!itens.length) return '<p class="tiny muted">Sem dados.</p>';
+    var alt = 26, topo = 8, larg = 640, rotulo = 168, dir = 62;
+    var w = larg - rotulo - dir;
+    var alturaT = topo*2 + itens.length*alt;
+    var s2 = '<div class="chartwrap"><svg viewBox="0 0 '+larg+' '+alturaT+'" class="chart" role="img" '
+      + 'aria-label="Frequência por instrutor">';
+    [0,25,50,75,100].forEach(function(g){
+      var x = rotulo + w*g/100;
+      s2 += '<line x1="'+x+'" y1="'+topo+'" x2="'+x+'" y2="'+(alturaT-topo)+'" class="grid"/>';
+    });
+    var xc = rotulo + w*CORTE/100;
+    s2 += '<line x1="'+xc+'" y1="'+(topo-4)+'" x2="'+xc+'" y2="'+(alturaT-topo+2)+'" class="corte"/>';
+    itens.forEach(function(it, i){
+      var y = topo + i*alt, bw = Math.max(2, Math.min(w, w*it.pctTotal/100));
+      var baixo = it.pctTotal < CORTE;
+      s2 += '<text x="'+(rotulo-10)+'" y="'+(y+alt/2)+'" class="lbl" text-anchor="end">'+esc(nomeCurto(it.nome))+'</text>'
+        + '<rect x="'+rotulo+'" y="'+(y+5)+'" width="'+bw+'" height="'+(alt-12)+'" rx="4" '
+        +   'fill="'+(baixo ? "var(--alert)" : "var(--c0)")+'" class="mark" '
+        +   'data-tip="'+esc(nomeCheio(it.nome)+" · "+it.presT+" de "+it.prevT+" turnos · R$ "+reais(it.bolsa))+'"/>'
+        + '<text x="'+(rotulo+w+8)+'" y="'+(y+alt/2)+'" class="val'+(baixo?" baixo":"")+'">'
+        +   it.pctTotal.toFixed(0)+'%</text>';
+    });
+    s2 += '</svg></div>';
+    return s2;
+  }
+
+  function linhaTempo(serie){
+    var larg = 640, altura = 190, esq = 40, dirm = 16, topo = 16, baixo = 34;
+    var w = larg - esq - dirm, hh = altura - topo - baixo;
+    var maxV = 100, minV = Math.max(0, Math.min.apply(null, serie.map(function(p){ return p.pct; })) - 15);
+    function X(i){ return esq + (serie.length === 1 ? w/2 : w*i/(serie.length-1)); }
+    function Y(v){ return topo + hh - hh*(v-minV)/(maxV-minV); }
+    var s2 = '<div class="chartwrap"><svg viewBox="0 0 '+larg+' '+altura+'" class="chart" role="img" '
+      + 'aria-label="Frequência do programa mês a mês">';
+    [minV, (minV+maxV)/2, maxV].forEach(function(g){
+      s2 += '<line x1="'+esq+'" y1="'+Y(g)+'" x2="'+(larg-dirm)+'" y2="'+Y(g)+'" class="grid"/>'
+        + '<text x="'+(esq-8)+'" y="'+(Y(g)+4)+'" class="lbl" text-anchor="end">'+Math.round(g)+'%</text>';
+    });
+    var d = serie.map(function(p,i){ return (i?"L":"M")+X(i)+" "+Y(p.pct); }).join(" ");
+    s2 += '<path d="'+d+'" class="linha"/>';
+    serie.forEach(function(p,i){
+      s2 += '<circle cx="'+X(i)+'" cy="'+Y(p.pct)+'" r="5" class="mark ponto" '
+        + 'data-tip="'+esc(p.rotulo+" · "+p.pct.toFixed(1).replace(".",",")+"% · "+p.pres+" de "+p.prev+" turnos")+'"/>'
+        + '<text x="'+X(i)+'" y="'+(altura-12)+'" class="lbl" text-anchor="middle">'+esc(p.curto)+'</text>';
+    });
+    var ult = serie[serie.length-1];
+    s2 += '<text x="'+X(serie.length-1)+'" y="'+(Y(ult.pct)-12)+'" class="val" text-anchor="end">'
+      + ult.pct.toFixed(0)+'%</text></svg></div>';
+    return s2;
+  }
+
+  function barrasV(itens){
+    if(!itens.length) return '<p class="tiny muted">Sem dados.</p>';
+    var larg = 640, altura = 210, esq = 38, dirm = 12, topo = 22, baixo = 40;
+    var w = larg - esq - dirm, hh = altura - topo - baixo;
+    var passo = w/itens.length, bw = Math.min(88, passo - 18);
+    var s2 = '<div class="chartwrap"><svg viewBox="0 0 '+larg+' '+altura+'" class="chart" role="img" '
+      + 'aria-label="Frequência por diretoria">';
+    [0,50,100].forEach(function(g){
+      var y = topo + hh - hh*g/100;
+      s2 += '<line x1="'+esq+'" y1="'+y+'" x2="'+(larg-dirm)+'" y2="'+y+'" class="grid"/>'
+        + '<text x="'+(esq-8)+'" y="'+(y+4)+'" class="lbl" text-anchor="end">'+g+'%</text>';
+    });
+    itens.forEach(function(it,i){
+      var x = esq + passo*i + (passo-bw)/2;
+      var bh = Math.max(2, Math.min(hh, hh*it.pct/100)), y = topo + hh - bh;
+      s2 += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="'+it.cor+'" class="mark" '
+        +   'data-tip="'+esc(it.cheio+" · "+it.detalhe)+'"/>'
+        + '<text x="'+(x+bw/2)+'" y="'+(y-7)+'" class="val" text-anchor="middle">'+it.pct.toFixed(0)+'%</text>'
+        + '<text x="'+(x+bw/2)+'" y="'+(altura-14)+'" class="lbl" text-anchor="middle">'+esc(it.rotulo)+'</text>';
+    });
+    s2 += '</svg></div>';
+    return s2;
+  }
+
+  function ligarTooltips(box){
+    var tip = el("tip");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-tip]"), function(m){
+      m.addEventListener("mouseenter", function(ev){
+        tip.textContent = m.getAttribute("data-tip");
+        tip.hidden = false;
+        mover(ev);
+      });
+      m.addEventListener("mousemove", mover);
+      m.addEventListener("mouseleave", function(){ tip.hidden = true; });
+      function mover(ev){
+        var x = ev.clientX + 14, y = ev.clientY + 16;
+        if(x + tip.offsetWidth > window.innerWidth - 8) x = ev.clientX - tip.offsetWidth - 14;
+        tip.style.left = x + "px"; tip.style.top = y + "px";
+      }
+    });
+  }
+
   function tile(k,v){ return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'; }
 
   function abrirFix(r){
