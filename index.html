@@ -226,6 +226,14 @@ th.hoje{color:var(--accent-strong)}
 .trocacard .txt{flex:1;min-width:200px}
 .trocacard h2{font-size:15px;font-weight:600;margin-bottom:2px}
 .mini{font-size:12.5px;padding:4px 7px;max-width:200px}
+.chipx{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border-radius:7px;
+  padding:2px 4px 2px 8px;margin:0 4px 4px 0;font-size:12px;font-weight:600}
+.chipx button{border:0;background:transparent;cursor:pointer;font-size:14px;line-height:1;
+  padding:0 3px;color:var(--ink-2);border-radius:4px}
+.chipx button:hover{background:var(--alert-soft);color:var(--alert)}
+table.grade.editor td{min-width:180px}
+select.addslot{width:100%;margin-top:2px;font-size:11.5px;max-width:none}
+.opcao{display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:12.5px;white-space:nowrap}
 .coordwrap{display:grid;grid-template-columns:184px 1fr;gap:22px;align-items:start}
 .coordmain{min-width:0;display:flex;flex-direction:column;gap:20px}
 .railnav{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:12px;
@@ -351,7 +359,9 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var INSTRUTORES = {};
   Object.keys(ESC.instrutores || {}).forEach(function(k){ INSTRUTORES[k] = ESC.instrutores[k]; });
   var instrutoresDoBanco = false;
-  var SABADOS = ESC.sabados || [];
+  var SABADOS = (ESC.sabados || []).slice();
+  var GRADE = JSON.parse(JSON.stringify(ESC.grade || {}));
+  var escalaDoBanco = false;
   var TOL = typeof ESC.toleranciaMin === "number" ? ESC.toleranciaMin : 10;
   var DIA_CURTO = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   var DIA_LONGO = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
@@ -433,7 +443,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   function escalados(turnoId, dow, data){
     var t = turnoDe(turnoId);
     if(t && t.sabado){ var e = sabadoDe(data); return e ? nomesDasDiretorias(e.diretorias) : []; }
-    var g = (ESC.grade && ESC.grade[turnoId]) || {};
+    var g = GRADE[turnoId] || {};
     return (g[dow] || []).slice();
   }
   function atrasoDe(turnoId, iso){
@@ -582,6 +592,50 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     erro(await sb.from("instrutores").delete().eq("nome", nome));
   }
 
+  async function carregarEscala(){
+    if(DEMO) return;
+    try{
+      var r = await sb.from("escala").select("turno,dia,nome");
+      if(!r.error && r.data && r.data.length){
+        var g = {};
+        r.data.forEach(function(x){
+          if(!g[x.turno]) g[x.turno] = {};
+          if(!g[x.turno][x.dia]) g[x.turno][x.dia] = [];
+          g[x.turno][x.dia].push(x.nome);
+        });
+        Object.keys(g).forEach(function(t){
+          Object.keys(g[t]).forEach(function(d){ g[t][d].sort(ordenaPorNome); });
+        });
+        GRADE = g; escalaDoBanco = true;
+      }
+    }catch(e){}
+    try{
+      var r2 = await sb.from("sabados").select("data,todos,diretorias").order("data");
+      if(!r2.error && r2.data && r2.data.length){
+        SABADOS = r2.data.map(function(x){
+          return { data:x.data, diretorias: x.todos ? "todos" : (x.diretorias || []) };
+        });
+      }
+    }catch(e){}
+  }
+  async function addSlot(turno, dia, nome){
+    if(DEMO) return;
+    var r = await sb.from("escala").insert({ turno:turno, dia:+dia, nome:nome });
+    if(r.error && r.error.code !== "23505") throw new Error(r.error.message);
+  }
+  async function delSlot(turno, dia, nome){
+    if(DEMO) return;
+    erro(await sb.from("escala").delete().eq("turno", turno).eq("dia", +dia).eq("nome", nome));
+  }
+  async function salvarSabado(data, patch){
+    if(DEMO) return;
+    erro(await sb.from("sabados").upsert(Object.assign({ data:data }, patch), { onConflict:"data" }));
+  }
+  async function apagarSabado(data){
+    if(DEMO) return;
+    erro(await sb.from("sabados").delete().eq("data", data));
+  }
+
   async function listarPerfis(){
     if(DEMO) return [perfil];
     return erro(await sb.from("perfis").select("id,email,nome,papel,aprovado,criado_em")
@@ -633,7 +687,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     tick();
     setInterval(function(){ tick(); if(pronto && view==="ponto") render(); }, 30000);
     setInterval(function(){ if(pronto && view==="ponto") carregarHoje(); }, 45000);
-    var VERSAO = "v6 · quadro de instrutores";
+    var VERSAO = "v7 · escala editável";
   el("rodape").textContent = (CFG.RODAPE || "") + "  —  " + VERSAO;
     mesFiltro = hojeKey().slice(0,7);
 
@@ -751,6 +805,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
 
   async function entrarNoApp(){
     await carregarInstrutores();
+    await carregarEscala();
     pronto = true;
     el("gate").hidden = true;
     el("app").hidden = false;
@@ -1104,6 +1159,7 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   var SECOES = [
     { id:"visao",     nome:"Visão geral" },
     { id:"pessoas",   nome:"Instrutores" },
+    { id:"escala",    nome:"Escala" },
     { id:"contas",    nome:"Contas" },
     { id:"trocas",    nome:"Trocas" },
     { id:"registros", nome:"Registros" }
@@ -1329,6 +1385,67 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
         + 'o arquivo cuida de quando cada uma trabalha.</p></div>';
     }
 
+    /* ---------------- escala ---------------- */
+    if(coordSec === "escala"){
+      var todosNomes = Object.keys(INSTRUTORES).sort(ordenaPorNome);
+      h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
+        + '<p>clique no × para tirar alguém, ou use o seletor para acrescentar'
+        + (escalaDoBanco ? '' : ' · <b>ainda vindo do escala.js</b> — rode o SQL de carga')+'</p></div>'
+        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Turno</th>'
+        + UTEIS.map(function(d){
+            var nm = DIA_LONGO[d].replace("-feira","");
+            return '<th>'+nm.charAt(0).toUpperCase()+nm.slice(1)+'</th>';
+          }).join("") + '</tr></thead><tbody>';
+      TURNOS_SEMANA.forEach(function(t){
+        h += '<tr><td class="turno">'+esc(t.nome)+'<small>'+esc(t.inicio)+' – '+esc(t.fim)+'</small></td>';
+        UTEIS.forEach(function(d){
+          var ns = escalados(t.id, d, "");
+          var livres = todosNomes.filter(function(n){ return ns.indexOf(n) < 0; });
+          h += '<td>'
+            + ns.map(function(n){
+                return '<span class="chipx'+classeDir(diretoriaDe(n))+'">'+esc(nomeCurto(n))
+                  + '<button data-rmslot="'+esc(t.id+"|"+d+"|"+n)+'" title="Tirar da escala">&times;</button></span>';
+              }).join("")
+            + '<select class="mini addslot" data-addslot="'+esc(t.id+"|"+d)+'">'
+            +   '<option value="">+ adicionar</option>'
+            +   livres.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
+            + '</select></td>';
+        });
+        h += '</tr>';
+      });
+      h += '</tbody></table></div></div>';
+
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Marcar um sábado</h2>'
+        + '<p>'+esc(TURNO_SAB ? TURNO_SAB.inicio+" – "+TURNO_SAB.fim : "")+'</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Data<input type="date" id="sb-data"></label>'
+        +   '<button class="btn primary" id="sb-ok">Adicionar sábado</button>'
+        + '</div></div>';
+
+      h += '<div><div class="sec-head"><h2>Sábados marcados</h2><p>'+SABADOS.length+' data'+(SABADOS.length===1?'':'s')+'</p></div>';
+      if(!SABADOS.length){ h += '<div class="empty"><h3>Nenhum sábado cadastrado</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Diretorias convocadas</th>'
+          + '<th class="num">Pessoas</th><th></th></tr></thead><tbody>';
+        SABADOS.slice().sort(function(a,b){ return a.data < b.data ? -1 : 1; }).forEach(function(e){
+          var todos = (e.diretorias === "todos");
+          var sel = todos ? [] : (e.diretorias || []);
+          h += '<tr><td class="mono">'+esc(brData(e.data))+' <span class="muted">'+DIA_CURTO[dowDe(e.data)]+'</span></td>'
+            + '<td><label class="opcao"><input type="checkbox" data-sbtodos="'+esc(e.data)+'"'+(todos?" checked":"")+'> todas</label>'
+            + DIRETORIAS.map(function(d){
+                return '<label class="opcao"><input type="checkbox" data-sbdir="'+esc(e.data+"|"+d)+'"'
+                  + (sel.indexOf(d)>=0?" checked":"") + (todos?" disabled":"") + '> '+esc(dirCurta(d))+'</label>';
+              }).join("")
+            + '</td>'
+            + '<td class="num">'+nomesDasDiretorias(e.diretorias).length+'</td>'
+            + '<td><button class="btn icon ghost" data-delsab="'+esc(e.data)+'" style="color:var(--alert)">Remover</button></td></tr>';
+        });
+        h += '</tbody></table></div>';
+      }
+      h += '</div>';
+    }
+
     /* ---------------- trocas ---------------- */
     if(coordSec === "trocas"){
       var pend = trocas.filter(function(x){ return x.status === "pendente"; });
@@ -1413,6 +1530,54 @@ footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
     ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Agora é coordenação.");
     ligar(box, "data-delconv", function(em){ return apagarConvite(em); }, "Convite removido.");
     ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor removido do quadro.");
+
+    async function recarregarEscala(){ await carregarEscala(); render(); }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-rmslot]"), function(b){
+      b.addEventListener("click", async function(){
+        var pr = b.dataset.rmslot.split("|");
+        b.disabled = true;
+        try{ await delSlot(pr[0], pr[1], pr[2]); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui tirar. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-addslot]"), function(sl){
+      sl.addEventListener("change", async function(){
+        if(!sl.value) return;
+        var pr = sl.dataset.addslot.split("|");
+        sl.disabled = true;
+        try{ await addSlot(pr[0], pr[1], sl.value); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui acrescentar. ("+e.message+")", "warn"); sl.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-sbtodos]"), function(c){
+      c.addEventListener("change", async function(){
+        c.disabled = true;
+        try{ await salvarSabado(c.dataset.sbtodos, { todos: c.checked, diretorias: c.checked ? [] : undefined }); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); c.disabled = false; }
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-sbdir]"), function(c){
+      c.addEventListener("change", async function(){
+        var pr = c.dataset.sbdir.split("|");
+        var ent = SABADOS.filter(function(x){ return x.data === pr[0]; })[0];
+        var atual = (ent && ent.diretorias !== "todos") ? (ent.diretorias || []).slice() : [];
+        if(c.checked){ if(atual.indexOf(pr[1]) < 0) atual.push(pr[1]); }
+        else { atual = atual.filter(function(d){ return d !== pr[1]; }); }
+        c.disabled = true;
+        try{ await salvarSabado(pr[0], { todos:false, diretorias:atual }); await recarregarEscala(); }
+        catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); c.disabled = false; }
+      });
+    });
+    ligar(box, "data-delsab", function(d){ return apagarSabado(d); }, "Sábado removido.");
+    var sbb = el("sb-ok");
+    if(sbb) sbb.addEventListener("click", async function(){
+      var d = el("sb-data").value;
+      if(!d){ aviso("Escolha a data."); return; }
+      if(new Date(d+"T12:00:00").getDay() !== 6){ aviso("Essa data não é um sábado."); return; }
+      sbb.disabled = true;
+      try{ await salvarSabado(d, { todos:true, diretorias:[] }); await recarregarEscala(); aviso("Sábado adicionado como 'todas as diretorias' — ajuste abaixo se for por diretoria."); }
+      catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); sbb.disabled = false; }
+    });
 
     Array.prototype.forEach.call(box.querySelectorAll("[data-inf]"), function(c){
       c.addEventListener("change", async function(){
