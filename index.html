@@ -689,6 +689,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
   async function criarInstrutor(x){
     if(DEMO) return;
+    /* se o quadro ainda vem do escala.js, leva os 21 junto — senao a tabela
+       passaria a ter so esta pessoa e a lista inteira sumiria da tela. */
+    if(!instrutoresDoBanco && Object.keys(INSTRUTORES).length){
+      try{ await importarInstrutores(); }catch(e){}
+    }
     var r = await sb.from("instrutores").insert(x);
     if(r.error){
       if(r.error.code === "23505") throw new Error("Já existe um instrutor com esse nome-chave.");
@@ -1875,13 +1880,24 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var convSoltosInstr = convSoltos.filter(function(c){ return c.papel !== "coordenacao"; });
       if(soltas.length || convSoltosInstr.length){
         h += '<div><div class="sec-head"><h2>Contas sem vínculo</h2>'
-          + '<p>entraram no site mas ainda não estão ligadas a um apelido da escala</p></div>'
+          + '<p>entraram no site mas ainda não estão ligadas a um apelido da lista de instrutores. Escolha o apelido para a conta passar a ver a escala dela.</p></div>'
           + '<div class="tblwrap"><table class="data"><thead><tr><th>E-mail</th><th>Apelido</th><th>Situação</th><th></th></tr></thead><tbody>';
         soltas.forEach(function(x){
+          var fantasma = x.nome && !INSTRUTORES[x.nome];
           h += '<tr><td>'+esc(x.email||"—")+'</td>'
-            + '<td><input class="mini" list="nomes-escala" data-nome="'+esc(x.id)+'" value="'+esc(x.nome||"")+'" placeholder="digite o apelido"></td>'
+            + '<td><select class="mini" data-vinc="'+esc(x.id)+'">'
+            +   '<option value="">— sem vínculo —</option>'
+            +   (fantasma ? '<option value="'+esc(x.nome)+'" selected>'+esc(x.nome)+' (não existe no quadro)</option>' : '')
+            +   chaves.map(function(n){
+                  return '<option value="'+esc(n)+'"'+(n===x.nome?" selected":"")+'>'+esc(n)+' · '+esc(nomeCheio(n))+'</option>';
+                }).join("")
+            + '</select>'
+            + (fantasma ? '<div class="tiny" style="color:var(--warn);margin-top:4px">o apelido <b>'+esc(x.nome)+'</b> '
+                + 'não existe na lista de instrutores — por isso a conta fica aqui</div>' : '')
+            + '</td>'
             + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
             + '<td style="white-space:nowrap">'
+            + (fantasma ? '<button class="btn icon" data-criarinstr="'+esc(x.nome)+'">Criar instrutor “'+esc(x.nome)+'”</button> ' : '')
             + (x.aprovado ? '<button class="btn icon ghost" data-bloq="'+esc(x.id)+'">Bloquear</button> '
                           : '<button class="btn icon" data-lib="'+esc(x.id)+'">Liberar</button> ')
             + '<button class="btn icon ghost" data-prom="'+esc(x.id)+'">Tornar coordenação</button> '
@@ -2373,10 +2389,22 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         await criarInstrutor({ nome:chave, completo:(el("in-completo").value||"").trim() || chave,
                                diretoria: el("in-dir").value || null, curso:(el("in-curso").value||"").trim() || null });
         var emNovo = ((el("in-email")||{}).value || "").trim().toLowerCase();
-        if(emNovo && emNovo.indexOf("@") > 0) await criarConvite({ email:emNovo, nome:chave, papel:"instrutor" });
+        var extra = "";
+        if(emNovo && emNovo.indexOf("@") > 0){
+          /* se a pessoa já tem conta no site, liga na hora em vez de convidar de novo */
+          var ja = perfis.filter(function(pp){ return (pp.email||"").toLowerCase() === emNovo; })[0];
+          if(ja){
+            await mudarPerfil(ja.id, { nome:chave });
+            ja.nome = chave;
+            extra = " A conta " + emNovo + " ficou ligada a ele.";
+          } else {
+            await criarConvite({ email:emNovo, nome:chave, papel:"instrutor" });
+            extra = " Convite guardado para " + emNovo + ".";
+          }
+        }
         await carregarInstrutores();
         await carregarMes();
-        aviso("Instrutor adicionado. Lembre de colocá-lo na grade do escala.js.");
+        aviso("Instrutor adicionado." + extra + " Agora coloque-o na grade, na aba Escala.");
         render();
       }catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); ib.disabled = false; }
     });
@@ -2392,6 +2420,38 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
           aviso(/duplicate|unique/i.test(e.message) ? "Esse nome já está vinculado a outra conta." : e.message, "warn");
           inp.value = antes; inp.disabled = false;
         }
+      });
+    });
+
+    /* liga uma conta solta a um apelido do quadro */
+    Array.prototype.forEach.call(box.querySelectorAll("[data-vinc]"), function(sel){
+      var antes = sel.value;
+      sel.addEventListener("change", async function(){
+        var novo = sel.value;
+        if(novo === antes) return;
+        sel.disabled = true;
+        try{
+          await mudarPerfil(sel.dataset.vinc, { nome: novo || null });
+          aviso(novo ? "Conta ligada a " + novo + "." : "Vínculo removido.");
+          await carregarMes(); render();
+        }catch(e){
+          aviso(/duplicate|unique/i.test(e.message) ? "Esse apelido já está em outra conta." : e.message, "warn");
+          sel.value = antes; sel.disabled = false;
+        }
+      });
+    });
+
+    /* cria no quadro um apelido que ficou órfão numa conta */
+    Array.prototype.forEach.call(box.querySelectorAll("[data-criarinstr]"), function(bt){
+      bt.addEventListener("click", async function(){
+        var nome = bt.dataset.criarinstr;
+        bt.disabled = true;
+        try{
+          await criarInstrutor({ nome:nome, completo:nome });
+          await carregarInstrutores(); await carregarMes();
+          aviso("“" + nome + "” entrou na lista de instrutores. Complete os dados dele na tabela acima.");
+          render();
+        }catch(e){ aviso("Não consegui criar. (" + e.message + ")", "warn"); bt.disabled = false; }
       });
     });
 
