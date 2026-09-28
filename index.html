@@ -344,10 +344,29 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   <p class="tiny muted" id="dc-sub" style="margin:0 0 16px"></p>
   <label class="fld" id="dc-hora-wrap" style="max-width:150px;margin-bottom:16px" hidden>Horário da chegada<input type="time" id="dc-hora"></label>
   <div class="geo" id="dc-geo" style="margin-bottom:16px" hidden></div>
+  <div id="dc-atraso-wrap" style="margin-bottom:16px" hidden>
+    <p class="tiny" id="dc-atraso-lbl" style="margin:0 0 6px;color:var(--warn);font-weight:600"></p>
+    <input id="dc-motivo" placeholder="Motivo do atraso (opcional)" style="width:100%">
+  </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button class="btn primary big" id="dc-ok" style="flex:1">Confirmar chegada</button>
     <button class="btn ghost big" id="dc-retry" hidden>Tentar de novo</button>
     <button class="btn ghost big" id="dc-no">Cancelar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-fjp">
+  <h3>Justificar uma falta</h3>
+  <p class="tiny muted" style="margin:0 0 14px">O pedido vai para a coordenação avaliar. Aprovado, fica
+  registrado como falta justificada — a falta continua descontando da frequência.</p>
+  <div class="addform" style="border-top:0;padding-top:0;margin-top:0">
+    <label class="fld">Data<input type="date" id="fp-data"></label>
+    <label class="fld">Turno<select id="fp-turno"></select></label>
+  </div>
+  <label class="fld" style="margin-top:12px">Motivo<input id="fp-motivo" placeholder="Atestado, prova, viagem…" style="width:100%"></label>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+    <button class="btn primary" id="fp-ok">Enviar pedido</button>
+    <button class="btn ghost" id="fp-no">Cancelar</button>
   </div>
 </dialog>
 
@@ -418,6 +437,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   }
   var BOLSA = (typeof CFG.BOLSA === "number") ? CFG.BOLSA : 700;
   var JUSTIFICATIVAS = [];
+  var HORARIOS = {};             /* "data|turno" -> {inicio, fim} */
   var historico = [];
   var EXCECOES = [];
   var SUSPENSOES = {};
@@ -557,9 +577,20 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     }
     return lista.filter(function(n){ return estaAtivoEm(n, data); });
   }
-  function atrasoDe(turnoId, iso){
+  function horarioTexto(turnoId, data){
+    var hr = horarioDe(turnoId, data); if(!hr) return "";
+    return esc(hr.inicio) + " \u2013 " + esc(hr.fim)
+      + (hr.ajustado ? ' <b style="color:var(--warn)">ajustado</b>' : '');
+  }
+  /* horario que vale para o turno naquela data — a coordenação pode ajustar */
+  function horarioDe(turnoId, data){
     var t = turnoDe(turnoId); if(!t) return null;
-    var d = minIso(iso) - minOf(t.inicio);
+    var aj = data ? HORARIOS[data+"|"+turnoId] : null;
+    return { inicio:(aj && aj.inicio) || t.inicio, fim:(aj && aj.fim) || t.fim, ajustado:!!aj };
+  }
+  function atrasoDe(turnoId, iso, data){
+    var hr = horarioDe(turnoId, data); if(!hr) return null;
+    var d = minIso(iso) - minOf(hr.inicio);
     return d > TOL ? d : null;
   }
 
@@ -625,17 +656,18 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
   async function listar(de, ate){
     if(DEMO) return demoLer("paespe-regs").filter(function(r){ return r.data >= de && r.data <= ate; });
-    return erro(await sb.from("registros").select("id,nome,turno,data,chegada")
+    return erro(await sb.from("registros").select("id,nome,turno,data,chegada,motivo")
       .gte("data", de).lte("data", ate).order("chegada", { ascending:false })) || [];
   }
-  async function inserir(nome, turno, data, chegada){
+  async function inserir(nome, turno, data, chegada, motivo){
     if(DEMO){
       var a = demoLer("paespe-regs");
       if(a.some(function(r){ return r.nome===nome && r.turno===turno && r.data===data; })) return;
-      a.push({ id:"d"+Date.now(), nome:nome, turno:turno, data:data, chegada:chegada });
+      a.push({ id:"d"+Date.now(), nome:nome, turno:turno, data:data, chegada:chegada, motivo:motivo || null });
       demoGravar("paespe-regs", a); return;
     }
-    var r = await sb.from("registros").insert({ nome:nome, turno:turno, data:data, chegada:chegada });
+    var r = await sb.from("registros")
+      .insert({ nome:nome, turno:turno, data:data, chegada:chegada, motivo:motivo || null });
     if(r.error){
       if(r.error.code === "23505") return;          // já registrado hoje
       if(r.error.code === "42501") throw new Error("O banco recusou: você só pode registrar o próprio ponto.");
@@ -857,17 +889,48 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   async function carregarExtras(){
     if(DEMO) return;
     try{
-      var r = await sb.from("justificativas").select("data,turno,nome,motivo");
+      var r = await sb.from("justificativas").select("data,turno,nome,motivo,status");
+      if(r.error && (r.error.code === "42703" || /column .* does not exist/i.test(r.error.message || "")))
+        r = await sb.from("justificativas").select("*");
       JUSTIFICATIVAS = (!r.error && r.data) ? r.data : [];
     }catch(e){ JUSTIFICATIVAS = []; }
+    try{
+      var rh = await sb.from("horarios").select("data,turno,inicio,fim");
+      HORARIOS = {};
+      if(!rh.error && rh.data) rh.data.forEach(function(x){ HORARIOS[x.data+"|"+x.turno] = x; });
+    }catch(e){ HORARIOS = {}; }
   }
+  function fjDe(nome, data, turno){
+    for(var i=0;i<JUSTIFICATIVAS.length;i++){
+      var x = JUSTIFICATIVAS[i];
+      if(x.nome===nome && x.data===data && x.turno===turno) return x;
+    }
+    return null;
+  }
+  function statusFJ(x){ return (x && x.status) || "aprovada"; }   /* linha antiga, sem status, vale como aprovada */
   function temFJ(nome, data, turno){
-    return JUSTIFICATIVAS.some(function(x){ return x.nome===nome && x.data===data && x.turno===turno; });
+    var x = fjDe(nome, data, turno);
+    return !!x && statusFJ(x) === "aprovada";
   }
-  async function porFJ(nome, data, turno, motivo){
+  async function porFJ(nome, data, turno, motivo, status){
     if(DEMO) return;
-    erro(await sb.from("justificativas").upsert({ nome:nome, data:data, turno:turno, motivo:motivo || null },
-                                                { onConflict:"data,turno,nome" }));
+    erroW(await sb.from("justificativas").upsert(
+      { nome:nome, data:data, turno:turno, motivo:motivo || null, status:status || "aprovada" },
+      { onConflict:"data,turno,nome" }).select("nome"), "justificativas");
+  }
+  async function decidirFJ(nome, data, turno, status){
+    if(DEMO) return;
+    erroW(await sb.from("justificativas").update({ status:status })
+      .eq("nome", nome).eq("data", data).eq("turno", turno).select("nome"), "justificativas");
+  }
+  async function salvarHorario(data, turno, inicio, fim){
+    if(DEMO) return;
+    erroW(await sb.from("horarios").upsert({ data:data, turno:turno, inicio:inicio, fim:fim || null },
+      { onConflict:"data,turno" }).select("data"), "horarios");
+  }
+  async function apagarHorario(data, turno){
+    if(DEMO) return;
+    erroW(await sb.from("horarios").delete().eq("data", data).eq("turno", turno).select("data"), "horarios");
   }
   async function tirarFJ(nome, data, turno){
     if(DEMO) return;
@@ -1137,7 +1200,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       + (entradaSab ? ' · '+esc(rotuloSabado(entradaSab)) : '')+'</div><div class="turnos">';
     lista.forEach(function(t){
       h += '<button class="turnobtn" data-t="'+esc(t.id)+'" aria-pressed="'+(t.id===turnoSel)+'">'
-        + '<b>'+esc(t.nome)+'</b><span>'+esc(t.inicio)+' – '+esc(t.fim)+'</span></button>';
+        + '<b>'+esc(t.nome)+'</b><span>'+horarioTexto(t.id, data)+'</span></button>';
     });
     h += '</div>';
     if(GEO_ATIVO){
@@ -1165,7 +1228,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         var r = reg[n], d = diretoriaDe(n), sou = (n === eu);
         var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(dirCurta(d))+'</span>' : '';
         if(r){
-          var at = atrasoDe(turnoSel, r.chegada);
+          var at = atrasoDe(turnoSel, r.chegada, data);
           h += '<div class="namecard done'+(at!=null?" late":"")+(sou?" eu":"")+'">'+rot
             + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+'</span>'
             + '<span class="s"><svg class="check" viewBox="0 0 20 20" fill="none" aria-hidden="true">'
@@ -1196,19 +1259,47 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     }
     h += '</div>';
 
-    if(eu && hoje && nomes.indexOf(eu) < 0){
+    var souInstrutor = !!(eu && INSTRUTORES[eu]);
+    if(souInstrutor && hoje && nomes.indexOf(eu) < 0){
       h += '<div class="trocacard"><div class="txt">'
         + '<h2>Você não está escalado neste turno</h2>'
         + '<p class="tiny muted" style="margin:0">Se veio cobrir alguém, registre a presença e escolha qual plantão seu sai no lugar. '
         + 'A coordenação aprova a troca.</p></div>'
         + '<button class="btn primary" id="btn-troca">Registrar troca</button></div>';
-    } else if(eu && hoje){
+    } else if(souInstrutor && hoje){
       h += '<div class="trocacard"><div class="txt">'
         + '<h2>Precisa trocar um plantão?</h2>'
         + '<p class="tiny muted" style="margin:0">Registre a presença de hoje e escolha qual plantão seu sai no lugar.</p></div>'
         + '<button class="btn" id="btn-troca">Registrar troca</button></div>';
     } else if(!eu){
       h += '<p class="note">Sua conta não está vinculada a um nome da escala, então você acompanha mas não registra ponto.</p>';
+    }
+
+    if(souInstrutor){
+      var meusPed = JUSTIFICATIVAS.filter(function(x){ return x.nome === eu; })
+        .sort(function(a2,b2){ return a2.data < b2.data ? 1 : -1; }).slice(0, 5);
+      h += '<div class="trocacard"><div class="txt">'
+        + '<h2>Faltou em algum turno?</h2>'
+        + '<p class="tiny muted" style="margin:0">Envie a justificativa para a coordenação avaliar. '
+        + 'A falta continua descontando, mas fica registrada como justificada.</p></div>'
+        + '<button class="btn" id="btn-fjp">Justificar falta</button></div>';
+      if(meusPed.length){
+        h += '<div class="card" style="padding:12px 16px">'
+          + '<p class="eyebrow" style="margin:0 0 8px">Suas justificativas</p>'
+          + meusPed.map(function(x){
+              var st = statusFJ(x);
+              var pill = st === "aprovada" ? '<span class="pill p-on"><span class="dot"></span>aprovada</span>'
+                       : (st === "recusada" ? '<span class="pill p-miss">recusada</span>'
+                                            : '<span class="pill p-late">aguardando</span>');
+              var tt = turnoDe(x.turno);
+              return '<div class="tiny" style="display:flex;gap:8px;align-items:center;margin-bottom:4px">'
+                + '<span class="mono">'+esc(brData(x.data))+'</span>'
+                + '<span class="muted">'+esc(tt ? tt.nome : x.turno)+'</span>'
+                + pill
+                + (x.motivo ? '<span class="muted">'+esc(x.motivo)+'</span>' : '')+'</div>';
+            }).join("")
+          + '</div>';
+      }
     }
 
     var fora = regsHoje.filter(function(r){ return r.turno===turnoSel && nomes.indexOf(r.nome) < 0; });
@@ -1232,7 +1323,48 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     });
     var bt = el("btn-troca");
     if(bt) bt.addEventListener("click", abrirTroca);
+    var bfp = el("btn-fjp");
+    if(bfp) bfp.addEventListener("click", abrirPedidoFJ);
   }
+
+  /* ---------- pedido de falta justificada (instrutor) ---------- */
+  function preencherTurnosPedido(){
+    var d = el("fp-data").value;
+    var dow = d ? dowDe(d) : 1;
+    var lista = turnosDe(dow);
+    el("fp-turno").innerHTML = lista.map(function(t){
+      return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>';
+    }).join("") || '<option value="">sem turno neste dia</option>';
+  }
+  function abrirPedidoFJ(){
+    el("fp-data").value = dataAtiva();
+    el("fp-data").max = hojeKey();
+    el("fp-motivo").value = "";
+    preencherTurnosPedido();
+    el("dlg-fjp").showModal();
+  }
+  el("fp-data").addEventListener("change", preencherTurnosPedido);
+  el("fp-no").addEventListener("click", function(){ el("dlg-fjp").close(); });
+  el("fp-ok").addEventListener("click", async function(){
+    var eu2 = meuNome();
+    var d = el("fp-data").value, t = el("fp-turno").value;
+    var motivo = (el("fp-motivo").value || "").trim();
+    if(!eu2 || !d || !t){ aviso("Escolha a data e o turno."); return; }
+    if(escalados(t, dowDe(d), d).indexOf(eu2) < 0){
+      aviso("Você não estava escalado nesse turno nessa data.", "warn"); return;
+    }
+    var jaFoi = fjDe(eu2, d, t);
+    if(jaFoi && statusFJ(jaFoi) !== "recusada"){ aviso("Já existe um pedido para esse turno."); return; }
+    var bt2 = el("fp-ok"); bt2.disabled = true;
+    try{
+      await porFJ(eu2, d, t, motivo, "pendente");
+      el("dlg-fjp").close();
+      await carregarExtras();
+      aviso("Pedido enviado. A coordenação vai avaliar.");
+      render();
+    }catch(e){ aviso("Não consegui enviar. ("+e.message+")", "warn"); }
+    bt2.disabled = false;
+  });
 
   function painelHoje(dow, data){
     var lista = turnosDe(dow), total = 0, presentes = 0, corpo = "";
@@ -1244,11 +1376,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var faltam = nomes.filter(function(n){ return !reg[n]; });
       total += nomes.length; presentes += chegaram.length;
       corpo += '<div class="linha'+(i===0?" first":"")+'">'
-        + '<div class="tn">'+esc(t.nome)+'<small>'+esc(t.inicio)+'–'+esc(t.fim)+'</small></div><div class="chips">';
+        + '<div class="tn">'+esc(t.nome)+'<small>'+horarioTexto(t.id, data)+'</small></div><div class="chips">';
       if(!nomes.length){ corpo += '<span class="chip">sem escala neste dia</span>'; }
       else {
         chegaram.forEach(function(n){
-          var at = atrasoDe(t.id, reg[n].chegada);
+          var at = atrasoDe(t.id, reg[n].chegada, data);
           corpo += '<span class="chip '+(at!=null?"late":"ok")+'">'+esc(nomeCurto(n))+' <span class="mono">'+esc(hhmm(reg[n].chegada))+'</span></span>';
         });
         faltam.forEach(function(n){ corpo += '<span class="chip no">'+esc(nomeCurto(n))+'</span>'; });
@@ -1272,10 +1404,32 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var wrap = el("dc-hora-wrap");
     if(ehCoord()){
       wrap.hidden = false;
-      el("dc-hora").value = hoje ? agoraTxt : t.inicio;
+      el("dc-hora").value = hoje ? agoraTxt : horarioDe(turnoSel, data).inicio;
     } else wrap.hidden = true;
+    el("dc-motivo").value = "";
+    avisarAtraso();
     el("dlg-conf").showModal();
     checarNoDialogo();
+  }
+  function chegadaEscolhida(){
+    var a = alvoConf; if(!a) return null;
+    if(ehCoord() && el("dc-hora").value){
+      var pr = el("dc-hora").value.split(":");
+      var dd = new Date(a.data+"T00:00:00"); dd.setHours(+pr[0], +pr[1], 0, 0);
+      return dd.toISOString();
+    }
+    return new Date().toISOString();
+  }
+  function avisarAtraso(){
+    var a = alvoConf, w = el("dc-atraso-wrap");
+    if(!a){ w.hidden = true; return; }
+    var at = atrasoDe(a.turno, chegadaEscolhida(), a.data);
+    w.hidden = (at == null);
+    if(at != null){
+      var hr = horarioDe(a.turno, a.data);
+      el("dc-atraso-lbl").textContent = at + " min depois do in\u00edcio (" + hr.inicio + "). "
+        + "Se quiser, diga o motivo \u2014 fica registrado para a coordena\u00e7\u00e3o.";
+    }
   }
   async function checarNoDialogo(){
     var faixa = el("dc-geo"), ok = el("dc-ok"), retry = el("dc-retry");
@@ -1295,19 +1449,16 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     ok.disabled = !r.ok;
     retry.hidden = r.ok;
   }
+  el("dc-hora").addEventListener("input", avisarAtraso);
   el("dc-retry").addEventListener("click", checarNoDialogo);
   el("dc-no").addEventListener("click", function(){ el("dlg-conf").close(); });
   el("dc-ok").addEventListener("click", async function(){
     var a = alvoConf; if(!a) return;
     var btn = el("dc-ok"); btn.disabled = true;
-    var agora;
-    if(ehCoord() && el("dc-hora").value){
-      var pr = el("dc-hora").value.split(":");
-      var dd = new Date(a.data+"T00:00:00"); dd.setHours(+pr[0], +pr[1], 0, 0);
-      agora = dd.toISOString();
-    } else agora = new Date().toISOString();
+    var agora = chegadaEscolhida();
+    var motivo = el("dc-atraso-wrap").hidden ? "" : (el("dc-motivo").value || "").trim();
     try{
-      await inserir(a.nome, a.turno, a.data, agora);
+      await inserir(a.nome, a.turno, a.data, agora, motivo);
       el("dlg-conf").close();
       aviso("Chegada registrada em "+brData(a.data)+" às "+hhmm(agora)+".");
       await carregarHoje();
@@ -1493,7 +1644,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     { id:"visao",     nome:"Visão geral" },
     { id:"pessoas",   nome:"Pessoas" },
     { id:"escala",    nome:"Escala" },
-    { id:"trocas",    nome:"Trocas" },
+    { id:"trocas",    nome:"Pedidos" },
     { id:"registros", nome:"Registros" }
   ];
 
@@ -1516,9 +1667,10 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var s2 = slot(r.nome); s2.presentes++;
       var tt = turnoDe(r.turno);
       if(tt && tt.sabado) s2.presSabado++; else s2.presSemana++;
-      if(atrasoDe(r.turno, r.chegada) != null){ s2.atrasos++; atrasosTot++; }
+      if(atrasoDe(r.turno, r.chegada, r.data) != null){ s2.atrasos++; atrasosTot++; }
     });
     JUSTIFICATIVAS.forEach(function(j){
+      if(statusFJ(j) !== "aprovada") return;
       if(j.data >= periodoDe && j.data <= periodoAte) slot(j.nome).fj++;
     });
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
@@ -1665,7 +1817,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var E = estatisticas();
     var ordenados = E.ordenados;
     var pendConta = perfis.filter(function(x){ return !x.aprovado; }).length;
-    var pendTroca = trocas.filter(function(x){ return x.status === "pendente"; }).length;
+    var pendTroca = trocas.filter(function(x){ return x.status === "pendente"; }).length
+      + JUSTIFICATIVAS.filter(function(x){ return statusFJ(x) === "pendente"; }).length;
 
     var h = '<div class="coordwrap"><nav class="railnav" aria-label="Seções da coordenação">'
       + SECOES.map(function(sc){
@@ -2120,6 +2273,39 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
             }).join("") + '</tbody></table></div>';
       }
       h += '</div>';
+
+      /* ---- horario ajustado de um dia ---- */
+      var ajustes = Object.keys(HORARIOS).map(function(k){ return HORARIOS[k]; })
+        .sort(function(a2,b2){ return a2.data < b2.data ? -1 : (a2.data > b2.data ? 1 : 0); });
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Horário diferente em um dia</h2>'
+        + '<p>vale só nessa data — é por ele que o atraso é contado</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Data<input type="date" id="hj-data"></label>'
+        +   '<label class="fld">Turno<select id="hj-turno">'
+        +     TURNOS.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Início<input type="time" id="hj-ini"></label>'
+        +   '<label class="fld">Fim<input type="time" id="hj-fim"></label>'
+        +   '<button class="btn primary" id="hj-ok">Aplicar</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">Exemplo: na segunda 05/10 o matutino começa 07:30 '
+        + 'em vez de 08:00. A tolerância de '+TOL+' min continua valendo, contada a partir do novo horário.</p></div>';
+      h += '<div><div class="sec-head"><h2>Horários ajustados</h2><p>'+ajustes.length+' data'+(ajustes.length===1?'':'s')+'</p></div>';
+      if(!ajustes.length){ h += '<div class="empty"><h3>Nenhum horário ajustado</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th>'
+          + '<th>Horário do dia</th><th>Horário normal</th><th></th></tr></thead><tbody>'
+          + ajustes.map(function(x){
+              var t2 = turnoDe(x.turno);
+              return '<tr><td class="mono">'+esc(brData(x.data))+' <span class="muted">'+DIA_CURTO[dowDe(x.data)]+'</span></td>'
+                + '<td>'+esc(t2 ? t2.nome : x.turno)+'</td>'
+                + '<td class="mono">'+esc(x.inicio)+(x.fim ? ' \u2013 '+esc(x.fim) : '')+'</td>'
+                + '<td class="mono muted">'+esc(t2 ? t2.inicio+" \u2013 "+t2.fim : "\u2014")+'</td>'
+                + '<td><button class="btn icon ghost" data-delhor="'+esc(x.data+"|"+x.turno)+'" style="color:var(--alert)">Remover</button></td></tr>';
+            }).join("") + '</tbody></table></div>';
+      }
+      h += '</div>';
     }
 
 
@@ -2151,6 +2337,41 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         h += '</tbody></table></div>';
       }
       h += '</div>';
+
+      /* ---- faltas justificadas ---- */
+      var fjPend = JUSTIFICATIVAS.filter(function(x){ return statusFJ(x) === "pendente"; })
+        .sort(function(a2,b2){ return a2.data < b2.data ? 1 : -1; });
+      var fjOutras = JUSTIFICATIVAS.filter(function(x){ return statusFJ(x) !== "pendente"; })
+        .filter(function(x){ return x.data >= periodoDe && x.data <= periodoAte; })
+        .sort(function(a2,b2){ return a2.data < b2.data ? 1 : -1; }).slice(0, 40);
+      h += '<div><div class="sec-head"><h2>Faltas justificadas</h2><p>'
+        + (fjPend.length ? fjPend.length+' aguardando decisão' : 'nenhuma pendente')
+        + ' · aprovada, entra na coluna FJ; a falta continua descontando</p></div>';
+      if(!fjPend.length && !fjOutras.length){
+        h += '<div class="empty"><h3>Nenhuma justificativa até agora</h3></div>';
+      } else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Data</th>'
+          + '<th>Turno</th><th>Motivo</th><th>Situação</th><th></th></tr></thead><tbody>';
+        fjPend.concat(fjOutras).forEach(function(x){
+          var tt = turnoDe(x.turno), st = statusFJ(x);
+          var chave = esc(x.nome+"|"+x.data+"|"+x.turno);
+          var sit = st === "pendente" ? '<span class="pill p-late">Pendente</span>'
+            : (st === "aprovada" ? '<span class="pill p-on"><span class="dot"></span>Aprovada</span>'
+            : '<span class="pill p-miss">Recusada</span>');
+          h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
+            + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+DIA_CURTO[dowDe(x.data)]+'</span></td>'
+            + '<td>'+esc(tt ? tt.nome : x.turno)+'</td>'
+            + '<td class="muted">'+esc(x.motivo || "—")+'</td>'
+            + '<td>'+sit+'</td><td style="white-space:nowrap">'
+            + (st === "pendente"
+                ? '<button class="btn icon" data-fjok="'+chave+'">Aprovar</button> '
+                  + '<button class="btn icon ghost" data-fjno="'+chave+'" style="color:var(--alert)">Recusar</button>'
+                : '<button class="btn icon ghost" data-fjdel="'+chave+'" style="color:var(--alert)">Remover</button>')
+            + '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+      }
+      h += '</div>';
     }
 
     /* ---------------- registros ---------------- */
@@ -2161,12 +2382,13 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor(a)</th>'
           + '<th>Diretoria</th><th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
         ordenados.slice(0,200).forEach(function(r, i2){
-          var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
+          var at = atrasoDe(r.turno, r.chegada, r.data), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
           h += '<tr><td class="mono">'+esc(brData(r.data))+' <span class="muted">'+DIA_CURTO[dowDe(r.data)]+'</span></td>'
             + '<td>'+esc(t ? t.nome : r.turno)+'</td><td>'+esc(nomeCheio(r.nome))+'</td>'
             + '<td class="muted">'+esc(diretoriaDe(r.nome) || "—")+'</td>'
             + '<td class="mono">'+esc(hhmm(r.chegada))+'</td>'
             + '<td>'+(at!=null ? '<span class="pill p-late">+'+at+' min</span>' : '<span class="pill p-on"><span class="dot"></span>No horário</span>')
+            + (r.motivo ? '<div class="tiny muted" style="margin-top:3px">'+esc(r.motivo)+'</div>' : '')
             + (tx ? ' <span class="pill '+(tx.status==="aprovada"?"p-on":(tx.status==="recusada"?"p-miss":"p-late"))+'">troca '+esc(tx.status)+'</span>' : '')+'</td>'
             + '<td><button class="btn icon ghost" data-fix="'+i2+'">Corrigir</button></td></tr>';
         });
@@ -2216,6 +2438,47 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     });
     ligar(box, "data-ap", function(id){ return decidirTroca(id, "aprovada"); }, "Troca aprovada.");
     ligar(box, "data-re", function(id){ return decidirTroca(id, "recusada"); }, "Troca recusada.");
+
+    function ligarFJ(attr, acao, msg){
+      Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"), function(b){
+        b.addEventListener("click", async function(){
+          b.disabled = true;
+          var pr = b.getAttribute(attr).split("|");
+          try{
+            await acao(pr[0], pr[1], pr[2]);
+            await carregarExtras(); await carregarMes();
+            aviso(msg); render();
+          }catch(e){ aviso("Não consegui. ("+e.message+")", "warn"); b.disabled = false; }
+        });
+      });
+    }
+    ligarFJ("data-fjok",  function(n,d,t){ return decidirFJ(n, d, t, "aprovada"); }, "Justificativa aprovada.");
+    ligarFJ("data-fjno",  function(n,d,t){ return decidirFJ(n, d, t, "recusada"); }, "Justificativa recusada.");
+    ligarFJ("data-fjdel", function(n,d,t){ return tirarFJ(n, d, t); }, "Justificativa removida.");
+
+    var hjb = el("hj-ok");
+    if(hjb) hjb.addEventListener("click", async function(){
+      var d = el("hj-data").value, t = el("hj-turno").value;
+      var ini = el("hj-ini").value, fim = el("hj-fim").value;
+      if(!d || !t || !ini){ aviso("Informe a data, o turno e o horário de início."); return; }
+      hjb.disabled = true;
+      try{
+        await salvarHorario(d, t, ini, fim || null);
+        await carregarExtras(); await carregarMes();
+        aviso("Horário ajustado para " + brData(d) + "."); render();
+      }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); hjb.disabled = false; }
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-delhor]"), function(b){
+      b.addEventListener("click", async function(){
+        b.disabled = true;
+        var pr = b.dataset.delhor.split("|");
+        try{
+          await apagarHorario(pr[0], pr[1]);
+          await carregarExtras(); await carregarMes();
+          aviso("Horário voltou ao normal."); render();
+        }catch(e){ aviso("Não consegui remover. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
     ligar(box, "data-lib",  function(id){ return mudarPerfil(id, { aprovado:true }); }, "Conta liberada.");
     ligar(box, "data-bloq", function(id){ return mudarPerfil(id, { aprovado:false }); }, "Conta bloqueada.");
     ligar(box, "data-prom", function(id){ return mudarPerfil(id, { papel:"coordenacao" }); }, "Agora é coordenação.");
@@ -2659,7 +2922,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Curso","Chegada","Atraso (min)","Situação","Troca"];
     var out = [head.join(";")];
     rows.slice().reverse().forEach(function(r){
-      var at = atrasoDe(r.turno, r.chegada), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
+      var at = atrasoDe(r.turno, r.chegada, r.data), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
       out.push([brData(r.data), DIA_CURTO[dowDe(r.data)], t?t.nome:r.turno, nomeCheio(r.nome),
         diretoriaDe(r.nome), infoDe(r.nome).curso || "", hhmm(r.chegada),
         at!=null?String(at):"", at!=null?"Atraso":"No horário", tx ? tx.status : ""]
