@@ -298,7 +298,7 @@ dialog::backdrop{background:var(--scrim)}
 dialog h3{font-size:18px;margin-bottom:4px}
 
 footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
-  font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 footer.legal #rodape{font-weight:600;color:var(--ink)}
 
 @media (prefers-reduced-motion: no-preference){
@@ -358,7 +358,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 <dialog id="dlg-fjp">
   <h3>Justificar uma falta</h3>
   <p class="tiny muted" style="margin:0 0 14px">O pedido vai para a coordenação avaliar. Aprovado, fica
-  registrado como falta justificada — a falta continua descontando da frequência.</p>
+  registrado como falta justificada. A falta continua descontando da frequência.</p>
   <div class="addform" style="border-top:0;padding-top:0;margin-top:0">
     <label class="fld">Data<input type="date" id="fp-data"></label>
     <label class="fld">Turno<select id="fp-turno"></select></label>
@@ -432,7 +432,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   function anota(tab, e){
     var m = (e && e.message) || String(e || "");
     if(/does not exist|Could not find the table|schema cache/i.test(m))
-      m = "a tabela ainda n\u00e3o existe no banco \u2014 rode o arquivo banco.sql no SQL Editor do Supabase";
+      m = "a tabela ainda n\u00e3o existe no banco. Rode o arquivo banco.sql no SQL Editor do Supabase";
     PROBLEMAS.push({ tabela:tab, msg:m });
   }
   var BOLSA = (typeof CFG.BOLSA === "number") ? CFG.BOLSA : 700;
@@ -641,7 +641,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   function erro(r){ if(r.error) throw new Error(r.error.message || "erro"); return r.data; }
   /* escrita: traduz a recusa do RLS numa frase que diz o que fazer */
   function semPermissao(tab){
-    return new Error("o banco recusou a gravação na tabela “" + tab + "” — "
+    return new Error("o banco recusou a gravação na tabela “" + tab + "”. "
       + "falta rodar o bloco de permissões dessa tabela no Supabase (SQL Editor).");
   }
   function erroW(r, tab, podeVazio){
@@ -736,7 +736,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         .select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
       /* tabela antiga pode não ter todas as colunas: tenta de novo pegando o que houver */
       if(r.error && (r.error.code === "42703" || /column .* does not exist/i.test(r.error.message || ""))){
-        anota("instrutores", new Error("faltam colunas na tabela \u2014 rode o banco.sql de novo (ele acrescenta as que faltarem)"));
+        anota("instrutores", new Error("faltam colunas na tabela. Rode o banco.sql de novo, que ele acrescenta as que faltarem"));
         r = await sb.from("instrutores").select("*");
       }
       if(r.error) throw new Error(r.error.message);
@@ -768,7 +768,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var r = await sb.from("perfis").delete().eq("id", id).select("id");
     if(r.error) throw new Error(r.error.message);
     if(!r.data || !r.data.length){
-      throw new Error("o banco recusou a exclusão — falta rodar a política \u201ccoord apaga perfis\u201d no Supabase");
+      throw new Error("o banco recusou a exclusão. Falta rodar a política \u201ccoord apaga perfis\u201d no Supabase");
     }
     if(email){ try{ await sb.from("convites").delete().eq("email", email); }catch(e){} }
   }
@@ -998,7 +998,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
     if(DEMO){
       perfil = { id:"demo", email:"demonstracao@paespe", nome:"Sara Vitória", papel:"coordenacao", aprovado:true };
-      el("modo").textContent = "Modo demonstração — dados só neste navegador";
+      el("modo").textContent = "Modo demonstração: dados só neste navegador";
       entrarNoApp();
       aviso("Modo demonstração: preencha o config.js com os dados do Supabase para valer de verdade.", "fixo");
       return;
@@ -1263,8 +1263,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(souInstrutor && hoje && nomes.indexOf(eu) < 0){
       h += '<div class="trocacard"><div class="txt">'
         + '<h2>Você não está escalado neste turno</h2>'
-        + '<p class="tiny muted" style="margin:0">Se veio cobrir alguém, registre a presença e escolha qual plantão seu sai no lugar. '
-        + 'A coordenação aprova a troca.</p></div>'
+        + '<p class="tiny muted" style="margin:0">Se veio compensar escala, registre a presença e escolha qual dia/turno seu sai no lugar. '
+        + 'Antes, alinhe com a coordenação.</p></div>'
         + '<button class="btn primary" id="btn-troca">Registrar troca</button></div>';
     } else if(souInstrutor && hoje){
       h += '<div class="trocacard"><div class="txt">'
@@ -1428,7 +1428,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(at != null){
       var hr = horarioDe(a.turno, a.data);
       el("dc-atraso-lbl").textContent = at + " min depois do in\u00edcio (" + hr.inicio + "). "
-        + "Se quiser, diga o motivo \u2014 fica registrado para a coordena\u00e7\u00e3o.";
+        + "Se quiser, diga o motivo; ele fica registrado para a coordena\u00e7\u00e3o.";
     }
   }
   async function checarNoDialogo(){
@@ -1580,8 +1580,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       + '</select></label></div>';
 
     h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
-      + '<p>Definida pela coordenação · a coluna de hoje aparece destacada'
-      + (filtroDir ? ' · filtrando '+esc(filtroDir) : '')+'</p></div>'
+      + (filtroDir ? '<p>filtrando '+esc(filtroDir)+'</p>' : '')+'</div>'
       + '<div class="tblwrap"><table class="grade"><thead><tr><th>Turno</th>'
       + UTEIS.map(function(d){
           var nm = DIA_LONGO[d].replace("-feira","");
@@ -1838,7 +1837,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         + '<h2 style="font-size:15px;margin-bottom:6px;color:var(--alert)">O banco n\u00e3o respondeu a tudo</h2>'
         + '<ul class="tiny" style="margin:0;padding-left:18px">'
         + unicos.map(function(x){
-            return '<li><b>' + esc(x.tabela) + '</b> \u2014 ' + esc(x.msg) + '</li>';
+            return '<li><b>' + esc(x.tabela) + '</b>: ' + esc(x.msg) + '</li>';
           }).join("")
         + '</ul></div>';
     }
@@ -1979,14 +1978,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         +   '<label class="fld">E-mail (opcional)<input id="in-email" type="email" placeholder="pessoa@gmail.com" size="20"></label>'
         +   '<button class="btn primary" id="in-ok">Adicionar</button>'
         + '</div>'
-        + '<p class="tiny muted" style="margin:10px 0 0">'
-        +   '<button class="btn icon ghost" id="diag-ok">Testar gravação no banco</button>'
-        +   '<span style="margin-left:8px">use se o botão Adicionar falhar — mostra a resposta crua do Supabase</span></p>'
-        + '<pre id="diag-out" class="mono tiny" hidden style="margin:10px 0 0;padding:10px;'
-        +   'background:var(--ground);border:1px solid var(--line);border-radius:8px;'
-        +   'white-space:pre-wrap;word-break:break-word"></pre>'
         + '<p class="tiny muted" style="margin:10px 0 0">O <b>apelido</b> é o nome curto que identifica a pessoa na escala e '
-        + 'é a etiqueta que o banco guarda em cada ponto — por isso não pode mudar depois. '
+        + 'é a etiqueta que o banco guarda em cada ponto, e por isso não pode mudar depois. '
         + 'Preenchendo o e-mail, ela já entra liberada quando acessar com o Google.</p></div>';
 
       var turnosPor = {};
@@ -2060,7 +2053,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
                 }).join("")
             + '</select>'
             + (fantasma ? '<div class="tiny" style="color:var(--warn);margin-top:4px">o apelido <b>'+esc(x.nome)+'</b> '
-                + 'não existe na lista de instrutores — por isso a conta fica aqui</div>' : '')
+                + 'não existe na lista de instrutores, por isso a conta fica aqui</div>' : '')
             + '</td>'
             + '<td>'+(x.aprovado ? '<span class="pill p-on"><span class="dot"></span>liberada</span>' : '<span class="pill p-late">pendente</span>')+'</td>'
             + '<td style="white-space:nowrap">'
@@ -2127,7 +2120,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         + '</div></div>';
 
       h += '<div><div class="sec-head"><h2>Semana de '+esc(brData(dias[0]))+'</h2>'
-        + '<p>o que você mudar aqui vale só nestas datas — a grade padrão continua intacta</p></div>'
+        + '<p>o que você mudar aqui vale só nestas datas; a grade padrão continua intacta</p></div>'
         + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Turno</th>'
         + dias.map(function(d){
             var off = suspenso(d, "*");
@@ -2279,7 +2272,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         .sort(function(a2,b2){ return a2.data < b2.data ? -1 : (a2.data > b2.data ? 1 : 0); });
       h += '<div class="card">'
         + '<div class="sec-head" style="margin-bottom:12px"><h2>Horário diferente em um dia</h2>'
-        + '<p>vale só nessa data — é por ele que o atraso é contado</p></div>'
+        + '<p>vale só nessa data, e é por ele que o atraso é contado</p></div>'
         + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
         +   '<label class="fld">Data<input type="date" id="hj-data"></label>'
         +   '<label class="fld">Turno<select id="hj-turno">'
@@ -2509,7 +2502,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       bt.addEventListener("click", function(){ coordSec = bt.dataset.ir; render(); });
     });
     ligar(box, "data-delinstr", function(n){ return apagarInstrutor(n); }, "Instrutor excluído do quadro.");
-    ligar(box, "data-desliga", function(n){ return desligarInstrutor(n, true); }, "Instrutor desligado — sai das escalas a partir de hoje.");
+    ligar(box, "data-desliga", function(n){ return desligarInstrutor(n, true); }, "Instrutor desligado. Sai das escalas a partir de hoje.");
     ligar(box, "data-religa",  function(n){ return desligarInstrutor(n, false); }, "Instrutor reativado.");
     ligar(box, "data-delperf", function(v){ var pr = v.split("|"); return excluirPerfil(pr[0], pr[1]); }, "Perfil excluído.");
 
@@ -2626,7 +2619,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       if(!d){ aviso("Escolha a data."); return; }
       if(new Date(d+"T12:00:00").getDay() !== 6){ aviso("Essa data não é um sábado."); return; }
       sbb.disabled = true;
-      try{ await salvarSabado(d, { todos:true, diretorias:[] }); await recarregarEscala(); aviso("Sábado adicionado como 'todas as diretorias' — ajuste abaixo se for por diretoria."); }
+      try{ await salvarSabado(d, { todos:true, diretorias:[] }); await recarregarEscala(); aviso("Sábado adicionado como 'todas as diretorias'. Ajuste abaixo se for por diretoria."); }
       catch(e){ aviso("Não consegui adicionar. ("+e.message+")", "warn"); sbb.disabled = false; }
     });
 
@@ -2644,49 +2637,6 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); }
         c.disabled = false;
       });
-    });
-
-    var dg = el("diag-ok");
-    if(dg) dg.addEventListener("click", async function(){
-      var saida = el("diag-out");
-      saida.hidden = false; saida.textContent = "testando\u2026";
-      var L = [];
-      function resumo(r){
-        return JSON.stringify({ code:(r.error||{}).code || null, message:(r.error||{}).message || null,
-                                details:(r.error||{}).details || null, hint:(r.error||{}).hint || null,
-                                linhas:(r.data||[]).length });
-      }
-      if(DEMO){ saida.textContent = "modo demonstra\u00e7\u00e3o \u2014 sem banco."; return; }
-      L.push("perfil: papel=" + perfil.papel + " aprovado=" + perfil.aprovado);
-      try{
-        var u = await sb.auth.getUser();
-        L.push("logado como: " + (((u.data||{}).user||{}).email || "?"));
-      }catch(e){ L.push("logado como: erro " + e.message); }
-      try{
-        var rc = await sb.rpc("eh_coord");
-        L.push("eh_coord(): " + (rc.error ? ("erro " + rc.error.message) : String(rc.data)));
-      }catch(e){ L.push("eh_coord(): erro " + e.message); }
-      try{
-        var rs = await sb.from("instrutores").select("nome");
-        L.push("select simples: " + resumo(rs));
-      }catch(e){ L.push("select simples: erro " + e.message); }
-      try{
-        var rq = await sb.from("instrutores")
-          .select("nome,completo,diretoria,curso,diretor,ativo,desligado_em").order("completo");
-        L.push("select do app: " + resumo(rq));
-      }catch(e){ L.push("select do app: erro " + e.message); }
-      L.push("no app agora: " + Object.keys(INSTRUTORES).length + " instrutor(es)");
-      if(PROBLEMAS.length) L.push("problemas: " + JSON.stringify(PROBLEMAS));
-      var alvo = "__teste_" + Date.now();
-      try{
-        var ri = await sb.from("instrutores").insert({ nome:alvo, completo:alvo }).select("nome");
-        L.push("insert: " + resumo(ri));
-      }catch(e){ L.push("insert: erro " + e.message); }
-      try{
-        var rd = await sb.from("instrutores").delete().eq("nome", alvo).select("nome");
-        L.push("delete: " + resumo(rd));
-      }catch(e){ L.push("delete: erro " + e.message); }
-      saida.textContent = L.join("\n");
     });
 
     var ib = el("in-ok");
