@@ -297,6 +297,10 @@ dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface)
 dialog::backdrop{background:var(--scrim)}
 dialog h3{font-size:18px;margin-bottom:4px}
 
+.mespill{display:inline-block;min-width:46px;padding:3px 8px;border-radius:999px;
+  font-weight:600;font-size:12px;text-align:center}
+.mespill.ok{background:var(--ok-soft);color:var(--ok)}
+.mespill.baixo{background:var(--alert-soft);color:var(--alert)}
 footer.legal{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
   font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 footer.legal #rodape{font-weight:600;color:var(--ink)}
@@ -361,9 +365,12 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   registrado como falta justificada. A falta continua descontando da frequência.</p>
   <div class="addform" style="border-top:0;padding-top:0;margin-top:0">
     <label class="fld">Data<input type="date" id="fp-data"></label>
-    <label class="fld">Turno<select id="fp-turno"></select></label>
+    <label class="fld">Escala<select id="fp-turno"></select></label>
   </div>
   <label class="fld" style="margin-top:12px">Motivo<input id="fp-motivo" placeholder="Atestado, prova, viagem…" style="width:100%"></label>
+  <label class="fld" style="margin-top:12px">Comprovante (opcional)
+    <input type="file" id="fp-anexo" accept="application/pdf,image/jpeg,image/png"></label>
+  <p class="tiny muted" style="margin:6px 0 0">PDF, JPG ou PNG, até 5 MB. Só você e a coordenação conseguem abrir.</p>
   <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
     <button class="btn primary" id="fp-ok">Enviar pedido</button>
     <button class="btn ghost" id="fp-no">Cancelar</button>
@@ -374,6 +381,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   <h3>Justificar falta</h3>
   <p class="tiny muted" id="fj-sub" style="margin:0 0 14px"></p>
   <label class="fld">Motivo<input id="fj-motivo" placeholder="Atestado, prova, viagem…" style="width:100%"></label>
+  <label class="fld" style="margin-top:12px">Comprovante (opcional)
+    <input type="file" id="fj-anexo" accept="application/pdf,image/jpeg,image/png"></label>
   <p class="tiny muted" style="margin:12px 0 0">A justificativa fica registrada no relatório, mas a falta continua
   descontando da frequência.</p>
   <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
@@ -493,6 +502,13 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var k = d.toLocaleDateString("sv-SE");
       if(k > lim) break;
       fn(k, d.getDay());
+      d.setDate(d.getDate()+1); n++;
+    }
+  }
+  function cadaDiaTodos(de, ate, fn){
+    var d = new Date(de+"T12:00:00"), fim = new Date(ate+"T12:00:00"), n = 0;
+    while(d <= fim && n < 800){
+      fn(d.toLocaleDateString("sv-SE"), d.getDay());
       d.setDate(d.getDate()+1); n++;
     }
   }
@@ -687,8 +703,9 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     return erro(await sb.from("trocas").select("id,nome,data,turno,data_abater,turno_abater,status")
       .order("id", { ascending:false })) || [];
   }
-  async function inserirTroca(t){
-    if(DEMO){ var a = demoLer("paespe-trocas"); t.id="t"+Date.now(); t.status="pendente"; a.push(t); demoGravar("paespe-trocas", a); return; }
+  async function inserirTroca(t, status){
+    if(DEMO){ var a = demoLer("paespe-trocas"); t.id="t"+Date.now(); t.status=status || "pendente"; a.push(t); demoGravar("paespe-trocas", a); return; }
+    if(status) t = Object.assign({}, t, { status:status });
     var r = await sb.from("trocas").insert(t);
     if(r.error){
       if(r.error.code === "23505") throw new Error("Já existe uma solicitação para esse plantão.");
@@ -889,7 +906,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   async function carregarExtras(){
     if(DEMO) return;
     try{
-      var r = await sb.from("justificativas").select("data,turno,nome,motivo,status");
+      var r = await sb.from("justificativas").select("data,turno,nome,motivo,status,anexo");
       if(r.error && (r.error.code === "42703" || /column .* does not exist/i.test(r.error.message || "")))
         r = await sb.from("justificativas").select("*");
       JUSTIFICATIVAS = (!r.error && r.data) ? r.data : [];
@@ -912,11 +929,35 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var x = fjDe(nome, data, turno);
     return !!x && statusFJ(x) === "aprovada";
   }
-  async function porFJ(nome, data, turno, motivo, status){
+  async function porFJ(nome, data, turno, motivo, status, anexo){
     if(DEMO) return;
-    erroW(await sb.from("justificativas").upsert(
-      { nome:nome, data:data, turno:turno, motivo:motivo || null, status:status || "aprovada" },
-      { onConflict:"data,turno,nome" }).select("nome"), "justificativas");
+    var linha = { nome:nome, data:data, turno:turno, motivo:motivo || null, status:status || "aprovada" };
+    if(anexo !== undefined) linha.anexo = anexo || null;
+    erroW(await sb.from("justificativas").upsert(linha, { onConflict:"data,turno,nome" })
+      .select("nome"), "justificativas");
+  }
+  /* ---------- anexos das justificativas (Storage do Supabase) ---------- */
+  var ANEXO_MAX = 5 * 1024 * 1024;
+  var ANEXO_TIPOS = { "application/pdf":"pdf", "image/jpeg":"jpg", "image/png":"png" };
+  async function enviarAnexo(file){
+    if(DEMO || !file) return null;
+    if(!ANEXO_TIPOS[file.type]) throw new Error("envie um PDF, JPG ou PNG");
+    if(file.size > ANEXO_MAX) throw new Error("o arquivo passa de 5 MB");
+    var uid = (sessao && sessao.user) ? sessao.user.id : "sem-conta";
+    var caminho = uid + "/" + Date.now() + "." + ANEXO_TIPOS[file.type];
+    var r = await sb.storage.from("justificativas").upload(caminho, file, { upsert:false });
+    if(r.error){
+      if(/not found|bucket/i.test(r.error.message || ""))
+        throw new Error("falta criar o espaco de anexos no Supabase: rode o banco.sql de novo");
+      throw new Error(r.error.message);
+    }
+    return caminho;
+  }
+  async function abrirAnexo(caminho){
+    if(!caminho) return;
+    var r = await sb.storage.from("justificativas").createSignedUrl(caminho, 300);
+    if(r.error) throw new Error(r.error.message);
+    window.open(r.data.signedUrl, "_blank", "noopener");
   }
   async function decidirFJ(nome, data, turno, status){
     if(DEMO) return;
@@ -979,7 +1020,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     try{ convites = await listarConvites(); }catch(e){}
     try{
       var pm = mesDoPeriodo().split("-");
-      var ini = new Date(+pm[0], +pm[1]-6, 1).toLocaleDateString("sv-SE");
+      var ini = new Date(+pm[0], +pm[1]-12, 1).toLocaleDateString("sv-SE");
       regsHist = await listar(ini, ate);
     }catch(e){ regsHist = []; }
     try{ regsMes = await listar(periodoDe, ate); }
@@ -1180,7 +1221,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
     if(!lista.length){
       box.innerHTML = barraData + '<div class="empty"><h3>Sem plantão neste dia</h3>'
-        + '<p class="tiny" style="margin:0">O PAESPE não tem turno aos domingos.</p></div>';
+        + '<p class="tiny" style="margin:0">O PAESPE não tem escala aos domingos.</p></div>';
       ligarBarraData();
       return;
     }
@@ -1262,7 +1303,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var souInstrutor = !!(eu && INSTRUTORES[eu]);
     if(souInstrutor && hoje && nomes.indexOf(eu) < 0){
       h += '<div class="trocacard"><div class="txt">'
-        + '<h2>Você não está escalado neste turno</h2>'
+        + '<h2>Você não está nesta escala hoje</h2>'
         + '<p class="tiny muted" style="margin:0">Se veio compensar escala, registre a presença e escolha qual dia/turno seu sai no lugar. '
         + 'Antes, alinhe com a coordenação.</p></div>'
         + '<button class="btn primary" id="btn-troca">Registrar troca</button></div>';
@@ -1279,7 +1320,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var meusPed = JUSTIFICATIVAS.filter(function(x){ return x.nome === eu; })
         .sort(function(a2,b2){ return a2.data < b2.data ? 1 : -1; }).slice(0, 5);
       h += '<div class="trocacard"><div class="txt">'
-        + '<h2>Faltou em algum turno?</h2>'
+        + '<h2>Faltou em alguma escala?</h2>'
         + '<p class="tiny muted" style="margin:0">Envie a justificativa para a coordenação avaliar. '
         + 'A falta continua descontando, mas fica registrada como justificada.</p></div>'
         + '<button class="btn" id="btn-fjp">Justificar falta</button></div>';
@@ -1296,7 +1337,9 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
                 + '<span class="mono">'+esc(brData(x.data))+'</span>'
                 + '<span class="muted">'+esc(tt ? tt.nome : x.turno)+'</span>'
                 + pill
-                + (x.motivo ? '<span class="muted">'+esc(x.motivo)+'</span>' : '')+'</div>';
+                + (x.motivo ? '<span class="muted">'+esc(x.motivo)+'</span>' : '')
+                + (x.anexo ? ' <button class="btn icon ghost" data-anexo="'+esc(x.anexo)+'">Ver anexo</button>' : '')
+                + '</div>';
             }).join("")
           + '</div>';
       }
@@ -1325,6 +1368,14 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(bt) bt.addEventListener("click", abrirTroca);
     var bfp = el("btn-fjp");
     if(bfp) bfp.addEventListener("click", abrirPedidoFJ);
+    Array.prototype.forEach.call(box.querySelectorAll("[data-anexo]"), function(b){
+      b.addEventListener("click", async function(){
+        b.disabled = true;
+        try{ await abrirAnexo(b.dataset.anexo); }
+        catch(e){ aviso("Não consegui abrir o anexo. ("+e.message+")", "warn"); }
+        b.disabled = false;
+      });
+    });
   }
 
   /* ---------- pedido de falta justificada (instrutor) ---------- */
@@ -1334,12 +1385,13 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var lista = turnosDe(dow);
     el("fp-turno").innerHTML = lista.map(function(t){
       return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>';
-    }).join("") || '<option value="">sem turno neste dia</option>';
+    }).join("") || '<option value="">sem escala neste dia</option>';
   }
   function abrirPedidoFJ(){
     el("fp-data").value = dataAtiva();
     el("fp-data").max = hojeKey();
     el("fp-motivo").value = "";
+    el("fp-anexo").value = "";
     preencherTurnosPedido();
     el("dlg-fjp").showModal();
   }
@@ -1349,15 +1401,18 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var eu2 = meuNome();
     var d = el("fp-data").value, t = el("fp-turno").value;
     var motivo = (el("fp-motivo").value || "").trim();
-    if(!eu2 || !d || !t){ aviso("Escolha a data e o turno."); return; }
+    if(!eu2 || !d || !t){ aviso("Escolha a data e a escala."); return; }
     if(escalados(t, dowDe(d), d).indexOf(eu2) < 0){
-      aviso("Você não estava escalado nesse turno nessa data.", "warn"); return;
+      aviso("Você não estava nessa escala nessa data.", "warn"); return;
     }
     var jaFoi = fjDe(eu2, d, t);
-    if(jaFoi && statusFJ(jaFoi) !== "recusada"){ aviso("Já existe um pedido para esse turno."); return; }
+    if(jaFoi && statusFJ(jaFoi) !== "recusada"){ aviso("Já existe um pedido para essa escala."); return; }
     var bt2 = el("fp-ok"); bt2.disabled = true;
     try{
-      await porFJ(eu2, d, t, motivo, "pendente");
+      var arq = (el("fp-anexo").files || [])[0] || null;
+      var caminho = arq ? await enviarAnexo(arq) : null;
+      await porFJ(eu2, d, t, motivo, "pendente", caminho);
+      el("fp-anexo").value = "";
       el("dlg-fjp").close();
       await carregarExtras();
       aviso("Pedido enviado. A coordenação vai avaliar.");
@@ -1390,7 +1445,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     });
     return '<div class="painel"><div class="sec-head" style="margin-bottom:2px"><h2>Quem já chegou'
       + (data === hojeKey() ? ' hoje' : ' em '+esc(brData(data)))+'</h2>'
-      + '<p>'+presentes+' de '+total+' turnos preenchidos · verde é presente, amarelo é atraso, vermelho ainda não chegou</p>'
+      + '<p>'+presentes+' de '+total+' escalas preenchidas · verde é presente, amarelo é atraso, vermelho ainda não chegou</p>'
       + '</div>' + corpo + '</div>';
   }
 
@@ -1478,15 +1533,19 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     el("fj-sub").textContent = nomeCheio(nome) + " · " + (t?t.nome:turnoSel) + " · " + brData(data);
     var atual = JUSTIFICATIVAS.filter(function(x){ return x.nome===nome && x.data===data && x.turno===turnoSel; })[0];
     el("fj-motivo").value = atual ? (atual.motivo || "") : "";
+    el("fj-anexo").value = "";
     el("fj-del").hidden = !atual;
     el("dlg-fj").showModal();
   }
   el("fj-no").addEventListener("click", function(){ el("dlg-fj").close(); });
   el("fj-ok").addEventListener("click", async function(){
     var a = alvoFJ; if(!a) return;
+    var arq = (el("fj-anexo").files || [])[0] || null;
     el("dlg-fj").close();
     try{
-      await porFJ(a.nome, a.data, a.turno, (el("fj-motivo").value||"").trim());
+      var caminho = arq ? await enviarAnexo(arq) : undefined;
+      await porFJ(a.nome, a.data, a.turno, (el("fj-motivo").value||"").trim(), "aprovada", caminho);
+      el("fj-anexo").value = "";
       await carregarExtras(); aviso("Falta justificada registrada."); render();
     }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); }
   });
@@ -1581,7 +1640,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
     h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
       + (filtroDir ? '<p>filtrando '+esc(filtroDir)+'</p>' : '')+'</div>'
-      + '<div class="tblwrap"><table class="grade"><thead><tr><th>Turno</th>'
+      + '<div class="tblwrap"><table class="grade"><thead><tr><th>Escala</th>'
       + UTEIS.map(function(d){
           var nm = DIA_LONGO[d].replace("-feira","");
           return '<th'+(d===dow?' class="hoje"':'')+'>'+nm.charAt(0).toUpperCase()+nm.slice(1)+'</th>';
@@ -1622,8 +1681,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     var todos = Object.keys(INSTRUTORES).filter(passa).sort(ordenaPorNome);
     var turnosSem = {};
     TURNOS_SEMANA.forEach(function(t){ UTEIS.forEach(function(d){ escalados(t.id,d,"").forEach(function(n){ turnosSem[n] = (turnosSem[n]||0)+1; }); }); });
-    h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+todos.length+' pessoas · turnos por semana</p></div>'
-      + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Curso</th><th>Diretoria</th><th class="num">Turnos/semana</th></tr></thead><tbody>'
+    h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+todos.length+' pessoas · escalas por semana</p></div>'
+      + '<div class="tblwrap"><table><thead><tr><th>Instrutor(a)</th><th>Curso</th><th>Diretoria</th><th class="num">Escalas/semana</th></tr></thead><tbody>'
       + todos.map(function(n){
           var d = diretoriaDe(n), i = infoDe(n);
           return '<tr><td>'+(i.diretor?'<b>'+esc(nomeCheio(n))+'</b> <span class="tag">diretor(a)</span>':esc(nomeCheio(n)))+'</td>'
@@ -1672,6 +1731,14 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       if(statusFJ(j) !== "aprovada") return;
       if(j.data >= periodoDe && j.data <= periodoAte) slot(j.nome).fj++;
     });
+    var previstosPeriodo = 0;
+    cadaDiaTodos(periodoDe, periodoAte, function(key, dow){
+      turnosDe(dow).forEach(function(t){
+        escalados(t.id, dow, key).forEach(function(n){
+          if(!abatido(n, key, t.id)) previstosPeriodo++;
+        });
+      });
+    });
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
     var previstosTot = nomes.reduce(function(a,n){ return a + porNome[n].previstos; }, 0);
     var freq = previstosTot ? Math.round(regsMes.length / previstosTot * 100) : 0;
@@ -1710,8 +1777,77 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         pctTotal:  prevT ? presT/prevT*100 : null,
         bolsa:b, atrasos:sn.atrasos, fj:sn.fj };
     });
-    return { porNome:porNome, nomes:nomes, previstosTot:previstosTot, freq:freq,
+    return { porNome:porNome, nomes:nomes, previstosTot:previstosTot, previstosPeriodo:previstosPeriodo, freq:freq,
              atrasosTot:atrasosTot, ordenados:ordenados, linhas:linhas, totalBolsa:totalBolsa };
+  }
+
+  /* frequencia de cada instrutor, mes a mes, dentro da janela carregada */
+  function matrizMensal(qtdMeses){
+    var base = mesDoPeriodo().split("-");
+    var cols = [];
+    for(var k = qtdMeses - 1; k >= 0; k--){
+      var m = new Date(+base[0], +base[1]-1-k, 1);
+      cols.push(m.toLocaleDateString("sv-SE").slice(0,7));
+    }
+    var dados = {};
+    function cel(n, ym){
+      var d = dados[n] || (dados[n] = {});
+      return d[ym] || (d[ym] = { prev:0, pres:0 });
+    }
+    cols.forEach(function(ym){
+      cadaDia(ym+"-01", fimDoMes(ym), function(key, dow){
+        turnosDe(dow).forEach(function(t){
+          escalados(t.id, dow, key).forEach(function(n){
+            if(!abatido(n, key, t.id)) cel(n, ym).prev++;
+          });
+        });
+      });
+    });
+    regsHist.forEach(function(r){
+      var ym = r.data.slice(0,7);
+      if(cols.indexOf(ym) >= 0) cel(r.nome, ym).pres++;
+    });
+    /* só entram os meses em que o programa de fato rodou */
+    cols = cols.filter(function(ym){
+      var temPrev = false, temPres = false;
+      Object.keys(dados).forEach(function(n){
+        var c = dados[n][ym]; if(!c) return;
+        if(c.prev > 0) temPrev = true;
+        if(c.pres > 0) temPres = true;
+      });
+      return temPrev && temPres;
+    });
+    var nomes = Object.keys(dados).filter(function(n){
+      return cols.some(function(ym){ return dados[n][ym] && dados[n][ym].prev > 0; });
+    }).sort(ordenaPorNome);
+    return { cols:cols, nomes:nomes, dados:dados };
+  }
+
+  function tabelaMensal(){
+    var m = matrizMensal(12);
+    if(!m.cols.length || !m.nomes.length)
+      return '<div class="empty"><h3>Ainda não há meses fechados para comparar</h3></div>';
+    var h2 = '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th>'
+      + m.cols.map(function(ym){
+          return '<th class="num">'+esc(ym.slice(5)+"/"+ym.slice(2,4))+'</th>';
+        }).join("")
+      + '<th class="num">Média</th></tr></thead><tbody>';
+    m.nomes.forEach(function(n){
+      var somaPrev = 0, somaPres = 0;
+      h2 += '<tr><td>'+esc(nomeCheio(n))+'</td>';
+      m.cols.forEach(function(ym){
+        var c = m.dados[n][ym];
+        if(!c || !c.prev){ h2 += '<td class="num muted">—</td>'; return; }
+        somaPrev += c.prev; somaPres += c.pres;
+        var pc = c.pres / c.prev * 100;
+        h2 += '<td class="num"><span class="mespill '+(pc >= CORTE ? "ok" : "baixo")+'" '
+          + 'title="'+esc(c.pres+" de "+c.prev)+'">'+pc.toFixed(0)+'%</span></td>';
+      });
+      var md = somaPrev ? somaPres/somaPrev*100 : null;
+      h2 += '<td class="num">'+(md === null ? '<span class="muted">—</span>'
+            : '<b class="'+(md >= CORTE ? "" : "")+'">'+md.toFixed(0)+'%</b>')+'</td></tr>';
+    });
+    return h2 + '</tbody></table></div>';
   }
 
   function barraPeriodo(comCsv){
@@ -1800,8 +1936,12 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     h += '<div><div class="sec-head"><h2>Por instrutor</h2>'
       + '<p>'+esc(rotuloPeriodo())+' · até hoje · ordenado da menor frequência para a maior</p></div>'
       + tabelaPorInstrutor(E.linhas, true)
-      + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre os turnos previstos. '
-      + 'A bolsa é R$ '+reais(BOLSA)+' × essa fração. Feriados, turnos suspensos e trocas aprovadas saem do previsto.</p></div>';
+      + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre as escalas previstas. '
+      + 'A bolsa é R$ '+reais(BOLSA)+' × essa fração. Feriados, escalas suspensas e trocas aprovadas saem do previsto.</p></div>';
+
+    h += '<div><div class="sec-head"><h2>Frequência mês a mês</h2>'
+      + '<p>porcentagem de presença em cada mês · verde a partir de '+CORTE+'%, vermelho abaixo disso</p></div>'
+      + tabelaMensal() + '</div>';
 
     box.innerHTML = h;
     ligarPeriodo(box);
@@ -1851,9 +1991,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       h += '<div class="tiles">'
         + tile("Frequência", E.freq+"%")
         + tile("Presenças", String(regsMes.length))
-        + tile("Turnos previstos", String(E.previstosTot))
+        + tile("Escalas previstas", String(E.previstosPeriodo))
         + tile("Chegadas com atraso", String(E.atrasosTot))
-        + '</div>';
+        + '</div>'
+        + '<p class="tiny muted" style="margin:-6px 0 18px">Frequência, presenças e atrasos contam até hoje. '
+        + '<b>Escalas previstas</b> mostra o período inteiro, inclusive os dias que ainda vêm.</p>';
 
       /* gráfico 1 — frequência por instrutor */
       if(linhas.length){
@@ -1885,7 +2027,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
               var sd = porDir[d];
               return { rotulo:dirCurta(d), cheio:d, pct: sd.prev ? sd.pres/sd.prev*100 : 0,
                        cor: "var(--c"+Math.max(0, DIRETORIAS.indexOf(d))+")",
-                       detalhe: sd.pessoas+" pessoas · "+sd.pres+" de "+sd.prev+" turnos" };
+                       detalhe: sd.pessoas+" pessoas · "+sd.pres+" de "+sd.prev+" escalas" };
             })) + '</div>'
           + '<div class="tblwrap" style="margin-top:14px"><table class="data"><thead><tr><th>Diretoria</th>'
           + '<th class="num">Pessoas</th><th class="num">Previstos</th><th class="num">Presenças</th>'
@@ -1988,7 +2130,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
       h += '<div><div class="sec-head"><h2>Instrutores</h2><p>'+(chaves.length - desligados)+' ativos</p></div>'
         + '<div class="tblwrap"><table class="data"><thead><tr><th>Apelido</th><th>Nome completo</th>'
-        + '<th>Diretoria</th><th>Curso</th><th>Dir.</th><th class="num">Turnos</th><th>Situação</th>'
+        + '<th>Diretoria</th><th>Curso</th><th>Dir.</th><th class="num">Escalas</th><th>Situação</th>'
         + '<th>Acesso</th><th></th></tr></thead><tbody>';
       if(!chaves.length) h += '<tr><td colspan="9" class="muted">Nenhum instrutor cadastrado.</td></tr>';
       chaves.forEach(function(n){
@@ -2107,7 +2249,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         +   '<label class="fld">Dia<select id="cv-dia">'
         +     dias.map(function(d){ return '<option value="'+esc(d)+'">'+DIA_CURTO[dowDe(d)]+' '+esc(brData(d))+'</option>'; }).join("")
         +   '</select></label>'
-        +   '<label class="fld">Turno<select id="cv-turno"><option value="*">Todos os turnos</option>'
+        +   '<label class="fld">Escala<select id="cv-turno"><option value="*">Todas as escalas</option>'
         +     TURNOS.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>'; }).join("")
         +   '</select></label>'
         +   '<span class="fld" style="gap:6px"><span>Diretorias</span><span>'
@@ -2121,7 +2263,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
       h += '<div><div class="sec-head"><h2>Semana de '+esc(brData(dias[0]))+'</h2>'
         + '<p>o que você mudar aqui vale só nestas datas; a grade padrão continua intacta</p></div>'
-        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Turno</th>'
+        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Escala</th>'
         + dias.map(function(d){
             var off = suspenso(d, "*");
             return '<th'+(d===hojeKey()?' class="hoje"':'')+'>'+DIA_CURTO[dowDe(d)]+' '+esc(brData(d).slice(0,5))
@@ -2150,7 +2292,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
           var livres = todosNomes.filter(function(n){ return ns.indexOf(n) < 0; });
           h += '<td>'
             + '<label class="opcao" style="margin-bottom:6px"><input type="checkbox" data-susp="'+esc(d+"|"+t.id)+'"'
-            +   (offT?" checked":"")+'> suspender turno</label>';
+            +   (offT?" checked":"")+'> suspender escala</label>';
           if(offT){
             h += '<div class="tiny muted">Ninguém é cobrado neste turno.</div></td>'; return;
           }
@@ -2173,7 +2315,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         h += '</tr>';
       });
       h += '</tbody></table></div>'
-        + '<p class="note" style="margin-top:10px">Turno ou dia suspenso não gera presença nem falta: some do plantão, '
+        + '<p class="note" style="margin-top:10px">Escala ou dia suspenso não gera presença nem falta: some do plantão, '
         + 'some do painel e deixa de contar como previsto no relatório. O <b>+</b> ao lado de um nome marca quem entrou '
         + 'só nesta semana, fora da grade padrão.</p></div>';
     }
@@ -2190,7 +2332,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       }
       h += '<div><div class="sec-head"><h2>Grade de segunda a sexta</h2>'
         + '<p>clique no × para tirar alguém, ou use o seletor para acrescentar</p></div>'
-        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Turno</th>'
+        + '<div class="tblwrap"><table class="grade editor"><thead><tr><th>Escala</th>'
         + UTEIS.map(function(d){
             var nm = DIA_LONGO[d].replace("-feira","");
             return '<th>'+nm.charAt(0).toUpperCase()+nm.slice(1)+'</th>';
@@ -2267,6 +2409,37 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       }
       h += '</div>';
 
+      /* ---- suspender um turno numa data ---- */
+      var suspTurno = Object.keys(SUSPENSOES).filter(function(k){ return k.indexOf("|*") < 0; })
+        .map(function(k){ var pr = k.split("|"); return { data:pr[0], turno:pr[1], motivo:SUSPENSOES[k] }; })
+        .sort(function(a2,b2){ return a2.data < b2.data ? -1 : (a2.data > b2.data ? 1 : 0); });
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Suspender uma escala</h2>'
+        + '<p>só aquela escala naquela data: ninguém ganha presença nem falta</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Data<input type="date" id="st-data"></label>'
+        +   '<label class="fld">Escala<select id="st-turno">'
+        +     TURNOS.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Motivo<input id="st-motivo" placeholder="Reunião pedagógica" size="22"></label>'
+        +   '<button class="btn primary" id="st-ok">Suspender</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">Para derrubar o dia inteiro, use Feriados e recessos acima. '
+        + 'O mesmo efeito existe dentro de <b>Uma semana só</b>, na caixa "suspender escala" de cada quadro.</p></div>';
+      h += '<div><div class="sec-head"><h2>Escalas suspensas</h2><p>'+suspTurno.length+' escala'+(suspTurno.length===1?'':'s')+'</p></div>';
+      if(!suspTurno.length){ h += '<div class="empty"><h3>Nenhuma escala suspensa</h3></div>'; }
+      else {
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Escala</th><th>Motivo</th><th></th></tr></thead><tbody>'
+          + suspTurno.map(function(f){
+              var t2 = turnoDe(f.turno);
+              return '<tr><td class="mono">'+esc(brData(f.data))+' <span class="muted">'+DIA_CURTO[dowDe(f.data)]+'</span></td>'
+                + '<td>'+esc(t2 ? t2.nome : f.turno)+'</td>'
+                + '<td>'+(f.motivo ? esc(f.motivo) : '<span class="muted">—</span>')+'</td>'
+                + '<td><button class="btn icon ghost" data-delsusp="'+esc(f.data+"|"+f.turno)+'" style="color:var(--alert)">Reativar</button></td></tr>';
+            }).join("") + '</tbody></table></div>';
+      }
+      h += '</div>';
+
       /* ---- horario ajustado de um dia ---- */
       var ajustes = Object.keys(HORARIOS).map(function(k){ return HORARIOS[k]; })
         .sort(function(a2,b2){ return a2.data < b2.data ? -1 : (a2.data > b2.data ? 1 : 0); });
@@ -2275,7 +2448,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         + '<p>vale só nessa data, e é por ele que o atraso é contado</p></div>'
         + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
         +   '<label class="fld">Data<input type="date" id="hj-data"></label>'
-        +   '<label class="fld">Turno<select id="hj-turno">'
+        +   '<label class="fld">Escala<select id="hj-turno">'
         +     TURNOS.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>'; }).join("")
         +   '</select></label>'
         +   '<label class="fld">Início<input type="time" id="hj-ini"></label>'
@@ -2287,7 +2460,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       h += '<div><div class="sec-head"><h2>Horários ajustados</h2><p>'+ajustes.length+' data'+(ajustes.length===1?'':'s')+'</p></div>';
       if(!ajustes.length){ h += '<div class="empty"><h3>Nenhum horário ajustado</h3></div>'; }
       else {
-        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th>'
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Escala</th>'
           + '<th>Horário do dia</th><th>Horário normal</th><th></th></tr></thead><tbody>'
           + ajustes.map(function(x){
               var t2 = turnoDe(x.turno);
@@ -2304,6 +2477,26 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
     /* ---------------- trocas ---------------- */
     if(coordSec === "trocas"){
+      var ativos = Object.keys(INSTRUTORES).sort(ordenaPorNome)
+        .filter(function(n){ return infoDe(n).ativo !== false; });
+      var optTurnos = TURNOS.map(function(t){
+        return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>';
+      }).join("");
+      h += '<div class="card">'
+        + '<div class="sec-head" style="margin-bottom:12px"><h2>Registrar uma troca</h2>'
+        + '<p>a coordenação lança direto, já aprovada</p></div>'
+        + '<div class="addform" style="border-top:0;padding-top:0;margin-top:0">'
+        +   '<label class="fld">Instrutor(a)<select id="tc-nome">'
+        +     ativos.map(function(n){ return '<option value="'+esc(n)+'">'+esc(nomeCheio(n))+'</option>'; }).join("")
+        +   '</select></label>'
+        +   '<label class="fld">Compareceu em<input type="date" id="tc-data"></label>'
+        +   '<label class="fld">Escala<select id="tc-turno">'+optTurnos+'</select></label>'
+        +   '<label class="fld">Sai de<input type="date" id="tc-dataab"></label>'
+        +   '<label class="fld">Escala<select id="tc-turnoab">'+optTurnos+'</select></label>'
+        +   '<button class="btn primary" id="tc-ok">Registrar</button>'
+        + '</div>'
+        + '<p class="tiny muted" style="margin:10px 0 0">A escala que sai deixa de ser cobrada no relatório. '
+        + 'Se a pessoa ainda não registrou a presença no dia em que compareceu, lance a chegada na aba Registrar.</p></div>';
       var pend = trocas.filter(function(x){ return x.status === "pendente"; });
       var decid = trocas.filter(function(x){ return x.status !== "pendente"; }).slice(0,30);
       h += '<div><div class="sec-head"><h2>Solicitações de troca</h2><p>'
@@ -2344,7 +2537,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         h += '<div class="empty"><h3>Nenhuma justificativa até agora</h3></div>';
       } else {
         h += '<div class="tblwrap"><table class="data"><thead><tr><th>Instrutor(a)</th><th>Data</th>'
-          + '<th>Turno</th><th>Motivo</th><th>Situação</th><th></th></tr></thead><tbody>';
+          + '<th>Escala</th><th>Motivo</th><th>Situação</th><th></th></tr></thead><tbody>';
         fjPend.concat(fjOutras).forEach(function(x){
           var tt = turnoDe(x.turno), st = statusFJ(x);
           var chave = esc(x.nome+"|"+x.data+"|"+x.turno);
@@ -2354,7 +2547,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
           h += '<tr><td>'+esc(nomeCheio(x.nome))+'</td>'
             + '<td class="mono">'+esc(brData(x.data))+' <span class="muted">'+DIA_CURTO[dowDe(x.data)]+'</span></td>'
             + '<td>'+esc(tt ? tt.nome : x.turno)+'</td>'
-            + '<td class="muted">'+esc(x.motivo || "—")+'</td>'
+            + '<td class="muted">'+esc(x.motivo || "—")
+            +   (x.anexo ? ' <button class="btn icon ghost" data-anexo="'+esc(x.anexo)+'">Ver anexo</button>' : '')+'</td>'
             + '<td>'+sit+'</td><td style="white-space:nowrap">'
             + (st === "pendente"
                 ? '<button class="btn icon" data-fjok="'+chave+'">Aprovar</button> '
@@ -2372,7 +2566,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       h += '<div><div class="sec-head"><h2>Registros</h2><p>'+ordenados.length+' chegada'+(ordenados.length===1?"":"s")+' · mais recentes primeiro</p></div>';
       if(!ordenados.length){ h += '<div class="empty"><h3>Nenhuma chegada neste período</h3></div>'; }
       else {
-        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Turno</th><th>Instrutor(a)</th>'
+        h += '<div class="tblwrap"><table class="data"><thead><tr><th>Data</th><th>Escala</th><th>Instrutor(a)</th>'
           + '<th>Diretoria</th><th>Chegada</th><th>Situação</th><th></th></tr></thead><tbody>';
         ordenados.slice(0,200).forEach(function(r, i2){
           var at = atrasoDe(r.turno, r.chegada, r.data), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
@@ -2445,6 +2639,32 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         });
       });
     }
+    var tcb = el("tc-ok");
+    if(tcb) tcb.addEventListener("click", async function(){
+      var nome = el("tc-nome").value, d1 = el("tc-data").value, t1 = el("tc-turno").value;
+      var d2 = el("tc-dataab").value, t2 = el("tc-turnoab").value;
+      if(!nome || !d1 || !t1 || !d2 || !t2){ aviso("Preencha os dois dias e as duas escalas."); return; }
+      if(d1 === d2 && t1 === t2){ aviso("A escala que sai tem que ser outra."); return; }
+      if(escalados(t2, dowDe(d2), d2).indexOf(nome) < 0){
+        aviso(nomeCheio(nome)+" não está na escala que sai.", "warn"); return;
+      }
+      tcb.disabled = true;
+      try{
+        await inserirTroca({ nome:nome, data:d1, turno:t1, data_abater:d2, turno_abater:t2 }, "aprovada");
+        trocas = await listarTrocas(); await carregarMes();
+        aviso("Troca registrada e aprovada."); render();
+      }catch(e){ aviso("Não consegui registrar. ("+e.message+")", "warn"); tcb.disabled = false; }
+    });
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-anexo]"), function(b){
+      b.addEventListener("click", async function(){
+        b.disabled = true;
+        try{ await abrirAnexo(b.dataset.anexo); }
+        catch(e){ aviso("Não consegui abrir o anexo. ("+e.message+")", "warn"); }
+        b.disabled = false;
+      });
+    });
+
     ligarFJ("data-fjok",  function(n,d,t){ return decidirFJ(n, d, t, "aprovada"); }, "Justificativa aprovada.");
     ligarFJ("data-fjno",  function(n,d,t){ return decidirFJ(n, d, t, "recusada"); }, "Justificativa recusada.");
     ligarFJ("data-fjdel", function(n,d,t){ return tirarFJ(n, d, t); }, "Justificativa removida.");
@@ -2453,7 +2673,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     if(hjb) hjb.addEventListener("click", async function(){
       var d = el("hj-data").value, t = el("hj-turno").value;
       var ini = el("hj-ini").value, fim = el("hj-fim").value;
-      if(!d || !t || !ini){ aviso("Informe a data, o turno e o horário de início."); return; }
+      if(!d || !t || !ini){ aviso("Informe a data, a escala e o horário de início."); return; }
       hjb.disabled = true;
       try{
         await salvarHorario(d, t, ini, fim || null);
@@ -2544,7 +2764,17 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       });
     });
     ligar(box, "data-delsab", function(d){ return apagarSabado(d); }, "Sábado removido.");
-    ligar(box, "data-delsusp", function(v){ var pr = v.split("|"); return marcarSuspensao(pr[0], pr[1], false); }, "Dia reativado.");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-delsusp]"), function(b){
+      b.addEventListener("click", async function(){
+        var pr = b.dataset.delsusp.split("|");
+        b.disabled = true;
+        try{
+          await marcarSuspensao(pr[0], pr[1], false);
+          await recarregarEscala(); await carregarMes();
+          aviso(pr[1] === "*" ? "Dia reativado." : "Escala reativada.");
+        }catch(e){ aviso("Não consegui. ("+e.message+")", "warn"); b.disabled = false; }
+      });
+    });
 
     Array.prototype.forEach.call(box.querySelectorAll("[data-modo]"), function(b){
       b.addEventListener("click", function(){ modoEscala = b.dataset.modo; render(); });
@@ -2612,6 +2842,17 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       feb.disabled = true;
       try{ await marcarSuspensao(d, "*", true, (el("fe-motivo").value||"").trim() || null); await recarregarEscala(); aviso("Dia suspenso."); }
       catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); feb.disabled = false; }
+    });
+    var stb = el("st-ok");
+    if(stb) stb.addEventListener("click", async function(){
+      var d = el("st-data").value, t = el("st-turno").value;
+      if(!d || !t){ aviso("Escolha a data e a escala."); return; }
+      stb.disabled = true;
+      try{
+        await marcarSuspensao(d, t, true, (el("st-motivo").value||"").trim() || null);
+        await recarregarEscala(); await carregarMes();
+        aviso("Escala suspensa em " + brData(d) + ".");
+      }catch(e){ aviso("Não consegui salvar. ("+e.message+")", "warn"); stb.disabled = false; }
     });
     var sbb = el("sb-ok");
     if(sbb) sbb.addEventListener("click", async function(){
@@ -2766,7 +3007,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       s2 += '<text x="'+(rotulo-10)+'" y="'+(y+alt/2)+'" class="lbl" text-anchor="end">'+esc(nomeCurto(it.nome))+'</text>'
         + '<rect x="'+rotulo+'" y="'+(y+5)+'" width="'+bw+'" height="'+(alt-12)+'" rx="4" '
         +   'fill="'+(baixo ? "var(--alert)" : "var(--c0)")+'" class="mark" '
-        +   'data-tip="'+esc(nomeCheio(it.nome)+" · "+it.presT+" de "+it.prevT+" turnos · R$ "+reais(it.bolsa))+'"/>'
+        +   'data-tip="'+esc(nomeCheio(it.nome)+" · "+it.presT+" de "+it.prevT+" escalas · R$ "+reais(it.bolsa))+'"/>'
         + '<text x="'+(rotulo+w+8)+'" y="'+(y+alt/2)+'" class="val'+(baixo?" baixo":"")+'">'
         +   it.pctTotal.toFixed(0)+'%</text>';
     });
@@ -2790,7 +3031,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     s2 += '<path d="'+d+'" class="linha"/>';
     serie.forEach(function(p,i){
       s2 += '<circle cx="'+X(i)+'" cy="'+Y(p.pct)+'" r="5" class="mark ponto" '
-        + 'data-tip="'+esc(p.rotulo+" · "+p.pct.toFixed(1).replace(".",",")+"% · "+p.pres+" de "+p.prev+" turnos")+'"/>'
+        + 'data-tip="'+esc(p.rotulo+" · "+p.pct.toFixed(1).replace(".",",")+"% · "+p.pres+" de "+p.prev+" escalas")+'"/>'
         + '<text x="'+X(i)+'" y="'+(altura-12)+'" class="lbl" text-anchor="middle">'+esc(p.curto)+'</text>';
     });
     var ult = serie[serie.length-1];
@@ -2869,7 +3110,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   });
 
   function baixarCSV(rows){
-    var head = ["Data","Dia","Turno","Instrutor(a)","Diretoria","Curso","Chegada","Atraso (min)","Situação","Troca"];
+    var head = ["Data","Dia","Escala","Instrutor(a)","Diretoria","Curso","Chegada","Atraso (min)","Situação","Troca"];
     var out = [head.join(";")];
     rows.slice().reverse().forEach(function(r){
       var at = atrasoDe(r.turno, r.chegada, r.data), t = turnoDe(r.turno), tx = trocaDoRegistro(r);
