@@ -1706,42 +1706,55 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
     { id:"registros", nome:"Registros" }
   ];
 
+  /* Mapa das escalas previstas no intervalo: "nome|data|turno" -> "sem" ou "sab".
+     A troca aprovada é neutra: a escala que sai some do previsto (abatido) e a
+     escala que a pessoa foi cobrir entra no lugar. Assim a conta nunca passa de 100%. */
+  function previstoMapa(de, ate, ateOFim){
+    var mapa = {};
+    (ateOFim ? cadaDiaTodos : cadaDia)(de, ate, function(key, dow){
+      turnosDe(dow).forEach(function(t){
+        escalados(t.id, dow, key).forEach(function(n){
+          if(abatido(n, key, t.id)) return;
+          mapa[n+"|"+key+"|"+t.id] = t.sabado ? "sab" : "sem";
+        });
+      });
+    });
+    var limite = ateOFim ? ate : (ate < hojeKey() ? ate : hojeKey());
+    trocas.forEach(function(x){
+      if(x.status !== "aprovada") return;
+      if(x.data < de || x.data > limite) return;
+      var k = x.nome+"|"+x.data+"|"+x.turno;
+      if(!mapa[k]){ var tt = turnoDe(x.turno); mapa[k] = (tt && tt.sabado) ? "sab" : "sem"; }
+    });
+    return mapa;
+  }
+
   function estatisticas(){
     var hoje = hojeKey();
     var porNome = {};
     function slot(n){ return porNome[n] || (porNome[n] = { previstos:0, presentes:0, atrasos:0, fj:0,
                                                           prevSemana:0, presSemana:0, prevSabado:0, presSabado:0 }); }
-    cadaDia(periodoDe, periodoAte, function(key, dow){
-      turnosDe(dow).forEach(function(t){
-        escalados(t.id, dow, key).forEach(function(n){
-          if(abatido(n, key, t.id)) return;
-          var sl = slot(n); sl.previstos++;
-          if(t.sabado) sl.prevSabado++; else sl.prevSemana++;
-        });
-      });
+    var prevMapa = previstoMapa(periodoDe, periodoAte, false);
+    Object.keys(prevMapa).forEach(function(k){
+      var sl = slot(k.split("|")[0]); sl.previstos++;
+      if(prevMapa[k] === "sab") sl.prevSabado++; else sl.prevSemana++;
     });
-    var atrasosTot = 0;
+    var atrasosTot = 0, presentesTot = 0, foraDaEscala = 0;
     regsMes.forEach(function(r){
-      var s2 = slot(r.nome); s2.presentes++;
-      var tt = turnoDe(r.turno);
-      if(tt && tt.sabado) s2.presSabado++; else s2.presSemana++;
+      var tipo = prevMapa[r.nome+"|"+r.data+"|"+r.turno];
+      if(!tipo){ foraDaEscala++; return; }   /* presença sem escala prevista fica só no histórico */
+      var s2 = slot(r.nome); s2.presentes++; presentesTot++;
+      if(tipo === "sab") s2.presSabado++; else s2.presSemana++;
       if(atrasoDe(r.turno, r.chegada, r.data) != null){ s2.atrasos++; atrasosTot++; }
     });
     JUSTIFICATIVAS.forEach(function(j){
       if(statusFJ(j) !== "aprovada") return;
       if(j.data >= periodoDe && j.data <= periodoAte) slot(j.nome).fj++;
     });
-    var previstosPeriodo = 0;
-    cadaDiaTodos(periodoDe, periodoAte, function(key, dow){
-      turnosDe(dow).forEach(function(t){
-        escalados(t.id, dow, key).forEach(function(n){
-          if(!abatido(n, key, t.id)) previstosPeriodo++;
-        });
-      });
-    });
+    var previstosPeriodo = Object.keys(previstoMapa(periodoDe, periodoAte, true)).length;
     var nomes = Object.keys(porNome).sort(ordenaPorNome);
     var previstosTot = nomes.reduce(function(a,n){ return a + porNome[n].previstos; }, 0);
-    var freq = previstosTot ? Math.round(regsMes.length / previstosTot * 100) : 0;
+    var freq = previstosTot ? Math.round(presentesTot / previstosTot * 100) : 0;
     historico = [];
     (function(){
       if(!regsHist.length) return;
@@ -1749,13 +1762,11 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       for(var k=5; k>=0; k--){
         var m = new Date(+base[0], +base[1]-1-k, 1);
         var ym = m.toLocaleDateString("sv-SE").slice(0,7);
-        var prev = 0;
-        cadaDia(ym+"-01", fimDoMes(ym), function(k2, dw2){
-          turnosDe(dw2).forEach(function(t){
-            escalados(t.id, dw2, k2).forEach(function(n){ if(!abatido(n, k2, t.id)) prev++; });
-          });
-        });
-        var pres = regsHist.filter(function(r){ return r.data.slice(0,7) === ym; }).length;
+        var mp = previstoMapa(ym+"-01", fimDoMes(ym), false);
+        var prev = Object.keys(mp).length;
+        var pres = regsHist.filter(function(r){
+          return r.data.slice(0,7) === ym && mp[r.nome+"|"+r.data+"|"+r.turno];
+        }).length;
         if(prev > 0 && pres > 0) historico.push({ rotulo:nomeMes(ym), curto:ym.slice(5)+"/"+ym.slice(2,4),
                                       pct: pres/prev*100, pres:pres, prev:prev });
       }
@@ -1777,7 +1788,8 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
         pctTotal:  prevT ? presT/prevT*100 : null,
         bolsa:b, atrasos:sn.atrasos, fj:sn.fj };
     });
-    return { porNome:porNome, nomes:nomes, previstosTot:previstosTot, previstosPeriodo:previstosPeriodo, freq:freq,
+    return { porNome:porNome, nomes:nomes, previstosTot:previstosTot, previstosPeriodo:previstosPeriodo,
+             presentesTot:presentesTot, foraDaEscala:foraDaEscala, freq:freq,
              atrasosTot:atrasosTot, ordenados:ordenados, linhas:linhas, totalBolsa:totalBolsa };
   }
 
@@ -1789,23 +1801,21 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       var m = new Date(+base[0], +base[1]-1-k, 1);
       cols.push(m.toLocaleDateString("sv-SE").slice(0,7));
     }
-    var dados = {};
+    var dados = {}, mapas = {};
     function cel(n, ym){
       var d = dados[n] || (dados[n] = {});
       return d[ym] || (d[ym] = { prev:0, pres:0 });
     }
     cols.forEach(function(ym){
-      cadaDia(ym+"-01", fimDoMes(ym), function(key, dow){
-        turnosDe(dow).forEach(function(t){
-          escalados(t.id, dow, key).forEach(function(n){
-            if(!abatido(n, key, t.id)) cel(n, ym).prev++;
-          });
-        });
-      });
+      var mp = previstoMapa(ym+"-01", fimDoMes(ym), false);
+      mapas[ym] = mp;
+      Object.keys(mp).forEach(function(k){ cel(k.split("|")[0], ym).prev++; });
     });
     regsHist.forEach(function(r){
       var ym = r.data.slice(0,7);
-      if(cols.indexOf(ym) >= 0) cel(r.nome, ym).pres++;
+      if(cols.indexOf(ym) < 0) return;
+      if(!mapas[ym][r.nome+"|"+r.data+"|"+r.turno]) return;
+      cel(r.nome, ym).pres++;
     });
     /* só entram os meses em que o programa de fato rodou */
     cols = cols.filter(function(ym){
@@ -1990,12 +2000,17 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
       h += '<div class="tiles">'
         + tile("Frequência", E.freq+"%")
-        + tile("Presenças", String(regsMes.length))
+        + tile("Presenças", String(E.presentesTot))
         + tile("Escalas previstas", String(E.previstosPeriodo))
         + tile("Chegadas com atraso", String(E.atrasosTot))
         + '</div>'
         + '<p class="tiny muted" style="margin:-6px 0 18px">Frequência, presenças e atrasos contam até hoje. '
-        + '<b>Escalas previstas</b> mostra o período inteiro, inclusive os dias que ainda vêm.</p>';
+        + '<b>Escalas previstas</b> mostra o período inteiro, inclusive os dias que ainda vêm.'
+        + (E.foraDaEscala ? ' Há '+E.foraDaEscala+' chegada'+(E.foraDaEscala===1?'':'s')
+            + ' registrada'+(E.foraDaEscala===1?'':'s')+' fora da escala, que aparece'+(E.foraDaEscala===1?'':'m')
+            + ' na aba Registros mas não entra'+(E.foraDaEscala===1?'':'m')+' na frequência. '
+            + 'Para valerem, lance a troca em Pedidos.' : '')
+        + '</p>';
 
       /* gráfico 1 — frequência por instrutor */
       if(linhas.length){
@@ -2047,7 +2062,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
 
       h += '<div><div class="sec-head"><h2>Por instrutor</h2><p>'+esc(rotuloPeriodo())+' · até hoje</p></div>'
         + tabelaPorInstrutor(linhas, false)
-        + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre o total de turnos previstos. '
+        + '<p class="note" style="margin-top:10px"><b>P</b> é o total de presenças sobre o total de escalas previstas. '
         + '<b>FJ</b> conta as faltas justificadas: elas ficam registradas, mas a falta continua descontando.</p></div>';
     }
 
