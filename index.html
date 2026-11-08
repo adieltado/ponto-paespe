@@ -297,6 +297,7 @@ dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface)
 dialog::backdrop{background:var(--scrim)}
 dialog h3{font-size:18px;margin-bottom:4px}
 
+.tag.comp{background:var(--warn-soft);color:var(--warn)}
 .mespill{display:inline-block;min-width:46px;padding:3px 8px;border-radius:999px;
   font-weight:600;font-size:12px;text-align:center}
 .mespill.ok{background:var(--ok-soft);color:var(--ok)}
@@ -589,6 +590,7 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       ex.forEach(function(x){ if(x.acao === "remover") fora[x.nome] = 1; else dentro.push(x.nome); });
       lista = lista.filter(function(n){ return !fora[n]; });
       dentro.forEach(function(n){ if(lista.indexOf(n) < 0) lista.push(n); });
+      cobrindo(data, turnoId).forEach(function(n){ if(lista.indexOf(n) < 0) lista.push(n); });
       lista.sort(ordenaPorNome);
     }
     return lista.filter(function(n){ return estaAtivoEm(n, data); });
@@ -986,6 +988,19 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
   function abatido(nome, data, turno){
     return trocas.some(function(x){ return x.status==="aprovada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
   }
+  /* compensacao aprovada: a pessoa cobre esta escala nesta data, mesmo sem estar na grade */
+  function cobrindo(data, turno){
+    if(!data) return [];
+    var fora = [];
+    trocas.forEach(function(x){
+      if(x.status === "aprovada" && x.data === data && x.turno === turno && fora.indexOf(x.nome) < 0)
+        fora.push(x.nome);
+    });
+    return fora;
+  }
+  function ehCobertura(nome, data, turno){
+    return cobrindo(data, turno).indexOf(nome) >= 0;
+  }
   function jaPedido(nome, data, turno){
     return trocas.some(function(x){ return x.status!=="recusada" && x.nome===nome && x.data_abater===data && x.turno_abater===turno; });
   }
@@ -1268,10 +1283,12 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
       nomes.forEach(function(n){
         var r = reg[n], d = diretoriaDe(n), sou = (n === eu);
         var rot = d ? '<span class="dir'+classeDir(d)+'">'+esc(dirCurta(d))+'</span>' : '';
+        var comp = ehCobertura(n, data, turnoSel)
+          ? ' <span class="tag comp" title="Compensa\u00e7\u00e3o aprovada: esta escala entrou no lugar de outra">compensa\u00e7\u00e3o</span>' : '';
         if(r){
           var at = atrasoDe(turnoSel, r.chegada, data);
           h += '<div class="namecard done'+(at!=null?" late":"")+(sou?" eu":"")+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+'</span>'
+            + '<span class="n">'+esc(nomeCheio(n))+(sou?' <span class="tag">você</span>':'')+comp+'</span>'
             + '<span class="s"><svg class="check" viewBox="0 0 20 20" fill="none" aria-hidden="true">'
             + '<circle cx="10" cy="10" r="9" fill="currentColor" opacity=".18"/>'
             + '<path d="M5.8 10.3l2.7 2.7 5.7-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -1279,12 +1296,12 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
             + (at!=null ? ' &middot; '+at+' min de atraso' : '')+'</span></span></div>';
         } else if(sou){
           h += '<button class="namecard eu" data-n="'+esc(n)+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+' <span class="tag">você</span></span>'
+            + '<span class="n">'+esc(nomeCheio(n))+' <span class="tag">você</span>'+comp+'</span>'
             + '<span class="s">Toque para registrar sua chegada</span></button>';
         } else if(podeTodos){
           var fj = temFJ(n, data, turnoSel);
           h += '<div class="namecard'+(fj?" fj":"")+'">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+'</span>'
+            + '<span class="n">'+esc(nomeCheio(n))+comp+'</span>'
             + (fj ? '<span class="s"><span class="pill p-wait">falta justificada</span></span>' : '')
             + '<span class="s" style="gap:6px;margin-top:4px">'
             +   '<button class="btn icon" data-n="'+esc(n)+'">Registrar</button>'
@@ -1292,13 +1309,19 @@ footer.legal #rodape{font-weight:600;color:var(--ink)}
             + '</span></div>';
         } else {
           h += '<div class="namecard esperando">'+rot
-            + '<span class="n">'+esc(nomeCheio(n))+'</span>'
+            + '<span class="n">'+esc(nomeCheio(n))+comp+'</span>'
             + '<span class="s">Ainda não registrou</span></div>';
         }
       });
       h += '</div>';
     }
     h += '</div>';
+
+    if(podeTodos){
+      h += '<p class="note">Algu\u00e9m cobriu esta escala e n\u00e3o aparece na lista? Lance a compensa\u00e7\u00e3o em '
+        + '<b>Coordena\u00e7\u00e3o \u2192 Pedidos</b>. A pessoa passa a aparecer aqui, em qualquer data, '
+        + 'e a chegada que voc\u00ea registrar conta na frequ\u00eancia dela.</p>';
+    }
 
     var souInstrutor = !!(eu && INSTRUTORES[eu]);
     if(souInstrutor && hoje && nomes.indexOf(eu) < 0){
